@@ -1,0 +1,6 @@
+libre_shuffle --info /media/ipod_shuffle
+
+libre_shuffle --set lang=zh_cn
+
+libre_shuffle4 --add --audio /media/music/a.mp3
+libre_shuffle4 --add --playlist --name xxx --dirs dir1,dir2

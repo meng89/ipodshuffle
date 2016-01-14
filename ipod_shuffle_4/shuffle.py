@@ -11,8 +11,6 @@ from .playlist import Playlist
 from . import fields as f
 from . import utils
 
-import mutagen
-
 
 def format_dbid(dbid):
     return format('%016x' % dbid)
@@ -23,20 +21,20 @@ class FieldError(Exception):
 
 
 class Shuffle:
-    def __init__(self, base):
-        self._base = base
-        self._tracks = []
-        self._playlists = []
+    def __init__(self, directory):
+        self.dir = directory
+        self.tracks = []
+        self.playlists = []
 
         itunessd_name = 'iTunesSD'
         ipod_control_dir_name = 'iPod_Control'
         speakable_dir_name = 'Speakable'
 
-        self.default_sound_dir = os.path.join(self._base, ipod_control_dir_name, 'sound')
+        self.default_sound_dir = os.path.join(self.dir, ipod_control_dir_name, 'sound')
 
-        self.tracks_speakable_dir = os.path.join(self._base, ipod_control_dir_name, speakable_dir_name, 'Tracks')
+        self.tracks_speakable_dir = os.path.join(self.dir, ipod_control_dir_name, speakable_dir_name, 'Tracks')
 
-        self.pls_speakable_dir = os.path.join(self._base, ipod_control_dir_name, speakable_dir_name, 'Playlists')
+        self.pls_speakable_dir = os.path.join(self.dir, ipod_control_dir_name, speakable_dir_name, 'Playlists')
 
         self._sounds_log = {}
 
@@ -45,7 +43,7 @@ class Shuffle:
         except FileExistsError:
             pass
 
-        self.itunessd_file = os.path.join(self._base, ipod_control_dir_name, itunessd_name)
+        self.itunessd_file = os.path.join(self.dir, ipod_control_dir_name, itunessd_name)
         self.itunessd = open(self.itunessd_file, 'rb').read()
 
         dic = f.split_xxhs(self.itunessd[:f.bdhs_items_size], f.bdhs_items)
@@ -60,7 +58,7 @@ class Shuffle:
         self.voiceover_lang = 'zh_CN'
         self.max_volume = utils.ifb(dic[f.max_volume])
 
-        self._tracks_add_info_file = self._base + '/iTunes' + '/tracks_add_info.json'
+        self._tracks_add_info_file = self.dir + '/iTunes' + '/tracks_add_info.json'
         try:
             self._tracks_add_info = json.load(open(self._tracks_add_info_file))
         except(FileNotFoundError, ValueError):
@@ -68,7 +66,7 @@ class Shuffle:
 
         self._init_tracks()
 
-        self._playlists_ext_info_file = self._base + '/iTunes' + '/playlists_add_info.json'
+        self._playlists_ext_info_file = self.dir + '/iTunes' + '/playlists_add_info.json'
         try:
             self._playlists_ext_info = json.load(open(self._playlists_ext_info_file))
         except(FileNotFoundError, ValueError):
@@ -94,7 +92,7 @@ class Shuffle:
             track.voice_lang = add_info['voice_lang']
             track.name = add_info['name']
 
-            self._tracks.append(track)
+            self.tracks.append(track)
 
     def _init_playlists(self):
         data = self.itunessd[self._playlists_header_chunk_offset:]
@@ -110,13 +108,13 @@ class Shuffle:
             playlist.voice_string = add_info['voice_string']
             playlist.voice_lang = add_info['voice_lang']
             playlist.name = add_info['name']
-            self._playlists.append(playlist)
+            self.playlists.append(playlist)
 
     def _get_chunk_of_tracks(self):
         data = b''
-        lenght_of_all_offset_of_track_chunk = len(self._tracks) * 4
+        lenght_of_all_offset_of_track_chunk = len(self.tracks) * 4
         list_of_tracks_bytes = []
-        for track in self._tracks:
+        for track in self.tracks:
             list_of_tracks_bytes.append(track.get_chunk())
 
         for one in f.hths_items:
@@ -140,17 +138,17 @@ class Shuffle:
 
     def _get_chunk_of_playlists(self):
         data = b''
-        lenght_of_all_offset_of_playlist = len(self._playlists) * 4
+        lenght_of_all_offset_of_playlist = len(self.playlists) * 4
 
         list_of_playlists_bytes = []
-        for track in self._tracks:
+        for track in self.tracks:
             list_of_playlists_bytes.append(track.get_chunk())
 
         number_of_master_playlists = 0
         number_of_normal_playlists = 0
         number_of_audiobooks_playlists = 0
         number_of_podcast_playlists = 0
-        for playlist in self._playlists:
+        for playlist in self.playlists:
             if playlist.type == f.PL_TYPE_NORMAL:
                 number_of_normal_playlists += 1
             elif playlist.type == f.PL_TYPE_AUDIOBOOK:
@@ -209,20 +207,20 @@ class Shuffle:
         return data
 
     def get_all_tracks(self):
-        return copy.copy(self._tracks)
+        return copy.copy(self.tracks)
 
     def get_all_info_of_tracks(self):
         return copy.copy(self._tracks_add_info)
 
     def get_all_playlists(self):
-        return copy.copy(self._playlists)
+        return copy.copy(self.playlists)
 
     def get_all_info_of_playlists(self):
         return copy.copy(self._playlists_ext_info)
 
     def get_tracks_of_master_playlist(self):
         master_playlist_tracks = []
-        for playlist in self._playlists:
+        for playlist in self.playlists:
             if playlist.type == f.PL_TYPE_NORMAL:
                 for track in playlist.tracks:
                     if track not in master_playlist_tracks:
@@ -233,7 +231,7 @@ class Shuffle:
         dbid = None
         while True:
             dbid = random.randint(1, 2**(8*8)-1)
-            if dbid not in [track.dbid for track in self._tracks] and dbid not in [pl.dbid for pl in self._playlists]:
+            if dbid not in [track.dbid for track in self.tracks] and dbid not in [pl.dbid for pl in self.playlists]:
                 break
         return dbid
 
@@ -243,7 +241,7 @@ class Shuffle:
 
         exsit_track = None
 
-        for track in self._tracks:
+        for track in self.tracks:
             if track.checksum == checksum:
                 exsit_track = track
                 break
@@ -255,39 +253,39 @@ class Shuffle:
                 fullname = '%s/%s%s' % (self.default_sound_dir,
                                         random.sample('ABCDEFGHIJKLMNOPQRSTUVWXYZ', 4),
                                         os.path.splitext(file)[1])
-                if fullname not in [track.fullname for track in self._tracks]:
+                if fullname not in [track.fullname for track in self.tracks]:
                     break
 
-            shutil.copy(file, '%s%s%s' % (self._base, os.sep, fullname))
+            shutil.copy(file, '%s%s%s' % (self.dir, os.sep, fullname))
 
             new_track = Track(shuffle=self, filename=fullname, add_info={'checksum': checksum})
 
-            self._tracks.append(new_track)
+            self.tracks.append(new_track)
             exsit_track = new_track
 
         return exsit_track
 
     def del_track(self, track):
-        self._tracks.remove(track)
+        self.tracks.remove(track)
         track.remove_file()
-        for playlist in self._playlists:
+        for playlist in self.playlists:
             playlist.remove(track)
 
     def add_playlist(self, playlist_name):
-        for playlist in self._playlists:
+        for playlist in self.playlists:
             if playlist.name == playlist_name:
                 return playlist
         new_playlist = Playlist(playlist_name)
-        self._playlists.append(new_playlist)
+        self.playlists.append(new_playlist)
         return new_playlist
 
     def del_playlist(self, playlist):
         os.remove(playlist['dbid_file'])
-        self._playlists.remove(playlist)
+        self.playlists.remove(playlist)
 
     def get_master_playlist(self):
         tracks = []
-        for playlist in self._playlists:
+        for playlist in self.playlists:
             if playlist.type == f.PL_TYPE_NORMAL:
                 for track in playlist.tracks:
                     if track not in tracks:
@@ -305,15 +303,16 @@ class Shuffle:
 
         bdhs_chunk_items = []
         items = bdhs_chunk_items
+
         for one in f.bdhs_items:
             if f.K_DEFAULT in one.keys():
                 items += one[f.K_DEFAULT]
             elif one[f.K_NAME] == f.header_legth:
                 items += f.bdhs_items_size
             elif one[f.K_NAME] == f.total_no_of_tracks:
-                items += utils.itb(len(self._tracks), one[f.K_SIZE])
+                items += utils.itb(len(self.tracks), one[f.K_SIZE])
             elif one[f.K_NAME] == f.total_no_of_playlists:
-                items += utils.itb(len(self._playlists), one[f.K_SIZE])
+                items += utils.itb(len(self.playlists), one[f.K_SIZE])
             elif one[f.K_NAME] == f.max_volume:
                 items += utils.itb(self.max_volume, one[f.K_SIZE])
             elif one[f.K_NAME] == f.voiceover_enabled:
@@ -352,7 +351,11 @@ class Shuffle:
     def write_add_info(self):
         track_add_info = {}
         playlist_add_info = {}
-        for track in self._tracks:
+        for track in self.tracks:
             track_add_info[track.dbid] = track.get_add_info()
-        for playlist in self._playlists:
+        for playlist in self.playlists:
             playlist_add_info[playlist.dbid] = playlist.get_add_info()
+
+
+class PlayList:
+    pass

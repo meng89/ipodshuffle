@@ -6,7 +6,7 @@ from .shuffle import format_dbid
 from . import fields as f
 from . import utils
 
-import mutagenx
+import mutagen
 
 
 class Track:

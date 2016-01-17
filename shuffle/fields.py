@@ -155,7 +155,7 @@ hphs_items = (
     {K_NAME: unknown_2,                    K_SIZE: 4, K_TYPE: T_UNKNOWN},
     {K_NAME: unknown_3,                    K_SIZE: 4, K_SEEMS_BE: b'\xFF'*4},
     {K_NAME: unknown_4,                    K_SIZE: 20, K_TYPE: T_UNKNOWN},
-    # offset_of_playlist_1        4
+    # offset_of_playlist_1                 4
     # ....
 )
 
@@ -177,7 +177,7 @@ lphs_items = (
     {K_NAME: dbid,                      K_SIZE: 8,  K_TYPE: T_INT},
     {K_NAME: TYPE,                      K_SIZE: 4,  K_TYPE: T_INT},
     {K_NAME: unknown_1,                 K_SIZE: 16, K_TYPE: T_UNKNOWN},
-    # playlist_track_1               4
+    # playlist_track_1                  4
     # ....
 )
 

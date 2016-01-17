@@ -13,7 +13,7 @@ from . import utils
 
 
 def format_dbid(dbid):
-    return format('%016x' % dbid)
+    return '{:X}'.format(dbid)
 
 
 class FieldError(Exception):

@@ -38,7 +38,7 @@ class Track:
 
             self._data[f.filename] = filename
             self._data[f.dbid] = self._shuffle.get_new_dbid()
-            self._data[f.stop_at_pos_ms] = int(mutagenx.File(filename, easy=True).info.length * 1000)
+            self._data[f.stop_at_pos_ms] = int(mutagen.File(filename, easy=True).info.length * 1000)
 
         else:
             raise ()

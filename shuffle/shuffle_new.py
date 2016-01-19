@@ -103,9 +103,8 @@ class Shuffle:
         self.sounds_voices = List()
         self.playlists_voices = List()
 
-
-
-
+    def write_itunessd(self):
+        pass
 
 hths_header_table = (
     {'name': 'header_id',        'size': 4, 'type': 'string', 'must_be': 'hths'},
@@ -134,7 +133,7 @@ class Sounds(List):
             for sound_offset in sounds_offsets:
                 self.append(Sound(itunessd_bytes, int_from_bytes(sound_offset)))
 
-    def _get_ituned_bytes(self):
+    def _get_bytes(self):
         pass
 
 
@@ -196,6 +195,9 @@ class Sound:
         else:
             pass
 
+    def _get_bytes(self):
+        pass
+
 
 hphs_header_table = (
     {'name': 'header_id',                      'size': 4,  'type': 'string', 'must_be': 'hphs'},
@@ -240,6 +242,8 @@ class Playlists(List):
             for playlist_offset in playlists_offsets:
                 self.append(Playlist(itunessd_bytes, int_from_bytes(playlist_offset), _sounds=_sounds))
 
+    def _get_bytes(self):
+        pass
 
 lphs_header_table = (
     {'name': 'header_id',                 'size': 4,  'type': 'string', 'must_be': 'lphs'},
@@ -267,3 +271,6 @@ class Playlist(List):
 
             for index in sounds_indexes:
                 self.append(_sounds(index))
+
+    def _get_bytes(self):
+        pass

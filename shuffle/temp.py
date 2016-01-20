@@ -7,55 +7,58 @@ import gtts
 import tempfile
 import pydub
 
-voice_info_filename = 'voice_info.json'
+logs_filename = 'voice_info.json'
 
-home = os.path.expanduser("~")
-
-voice_info_fullpath = home + os.sep + '.'
+logs_fullpath = os.path.expanduser("~") + os.sep + '.'
 
 
-def all_info():
-    voice_info = json.load(open(voice_info_fullpath))
-    return voice_info
+def read_logs():
+    logs = json.loads(open(logs_fullpath).read())
+    return logs
 
 
-def _get_info(text, lang):
-    info = None
-    for one in all_info():
-        if one['text'] == text and one['lang'] == lang:
-            info = one
+def write_logs(logs):
+    open(logs_fullpath, 'w').write(json.dumps(logs))
+
+
+def _get_log(text, lang):
+    log = None
+    for l in read_logs():
+        if l['text'] == text and l['lang'] == lang:
+            log = l
             break
-    return info
+    return log
 
 
 def get_from_cache(text, lang):
 
-    info = _get_info(text, lang)
+    log = _get_log(text, lang)
 
-    return info['filename'] if info else None
+    return log['filename'] if log else None
 
 
 def write_to_cache(text, lang):
-    info = _get_info(text, lang)
+    log = _get_log(text, lang)
 
-    if not info:
+    if not log:
         filename = None
         while True:
             filename = uuid.uuid1()
-            if filename not in [info['filename'] for info in all_info()]:
+            if filename not in [info['filename'] for info in read_logs()]:
                 break
 
-        info['text'] = text
-        info['lang'] = lang
+        log['text'] = text
+        log['lang'] = lang
 
-        info['filename'] = filename
+        log['filename'] = filename
 
     mp3_fp = tts(text, lang)
     wav_fp = mp3_to_wav(mp3_fp)
 
-    open(info['filename'], 'wb').write(wav_fp.read())
+    open(log['filename'], 'wb').write(wav_fp.read())
 
-    voice_info.append(info)
+    logs = read_logs()
+    logs.append(log)
 
 
 def tts(text, lang):
@@ -70,3 +73,6 @@ def mp3_to_wav(mp3_fp):
     wav_fp = tempfile.TemporaryFile()
     mp3_audio.export(wav_fp)
     return wav_fp
+
+def clean():
+    pass

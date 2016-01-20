@@ -1,0 +1,12 @@
+*~
+*.pyc
+.git/
+.idea/
+
+build
+dist
+__pycache__
+temp
+
+CCC/
+baseclasses.py

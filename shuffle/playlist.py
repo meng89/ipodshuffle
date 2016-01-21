@@ -1,7 +1,7 @@
 import os
 import copy
 
-from .shuffle import format_dbid
+from .shuffle_old import format_dbid
 from . import fields as f
 from . import utils
 from .track import Track

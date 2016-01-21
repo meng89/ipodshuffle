@@ -67,19 +67,13 @@ bdhs_table = (
 )
 
 
-class Shuffle:
-    def __init__(self, directory):
-        self.dir = os.path.abspath(directory)
+class Itunessd:
+    def __init__(self, itunessd_bytes=None):
 
-        self.sounds = List()
+        self.tracks = List()
         self.playlists = List()
 
-        ipod_control_folder = 'iPod_Control'
-
-        self._itunessd_path = self.dir + os.sep + ipod_control_folder + os.sep + 'iTunesSD'
-        itunessd_bytes = open(self._itunessd_path, 'rb').read()
-
-        if os.path.exists(self._itunessd_path):
+        if itunessd_bytes:
             bdhs_size = get_header_size(bdhs_table)
 
             bdhs_header_bytes = itunessd_bytes[0:bdhs_size]
@@ -91,8 +85,8 @@ class Shuffle:
             self.enable_voiceover = bool(int_from_bytes(dic['enable_voiceover']))
             self.max_volume = int_from_bytes(dic['max_volume'])
 
-            self.sounds = Sounds(itunessd_bytes, dic['sounds_header_offset'])
-            self.playlists = Playlists(itunessd_bytes, dic['playlists_header_offset'], self.sounds)
+            self.tracks = Tracks(itunessd_bytes, dic['sounds_header_offset'])
+            self.playlists = Playlists(itunessd_bytes, dic['playlists_header_offset'], self.tracks)
 
         else:
             pass
@@ -119,19 +113,19 @@ hths_header_table = (
 hths_subs_offset_size = 4
 
 
-class Sounds(List):
+class Tracks(List):
     def __init__(self, itunessd_bytes=None, offset=None):
         super().__init__()
 
         if itunessd_bytes and offset:
-            dic, sounds_offsets = get_dic_and_subs(itunessd_bytes, offset,
+            dic, tracks_offsets = get_dic_and_subs(itunessd_bytes, offset,
                                                    hths_header_table, hths_subs_offset_size)
 
             if dic['header_id'].decode() != 'hths':
                 raise DataError
 
-            for sound_offset in sounds_offsets:
-                self.append(Sound(itunessd_bytes, int_from_bytes(sound_offset)))
+            for track_offset in tracks_offsets:
+                self.append(Track(itunessd_bytes, int_from_bytes(track_offset)))
 
     def _get_bytes(self):
         pass
@@ -168,7 +162,7 @@ rths_table = (
 )
 
 
-class Sound:
+class Track:
     def __init__(self, itunessd_bytes=None, offset=None):
 
         if itunessd_bytes and offset:
@@ -181,6 +175,8 @@ class Sound:
             self.start_at_pos_ms = int_from_bytes(d['start_at_pos_ms'])
             self.stop_at_pos_ms = int_from_bytes(d['stop_at_pos_ms'])
             self.volume_gain = int_from_bytes(d['volume_gain'])
+
+            self.filename = d['filename'].decode()
 
             self.book_mark = int_from_bytes(d['bookmark'])
             self.dont_skip_on_shuffle = bool(int_from_bytes(d['dont_skip_on_shuffle']))

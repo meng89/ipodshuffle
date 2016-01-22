@@ -1,11 +1,20 @@
 import os
 import json
 import hashlib
+
+import mutagen
+
+import magic
+
 from . import itunessd
-from . import baseclasses
+from .baseclasses import List
 
 MUSIC = 'music'
 AUDIOBOOK = 'audiobook'
+
+
+def isablefile(path):
+    if
 
 def get_metadata(path):
     log = {
@@ -25,7 +34,7 @@ class Shuffle:
         ipod_control_folder = '/iPod_Control'
 
         itunessd_path = directory + '/iPod_Control/iTunes/iTunesSD'
-        self.sounds_logs_path = directory + '/iPod_Control/sounds_logs.json'
+        sounds_logs_path = directory + '/iPod_Control/sounds_logs.json'
 
         if os.path.exists(itunessd_path):
             if os.path.isfile(itunessd_path):
@@ -35,7 +44,9 @@ class Shuffle:
         else:
             self.itunessd = itunessd.Itunessd()
 
-        self.sounds_logs = json.loads(open(self.sounds_logs_path))
+        self.sounds_logs = json.loads(open(sounds_logs_path))
+
+        self.sounds = Sounds(self)
 
     def __logs_del_iffilenotexists(self):
         new_logs = {}
@@ -47,7 +58,7 @@ class Shuffle:
 
         self.sounds_logs = new_logs
 
-    def __logs_update_ifsizeormtimechanged(self):
+    def __logs_updata_ifsizeormtimechanged(self):
         new_logs = {}
         for path, metadata in self.sounds_logs.items():
             full_path = self.directory + os.sep + path
@@ -57,22 +68,48 @@ class Shuffle:
             else:
                 new_logs[path] = get_metadata(full_path)
 
+    def __logs_add_fromtracks(self):
+        tracks_logs_notinlogs = {}
+        for track in self.itunessd.tracks:
+            if not [path for path in self.sounds_logs.keys()
+                    if os.path.samefile(self.directory + os.sep + path, self.directory + os.sep + track.filename)]:
 
-class Sounds(baseclasses.List):
-    def __init__(self):
+                tracks_logs_notinlogs[track.filename] = get_metadata(self.directory + os.sep + track.filename)
+
+        self.sounds_logs.update(tracks_logs_notinlogs)
+
+
+    def fix(self, deeply=False):
+        pass
+
+
+class Sounds(List):
+    def __init__(self, shuffle):
         super().__init__()
-
-    def add_from_file(self, path):
-        sound = Sound(path)
-        self.append(sound)
-
+        for path, metadata in shuffle.sounds_logs.items():
+            self.append(Sound(path, metadata))
 
 class Sound:
     def __init__(self, path):
+        if path
 
-        self.original_name = None
-        self.path = None
-        self.md5 = None
-        self.size = None
-        self.mtime = None
 
+        self.path = path
+
+
+
+class Tracks(List):
+    pass
+
+
+class Track:
+    pass
+
+class Playlists(List):
+    def __init__(self):
+        super().__init__()
+
+
+class Playlist(List):
+    def __init__(self):
+        super().__init__()

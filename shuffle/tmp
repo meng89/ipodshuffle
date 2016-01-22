@@ -1,0 +1,16 @@
+# read_logs
+1， 读取 logs
+
+# del_error_logs()
+
+# check_and_update_logs
+2， 检查 mtime 和 size 是否和文件相符，不符就更新
+
+# update_logs_from_tracks
+2， 对比 itunessd tracks，如果 tracks 有，logs 没有，把没有的 sound 加进 logs
+
+# scan_sound_dir_update_
+3，扫描 sound 目录，如果文件没有记录，就更新。
+
+
+make_logs_right

@@ -7,6 +7,14 @@ from . import baseclasses
 MUSIC = 'music'
 AUDIOBOOK = 'audiobook'
 
+def get_metadata(path):
+    log = {
+        'md5': hashlib.md5().update(open(path, 'rb').read()).hexdigest(),
+        'mtime': os.path.getmtime(path),
+        'size': os.path.getsize(path)
+    }
+    return log
+
 
 class Shuffle:
     def __init__(self, directory):
@@ -19,22 +27,6 @@ class Shuffle:
         itunessd_path = directory + '/iPod_Control/iTunes/iTunesSD'
         self.sounds_logs_path = directory + '/iPod_Control/sounds_logs.json'
 
-        # speakable_folder = 'Speakable'
-
-        # self.default_sound_dir = os.path.join(self.directory, ipod_control_folder, 'sound')
-
-        # self.sounds_voice_folder = os.path.join(self.directory, ipod_control_folder, speakable_folder, 'Tracks')
-
-        # self.playlists_voice_folder = os.path.join(self.directory, ipod_control_folder, speakable_folder, 'Playlists')
-
-        # self._sounds_log = {}
-
-        # self._tracks_add_info_file = self.directory + '/iTunes' + '/tracks_add_info.json'
-        # try:
-        #    self._tracks_add_info = json.load(open(self._tracks_add_info_file))
-        # except(FileNotFoundError, ValueError):
-        #    self._tracks_add_info = {}
-
         if os.path.exists(itunessd_path):
             if os.path.isfile(itunessd_path):
                 self.itunessd = itunessd.Itunessd(open(itunessd_path, 'rb').read())
@@ -45,34 +37,25 @@ class Shuffle:
 
         self.sounds_logs = json.loads(open(self.sounds_logs_path))
 
-    def get_metadata(self, path):
-        log = {
-            'md5': hashlib.md5().update(open(path, 'rb').read()).hexdigest(),
-            'mtime': os.path.getmtime(path),
-            'size': os.path.getsize(path)
-        }
-        return log
-
-    def clean_sounds_logs(self):
-        cleand_logs = {}
-
+    def __logs_del_iffilenotexists(self):
+        new_logs = {}
         for path, metadata in self.sounds_logs.items():
-            os_path = self.directory + os.sep + path
+            full_path = self.directory + os.sep + path
 
-            if not os.path.exists(path):
-                continue
-            if not os.path.isfile(path):
-                continue
+            if os.path.exists(full_path) and os.path.isfile(full_path):
+                new_logs[path] = metadata
 
-            if (os.path.getmtime(os_path) != metadata['mtime']) or\
-                    (os.path.getsize(os_path) != metadata['size']):
+        self.sounds_logs = new_logs
 
-                cleand_logs[path] = self.get_metadata(os_path)
+    def __logs_update_ifsizeormtimechanged(self):
+        new_logs = {}
+        for path, metadata in self.sounds_logs.items():
+            full_path = self.directory + os.sep + path
 
+            if os.path.getsize(full_path) == metadata['size'] and os.path.getmtime(full_path) == metadata['mtime']:
+                new_logs[path] = metadata
             else:
-                cleand_logs[path] = metadata
-
-
+                new_logs[path] = get_metadata(full_path)
 
 
 class Sounds(baseclasses.List):

@@ -3,14 +3,19 @@ import json
 import hashlib
 
 import mutagen
+# import pydub
+# import av
+# import magic
 
-import magic
 
 from . import itunessd
 from .baseclasses import List
 
 MUSIC = 'music'
 AUDIOBOOK = 'audiobook'
+
+
+
 
 
 def isablefile(path):
@@ -89,9 +94,12 @@ class Sounds(List):
         for path, metadata in shuffle.sounds_logs.items():
             self.append(Sound(path, metadata))
 
+
+
+
 class Sound:
     def __init__(self, path):
-        if path
+        if pat
 
 
         self.path = path

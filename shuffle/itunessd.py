@@ -139,6 +139,7 @@ rths_table = (
     {'name': 'volume_gain',                   'size': 4,   'type': 'number'},
 
     {'name': 'filetype',                      'size': 4,   'type': 'number'},
+
     {'name': 'filename',                      'size': 256, 'type': 'string'},
 
     {'name': 'bookmark',                      'size': 4,   'type': 'number'},
@@ -198,17 +199,20 @@ class Track:
 hphs_header_table = (
     {'name': 'header_id',                      'size': 4,  'type': 'string', 'must_be': 'hphs'},
     {'name': 'length',                         'size': 4,  'type': 'number'},
+
+    # include the master playlist
     {'name': 'number_of_all_playlists',        'size': 4,  'type': 'number'},
 
-    {'name': 'playlist_flag_normal',           'size': 4,  'type': 'number'},  # \xFF if normal pls is 0 else 1
+    # \xFF*4 if no_of_normal_pls is 0 else 1
+    {'name': 'playlist_flag_normal',           'size': 4,  'type': 'number'},
     {'name': 'number_of_normal_playlists',     'size': 4,  'type': 'number'},
 
-    {'name': 'playlist_flag_audiobook',        'size': 4,  'type': 'number'},  # \xFF if audiobook pls is 0,
-                                                                               #   else master + normal + podcast
+    # \xFF*4 if no_of_audiobook_pls is 0, else no_of_master_pl + no_of_normal_pls + no_of_podcast_pls
+    {'name': 'playlist_flag_audiobook',        'size': 4,  'type': 'number'},
     {'name': 'number_of_audiobook_playlists',  'size': 4,  'type': 'number'},
 
-    {'name': 'playlist_flag_podcast',          'size': 4,  'type': 'number'},  # \xFF if podcast pls is 0,
-                                                                               #   else master + normal
+    # \xFF*4 if no_of_podcast_pls is 0, else no_of_master_pl + no_of_normal_pls
+    {'name': 'playlist_flag_podcast',          'size': 4,  'type': 'number'},
     {'name': 'number_of_podcast_playlists',    'size': 4,  'type': 'number'},
 
     {'name': 'unknown_1',                      'size': 4,  'type': 'unknown', 'seems_always_be': b'\xFF'*4},
@@ -246,8 +250,12 @@ lphs_header_table = (
     {'name': 'length',                    'size': 4,  'type': 'number'},
     {'name': 'number_of_all_sound',       'size': 4,  'type': 'number'},
     {'name': 'number_of_normal_sound',    'size': 4,  'type': 'number'},
+
+    # when type is 1, dbid is all 0, voice use iPod_Control/Speakable/Messages/sv01.wav
     {'name': 'dbid',                      'size': 8,  'type': 'number'},
-    {'name': 'TYPE',                      'size': 4,  'type': 'number'},  # 1 master, 2 normal, 3 podcast, 4 audiobook
+
+    # 1: master,  2: normal,  3: podcast,  4: audiobook
+    {'name': 'TYPE',                      'size': 4,  'type': 'number'},
     {'name': 'unknown_1',                 'size': 16, 'type': 'unknown'},
 
     # index_of_all_tracks                 'size': 4

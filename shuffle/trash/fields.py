@@ -1,4 +1,4 @@
-from .utils import ifb, itb
+from shuffle.trash.utils import ifb, itb
 
 
 item_name = []

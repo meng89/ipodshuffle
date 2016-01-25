@@ -1,10 +1,9 @@
-import os
 import copy
+import os
 
-from .shuffle_old import format_dbid
-from . import fields as f
-from . import utils
-from .track import Track
+from shuffle.trash import fields as f, utils
+from shuffle.trash.shuffle_old import format_dbid
+from shuffle.trash.track import Track
 
 
 class Playlist:
@@ -89,8 +88,8 @@ class Playlist:
             else:
                 data += b'\00' * one[f.K_SIZE]
 
-        data = data[:place_to_insert_total_length] +\
-            utils.itb(len(data) + total_length_size, total_length_size) +\
+        data = data[:place_to_insert_total_length] + \
+               utils.itb(len(data) + total_length_size, total_length_size) +\
             data[place_to_insert_total_length:]
 
         return data

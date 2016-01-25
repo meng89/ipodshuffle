@@ -2,11 +2,11 @@
 
 import os
 
-from .shuffle_old import format_dbid
-from . import fields as f
-from . import utils
-
 import mutagen
+
+from shuffle import utils
+from shuffle.trash import fields as f, utils
+from shuffle.trash.shuffle_old import format_dbid
 
 
 class Track:

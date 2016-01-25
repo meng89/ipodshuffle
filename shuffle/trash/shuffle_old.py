@@ -1,15 +1,14 @@
 #!/bin/env python3
 
-import os
-import json
-import shutil
-import random
 import copy
+import json
+import os
+import random
+import shutil
 
-from .track import Track
-from .playlist import Playlist
-from . import fields as f
-from . import utils
+from shuffle.trash import fields as f, utils
+from shuffle.trash.playlist import Playlist
+from shuffle.trash.track import Track
 
 
 def format_dbid(dbid):
@@ -164,7 +163,7 @@ class Shuffle:
             if f.K_DEFAULT in one.key():
                 data += one[f.K_DEFAULT]
             elif one[f.K_NAME] == f.total_length:
-                data += utils.itb(f.hphs_items_size+lenght_of_all_offset_of_playlist, one[f.K_SIZE])
+                data += utils.itb(f.hphs_items_size + lenght_of_all_offset_of_playlist, one[f.K_SIZE])
 
             elif one[f.K_NAME] == f.number_of_all_playlists:
                 data += utils.itb(number_of_master_playlists +

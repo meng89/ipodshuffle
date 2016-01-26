@@ -88,22 +88,9 @@ class Shuffle:
         pass
 
 
-class Sounds(List):
-    def __init__(self, shuffle):
-        super().__init__()
-        for path, metadata in shuffle.sounds_logs.items():
-            self.append(Sound(path, metadata))
-
-
-
-
-class Sound:
-    def __init__(self, path):
-        if pat
-
-
-        self.path = path
-
+class Sounds:
+    def filelist(self):
+        
 
 
 class Tracks(List):

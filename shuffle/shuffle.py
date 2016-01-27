@@ -189,7 +189,12 @@ class Tracks(List):
 
 
 class Track:
-    pass
+    def __init__(self):
+        self.voice_string = None
+        self.voice_lang = None
+        self.sound_file = None
+
+    def set_voice(self, string, lang):
 
 
 class Playlists(List):

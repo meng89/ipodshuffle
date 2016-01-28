@@ -1,19 +1,36 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 
+import string
 
-class A:
-    def __init__(self):
-        self.s = [1, 2]
-
-        class B:
-            def __init__(cls):
-                cls.s = self.s
-        self.b = B()
+b = open('/media/data/temp/iPod_Control/iTunes/iTunesSD', 'rb').read()[0x344:0x34c]
 
 
-a = A()
-b = A()
-a.b.s.append(3)
-print(a.s)
-print(b.s)
+num = int.from_bytes(b, byteorder='little')
+# print(hex(num)[2:].upper())
+
+import random
+
+# dbid_string = ''.join(random.sample('ABCDEF' + string.digits, 16))
+
+# i = int('0x' + dbid_string, 16)
+
+# print(dbid_string)
+# print(hex(i)[2:].upper())
+
+
+def get_dbid():
+    return ''.join(random.sample('ABCDEF' + string.digits, 16))
+
+
+def get_dbid2():
+    dbid_string = ''
+    for x in random.sample(range(0, 255), 8):
+        s = hex(x)[2:]
+        if len(s) == 1:
+            s = '0' + s
+        dbid_string += s.upper()
+    return dbid_string
+
+print(get_dbid())
+print(get_dbid2())

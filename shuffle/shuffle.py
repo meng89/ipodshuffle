@@ -16,6 +16,22 @@ MUSIC = 'music'
 AUDIOBOOK = 'audiobook'
 
 
+def get_dbid1():
+    return ''.join(random.sample('ABCDEF' + string.digits, 16))
+
+
+def get_dbid2():
+    dbid_string = ''
+    for x in random.sample(range(0, 255), 8):
+        s = hex(x)[2:]
+        if len(s) == 1:
+            s = '0' + s
+        dbid_string += s.upper()
+    return dbid_string
+
+get_dbid = get_dbid2
+
+
 def get_metadata(path):
     log = {
         # 'md5': hashlib.md5().update(open(path, 'rb').read()).hexdigest(),
@@ -23,6 +39,20 @@ def get_metadata(path):
         'size': os.path.getsize(path)
     }
     return log
+
+
+def md5(path):
+    source = open(path, 'rb')
+    m = hashlib.md5()
+    while True:
+        data = source.read(10240)
+        if data:
+            m.update(data)
+        else:
+            break
+    source.close()
+    checksum = m.hexdigest()
+    return checksum
 
 # iPod_Control
 #          |-- iTunes
@@ -137,17 +167,7 @@ class Sounds:
         if not audiorec.get_filetype(path):
             raise TypeError('This file type is not supported.')
 
-        if not checksum:
-            source = open(path, 'rb')
-            m = hashlib.md5()
-            while True:
-                data = source.read(10240)
-                if data:
-                    m.update(data)
-                else:
-                    break
-            source.close()
-            checksum = m.hexdigest()
+        checksum = checksum or md5(path)
 
         path_in_ipod = None
         for PATH, metadata in self._logs:
@@ -205,3 +225,36 @@ class Playlists(List):
 class Playlist(List):
     def __init__(self):
         super().__init__()
+
+
+class Voicedb:
+    def __init__(self, logs_path, stored_dir):
+        self._logs_path = logs_path
+        self._stored_dir = stored_dir
+        self._logs = json.loads(open(self._logs_path).read())
+
+    def add(self, path, text, lang, checksum):
+        if not audiorec.get_filetype(path) == 'wav':
+            raise TypeError
+
+        checksum = checksum or md5(path)
+
+        dbid = None
+        for DBID, info in self._logs.items():
+            if info['text'] == text and info['lang'] == lang:
+                if info['checksum'] == checksum:
+                    dbid = DBID
+                    break
+                else:
+                    shutil.copyfile(path, self._stored_dir + '/' + DBID + '.wav')
+
+        if not dbid:
+            while True:
+                dbid = get_dbid()
+
+
+    def getdbid(self, text, lang, checksum):
+        dbid = None
+
+
+

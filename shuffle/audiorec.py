@@ -53,19 +53,19 @@ def get_filetype(path):
     audio = mutagen.File(path)
     if audio:
         if 'audio/mp3' in audio.mime:
-            file_type = 1
+            file_type = 'mp3'
         elif 'audio/mp4' in audio.mime:
             if audio.info.codec == 'mp4a.40.2':
-                file_type = 2
+                file_type = 'acc-lc'
             elif audio.info.codec == 'alac':
-                file_type = 5
+                file_type = 'alac'
 
     else:
         t = sndhdr.what(path)
         if t:
             if t[0] == 'wav':
-                file_type = 4
+                file_type = 'wav'
             elif t[0] == 'aiff':
-                file_type = 6
+                file_type = 'aiff'
 
     return file_type

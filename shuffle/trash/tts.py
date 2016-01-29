@@ -7,7 +7,7 @@ import gtts
 import tempfile
 import pydub
 
-logs_filename = 'voice_info.json'
+logs_filename = 'voice_logs.json'
 
 logs_fullpath = os.path.expanduser("~") + os.sep + '.'
 

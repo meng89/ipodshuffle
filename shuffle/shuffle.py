@@ -41,7 +41,7 @@ def get_metadata(path):
     return log
 
 
-def md5(path):
+def get_checksum(path):
     source = open(path, 'rb')
     m = hashlib.md5()
     while True:
@@ -120,7 +120,7 @@ class Sounds:
         self._logs_path = self._shuffle.base_dir + '/' + self._shuffle.control_folder + '/' + 'sounds_logs.json'
         self._logs = json.loads(open(self._logs_path).read())
 
-    def __logs_del_iffilenotexists(self):
+    def _del_not_exists(self):
         new_logs = {}
         for path, metadata in self._logs.items():
             full_path = self._shuffle.base_dir + os.sep + path
@@ -130,7 +130,7 @@ class Sounds:
 
         self._logs = new_logs
 
-    def __logs_updata_ifsizeormtimechanged(self):
+    def _updata_metadata_changed(self):
         new_logs = {}
         for path, metadata in self._logs.items():
             full_path = self._shuffle.base_dir + os.sep + path
@@ -140,7 +140,7 @@ class Sounds:
             else:
                 new_logs[path] = get_metadata(full_path)
 
-    def __logs_update_fromtracks(self):
+    def _update_from_tracks(self):
         not_log_tracks_filenames = []
         for track in self._shuffle.itunessd.tracks:
             if track.filename[1:] not in self._logs.keys():
@@ -167,7 +167,7 @@ class Sounds:
         if not audiorec.get_filetype(path):
             raise TypeError('This file type is not supported.')
 
-        checksum = checksum or md5(path)
+        checksum = checksum or checksum(path)
 
         path_in_ipod = None
         for PATH, metadata in self._logs:
@@ -191,8 +191,11 @@ class Sounds:
             shutil.copyfile(path, target_path)
 
             # 3. update logs
-            self._logs[path_in_ipod]['checksum'] = checksum
-            self._logs[path_in_ipod].update(get_metadata(path))
+            self._logs[path_in_ipod] = {
+                'checksum': checksum,
+                'mtime': os.path.getmtime(target_path),
+                'size': os.path.getsize(target_path)
+            }
 
         return path_in_ipod
 
@@ -214,7 +217,8 @@ class Track:
         self.voice_lang = None
         self.sound_file = None
 
-    def set_voice(self, string, lang):
+    def setdbid(self, string, lang):
+        pass
 
 
 class Playlists(List):
@@ -233,11 +237,24 @@ class Voicedb:
         self._stored_dir = stored_dir
         self._logs = json.loads(open(self._logs_path).read())
 
+    def _add_exsits(self):
+        pass
+
+    def _del_not_exsits(self):
+        pass
+
+    def _update_changed(self):
+        for DBID, info in self._logs.items():
+            DBID
+
+    def clean(self):
+        pass
+
     def add(self, path, text, lang, checksum):
         if not audiorec.get_filetype(path) == 'wav':
             raise TypeError
 
-        checksum = checksum or md5(path)
+        checksum = checksum or get_checksum(path)
 
         dbid = None
         for DBID, info in self._logs.items():
@@ -251,10 +268,30 @@ class Voicedb:
         if not dbid:
             while True:
                 dbid = get_dbid()
+                if dbid not in self._logs.keys():
+                    break
 
+            voice_in_ipod = self._stored_dir + '/' + dbid + '.wav'
+            shutil.copyfile(path, voice_in_ipod)
 
-    def getdbid(self, text, lang, checksum):
+            self._logs[dbid] = {
+                'text': text,
+                'lang': lang,
+                'checksum': checksum,
+                'mtime': os.path.getmtime(voice_in_ipod),
+                'size': os.path.getsize(voice_in_ipod)
+            }
+        return dbid
+
+    def remove(self, dbid):
+        os.remove(self._stored_dir + '/' + dbid + '.wav')
+        del self._logs[dbid]
+
+    def get(self, text=None, lang=None, checksum=None):
         dbid = None
-
-
+        for DBID, info in self._logs.items():
+            if (info['text'] == text and info['lang'] == lang) or info['checksum'] == checksum:
+                dbid = DBID
+                break
+        return dbid
 

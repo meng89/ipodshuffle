@@ -32,13 +32,11 @@ def get_dbid2():
 get_dbid = get_dbid2
 
 
-def get_metadata(path):
-    log = {
-        # 'md5': hashlib.md5().update(open(path, 'rb').read()).hexdigest(),
+def get_mtime_size(path):
+    return {
         'mtime': os.path.getmtime(path),
         'size': os.path.getsize(path)
     }
-    return log
 
 
 def get_checksum(path):
@@ -138,7 +136,7 @@ class Sounds:
             if os.path.getsize(full_path) == metadata['size'] and os.path.getmtime(full_path) == metadata['mtime']:
                 new_logs[path] = metadata
             else:
-                new_logs[path] = get_metadata(full_path)
+                new_logs[path] = get_mtime_size(full_path)
 
     def _update_from_tracks(self):
         not_log_tracks_filenames = []
@@ -148,7 +146,7 @@ class Sounds:
 
         tracks_logs_notinlogs = {}
         for filename in not_log_tracks_filenames:
-            tracks_logs_notinlogs[filename] = get_metadata(self._shuffle.base_dir + '/' + filename)
+            tracks_logs_notinlogs[filename] = get_mtime_size(self._shuffle.base_dir + '/' + filename)
 
         self._logs.update(tracks_logs_notinlogs)
 
@@ -237,6 +235,9 @@ class Voicedb:
         self._stored_dir = stored_dir
         self._logs = json.loads(open(self._logs_path).read())
 
+    def _path(self, dbid):
+        return self._stored_dir + '/' + dbid + '.wav'
+
     def _add_exsits(self):
         pass
 
@@ -244,8 +245,19 @@ class Voicedb:
         pass
 
     def _update_changed(self):
+
+        changed_dbids = []
         for DBID, info in self._logs.items():
-            DBID
+            voice_path = self._path(DBID)
+            if info['mtime'] != os.path.getmtime(voice_path) or info['size'] != os.path.getsize(voice_path):
+                changed_dbids.append(DBID)
+
+        logs = {}
+        for changed_dbid in changed_dbids:
+            logs[changed_dbid] = get_mtime_size(self._path(changed_dbid))
+            logs[changed_dbid]['checksum'] = get_checksum(self._path(changed_dbid))
+
+        self._logs.update(logs)
 
     def clean(self):
         pass

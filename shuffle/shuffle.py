@@ -11,6 +11,7 @@ from shuffle import audiorec
 
 from . import itunessd
 from .baseclasses import List
+# baseclasses ? see https://github.com/meng89/epubuilder/blob/feature-rw/epubuilder/baseclasses.py
 
 MUSIC = 'music'
 AUDIOBOOK = 'audiobook'
@@ -107,6 +108,17 @@ class Shuffle:
             self.itunessd = itunessd.Itunessd()
 
         self.sounds = Sounds(_shuffle=self)
+
+        self.tracks = Tracks
+        self.playlists = Playlists()
+
+        self.tracks_voicedb = Voicedb(logs_path=self.base_dir + '/' + 'tracks_voice_logs.json',
+                                      stored_dir=self.base_dir + '/' + 'Speakable' + '/' + 'Tracks',
+                                      users=self.tracks)
+
+        self.playlists_voicedb = Voicedb(logs_path=self.base_dir + '/' + 'playlists_voice_logs.json',
+                                         stored_dir=self.base_dir + '/' + 'Speakable' + '/' + 'Playlists',
+                                         users=self.playlists)
 
 
 class Sounds:
@@ -205,59 +217,41 @@ class Sounds:
         open(self._logs_path, 'w').write(json.dumps(self._logs))
 
 
-class Tracks(List):
-    pass
-
-
-class Track:
-    def __init__(self):
-        self.voice_string = None
-        self.voice_lang = None
-        self.sound_file = None
-
-    def setdbid(self, string, lang):
-        pass
-
-
-class Playlists(List):
-    def __init__(self):
-        super().__init__()
-
-
-class Playlist(List):
-    def __init__(self):
-        super().__init__()
-
-
 class Voicedb:
-    def __init__(self, logs_path, stored_dir):
+    def __init__(self, logs_path, stored_dir, users):
         self._logs_path = logs_path
         self._stored_dir = stored_dir
+        self._users = users
         self._logs = json.loads(open(self._logs_path).read())
 
     def _path(self, dbid):
         return self._stored_dir + '/' + dbid + '.wav'
 
-    def _add_exsits(self):
+    def del_wrong_logs(self):
         pass
-
-    def _del_not_exsits(self):
-        pass
-
-    def _update_changed(self):
-
-        changed_dbids = []
+        dbids_to_del = []
         for DBID, info in self._logs.items():
             voice_path = self._path(DBID)
             if info['mtime'] != os.path.getmtime(voice_path) or info['size'] != os.path.getsize(voice_path):
-                changed_dbids.append(DBID)
+                dbids_to_del.append(DBID)
 
-        logs = {}
-        for changed_dbid in changed_dbids:
-            logs[changed_dbid] = get_mtime_size(self._path(changed_dbid))
-            logs[changed_dbid]['checksum'] = get_checksum(self._path(changed_dbid))
+        for dbid in dbids_to_del:
+            del self._logs[dbid]
 
-        self._logs.update(logs)
+    def clean_store_dir(self):
+        files_to_del = []
+        for file in os.listdir(self._stored_dir):
+            name, ext = os.path.splitext(file)
+            if (name not in self._logs.keys() and name not in [user.dbid for user in self._users]) or ext != '.wav':
+                files_to_del.append(file)
+
+        for file in files_to_del:
+            full_path = self._stored_dir + '/' + file
+
+            if os.path.isfile(full_path):
+                os.remove(full_path)
+            else:
+                os.removedirs(full_path)
 
     def clean(self):
         pass
@@ -307,3 +301,33 @@ class Voicedb:
                 break
         return dbid
 
+
+class SystemVoice:
+    pass
+
+
+class MassagesVoice:
+    pass
+
+
+class Tracks(List):
+    pass
+
+
+class Track:
+    def __init__(self, sound):
+        self.sound = sound
+        self.voice_id = None
+
+    def set_voice(self, text, lang, dbid):
+        pass
+
+
+class Playlists(List):
+    def __init__(self):
+        super().__init__()
+
+
+class Playlist(List):
+    def __init__(self):
+        super().__init__()

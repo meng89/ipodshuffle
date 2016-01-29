@@ -32,5 +32,12 @@ def get_dbid2():
         dbid_string += s.upper()
     return dbid_string
 
-print(get_dbid())
-print(get_dbid2())
+
+
+import json
+
+
+a = {('abc', '123'): 'slkfjaslkfj'}
+
+b = json.dumps(a)
+print(b)

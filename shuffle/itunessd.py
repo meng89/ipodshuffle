@@ -9,13 +9,8 @@ class DataError(Exception):
     pass
 
 
-def split_shxx(data, table):
-    d = {}
-    i = 0
-    for item in table:
-        d[item['name']] = data[i:i+item['size']]
-        i += item['size']
-    return d
+class SizeError(Exception):
+    pass
 
 
 def split_by_step(data, step):
@@ -40,13 +35,110 @@ def get_dic_and_subs(bytes_data, header_offset, table, sub_offset_size):
 
     header_bytes = bytes_data[header_offset: header_offset + header_size]
 
-    dic = split_shxx(header_bytes, table)
+    dic = split_to_dic(header_bytes, table)
 
     length = dic['length']
 
     subs_offsets = split_by_step(bytes_data[header_offset + header_size: header_offset + length], sub_offset_size)
 
     return dic, subs_offsets
+
+
+def check_must_be(dic, table):
+    for key, value in dic.items():
+        row = get_cow(key, table)
+        if 'must_be' in row.keys():
+            if value != row['must_be']:
+                return False
+    return True
+
+
+def get_cow(name, table):
+    cow = None
+    for COW in table:
+        if COW['name'] == name:
+            cow = COW
+            break
+    return cow
+
+
+def split_to_dic(data, table):
+    dic = {}
+    i = 0
+    for item in table:
+        dic[item['name']] = data[i:i+item['size']]
+        i += item['size']
+    return dic
+
+
+def join_to_bytes(dic, table):
+    b = b''
+    for cow in table:
+        if len(dic[cow['name']]) != cow['size']:
+            raise SizeError
+
+        b += dic[cow['name']]
+    return b
+
+
+def clean_unknown(dic, table):
+    new_dic = {}
+    for key, value in dic.items():
+        cow = get_cow(key, table)
+        if cow['type'] != 'unknown':
+            new_dic[key] = value
+    return new_dic
+
+
+def replenish_unknown(dic, table):
+    new_dic = {}
+    for cow in table:
+        if cow['type'] == 'unknown':
+            if 'seems_always_be' in cow.keys():
+                new_dic[cow['name']] = cow['seems_always_be']
+            else:
+                new_dic[cow['name']] = b'\x00' * cow['size']
+
+    new_dic.update(dic)
+    return new_dic
+
+
+def decode_dic(dic, table, ):
+    decoded_dic = {}
+    for key, value in dic.items():
+        cow = get_cow(key, table)
+
+        if cow['type'] == 'string':
+            decoded_value = str(value)
+        elif cow['type'] == 'number':
+            decoded_value = int.from_bytes(value, byteorder='little')
+        elif cow['type'] == 'bool':
+            decoded_value = bool(int.from_bytes(value, byteorder='little'))
+        else:
+            continue
+
+        decoded_dic[key] = decoded_value
+
+    return decoded_dic
+
+
+def encode_dic(dic, table):
+    encoded_dic = {}
+    for key, value in dic.items():
+        cow = get_cow(key, table)
+
+        if cow['type'] == 'string':
+            encoded_value = bytes(value)
+        elif cow['type'] == 'number':
+            encoded_value = value.to_bytes(byteorder='little', length=cow['size'])
+        elif cow['type'] == 'bool':
+            encoded_value = int(value).to_bytes(byteorder='little', length=cow['size'])
+        else:
+            continue
+
+        encoded_dic[key] = encoded_value
+
+    return encoded_dic
 
 
 bdhs_table = (
@@ -80,7 +172,7 @@ class Itunessd:
 
             bdhs_header_bytes = itunessd_bytes[0:bdhs_size]
 
-            dic = split_shxx(bdhs_header_bytes, bdhs_table)
+            dic = split_to_dic(bdhs_header_bytes, bdhs_table)
             if dic['header_id'].decode() != 'bdhs':
                 raise DataError
 
@@ -171,7 +263,7 @@ class Track:
         if itunessd_bytes and offset:
             _size = sum([i['size'] for i in rths_table])
             data = itunessd_bytes[offset: offset + _size]
-            d = split_shxx(data, rths_table)
+            d = split_to_dic(data, rths_table)
             if d['header_id'] != b'rths':
                 raise DataError
 

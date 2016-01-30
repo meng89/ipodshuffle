@@ -53,44 +53,6 @@ def get_checksum(path):
     checksum = m.hexdigest()
     return checksum
 
-# iPod_Control
-#          |-- iTunes
-#          |       +-- iTunesSD
-#          |
-#          |-- Speakable
-#          |       |-- Messages
-#          |       |        |-- bv00.wav
-#          |       |        +-- ...
-#          |       |
-#          |       |-- Playlists
-#          |       |        |-- 6FDA0FE117BB0640.wav
-#          |       |        +-- ...
-#          |       |
-#          |       |-- System
-#          |       |        |-- bn00.wav
-#          |       |        +-- ...
-#          |       |
-#          |       +-- Tracks
-#          |                |-- 1B8FE29DAD1ABA62.wav
-#          |                +-- ...
-#          |
-#          |
-#          |-- Sounds
-#          |       |-- ASFGPN
-#          |       +-- ...
-#          |
-#          |-- Music
-#          |       |-- F00
-#          |       |    |-- ACGS.mp3
-#          |       |    +-- ...
-#          |       |
-#          |       +-- ...
-#          |
-#          |-- sounds_logs.json
-#          |-- original_name_logs.json
-#          +-- voices_logs.json
-#
-
 
 class Shuffle:
     def __init__(self, directory):
@@ -217,6 +179,29 @@ class Sounds:
         open(self._logs_path, 'w').write(json.dumps(self._logs))
 
 
+class Tracks(List):
+    pass
+
+
+class Track:
+    def __init__(self, sound):
+        self.sound = sound
+        self.voice_id = None
+
+    def set_voice(self, text, lang, dbid):
+        pass
+
+
+class Playlists(List):
+    def __init__(self):
+        super().__init__()
+
+
+class Playlist(List):
+    def __init__(self):
+        super().__init__()
+
+
 class Voicedb:
     def __init__(self, logs_path, stored_dir, users):
         self._logs_path = logs_path
@@ -310,24 +295,3 @@ class MassagesVoice:
     pass
 
 
-class Tracks(List):
-    pass
-
-
-class Track:
-    def __init__(self, sound):
-        self.sound = sound
-        self.voice_id = None
-
-    def set_voice(self, text, lang, dbid):
-        pass
-
-
-class Playlists(List):
-    def __init__(self):
-        super().__init__()
-
-
-class Playlist(List):
-    def __init__(self):
-        super().__init__()

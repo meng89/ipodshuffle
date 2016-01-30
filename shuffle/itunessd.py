@@ -57,10 +57,12 @@ bdhs_table = (
     {'name': 'number_of_playlists',        'size': 4,  'type': 'number'},
     {'name': 'unknown_2',                  'size': 8,  'type': 'unknown'},
     {'name': 'max_volume',                 'size': 1,  'type': 'number'},
-    {'name': 'enable_voiceover',           'size': 1,  'type': 'number'},
+    {'name': 'enable_voiceover',           'size': 1,  'type': 'bool'},
     {'name': 'unknown_3',                  'size': 2,  'type': 'unknown'},
-    {'name': 'number_of_tracks2',          'size': 4,  'type': 'number'},   # Does not include podcasts or audiobooks
-                                                                            #   in the count.
+
+    # Does not include podcasts or audiobooks in the count.
+    {'name': 'number_of_tracks2',          'size': 4,  'type': 'number'},
+
     {'name': 'sounds_header_offset',       'size': 4,  'type': 'number'},
     {'name': 'playlists_header_offset',    'size': 4,  'type': 'number'},
     {'name': 'unknown_4',                  'size': 20, 'type': 'unknown'}

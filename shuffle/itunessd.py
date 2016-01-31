@@ -1,11 +1,11 @@
 #!/usr/bin/env python3
 
-import os
 
-from .baseclasses import List
+class BytesDataError(Exception):
+    pass
 
 
-class DataError(Exception):
+class DicDataError(Exception):
     pass
 
 
@@ -29,21 +29,6 @@ def get_header_size(table):
     return sum([i['size'] for i in table])
 
 
-def get_dic_and_subs(bytes_data, header_offset, table, sub_offset_size):
-
-    header_size = get_header_size(hths_header_table)
-
-    header_bytes = bytes_data[header_offset: header_offset + header_size]
-
-    dic = split_to_dic(header_bytes, table)
-
-    length = dic['length']
-
-    subs_offsets = split_by_step(bytes_data[header_offset + header_size: header_offset + length], sub_offset_size)
-
-    return dic, subs_offsets
-
-
 def check_must_be(dic, table):
     for key, value in dic.items():
         row = get_cow(key, table)
@@ -62,6 +47,8 @@ def get_cow(name, table):
     return cow
 
 
+########################################################################
+
 def split_to_dic(data, table):
     dic = {}
     i = 0
@@ -79,6 +66,9 @@ def join_to_bytes(dic, table):
 
         b += dic[cow['name']]
     return b
+
+#########################################################################
+#########################################################################
 
 
 def clean_unknown(dic, table):
@@ -102,6 +92,9 @@ def replenish_unknown(dic, table):
     new_dic.update(dic)
     return new_dic
 
+#########################################################################
+#########################################################################
+
 
 def decode_dic(dic, table, ):
     decoded_dic = {}
@@ -115,7 +108,7 @@ def decode_dic(dic, table, ):
         elif cow['type'] == 'bool':
             decoded_value = bool(int.from_bytes(value, byteorder='little'))
         else:
-            continue
+            raise BytesDataError
 
         decoded_dic[key] = decoded_value
 
@@ -140,6 +133,112 @@ def encode_dic(dic, table):
 
     return encoded_dic
 
+#########################################################################
+#########################################################################
+
+
+def bytes_to_dic(data, table):
+    return decode_dic(clean_unknown(split_to_dic(data, table), table), table)
+
+
+def dic_to_bytes(dic, table):
+    return join_to_bytes(replenish_unknown(encode_dic(dic, table), table), table)
+
+#########################################################################
+#########################################################################
+
+
+def itunessd_to_dics(itunessd):
+
+    bdhs_size = get_header_size(bdhs_table)
+    bdhs_header_bytes = itunessd[0:bdhs_size]
+
+    bdhs_dic = decode_dic(clean_unknown(split_to_dic(bdhs_header_bytes, bdhs_table), bdhs_table), bdhs_table)
+
+    if not check_must_be(bdhs_dic, bdhs_table):
+        raise BytesDataError
+
+    # tracks
+    hths_header_dic, rths_offsets = get_dic_sub_numbers(itunessd, bdhs_dic['sounds_header_offset'], hths_header_table)
+    rths_dics = []
+    for rths_offset in rths_offsets:
+        rths_dic = decode_dic(clean_unknown(split_to_dic(itunessd[rths_offset], rths_table), rths_table), rths_table)
+        rths_dics.append(rths_dic)
+
+    # playlists
+    hphs_header_dic, lphs_offsets = get_dic_sub_numbers(itunessd, bdhs_dic['playlists_header_offset'],
+                                                        hphs_header_table)
+    lphs_dics = []
+    for lphs_offset in lphs_offsets:
+        lphs_dic, indexes_of_tracks = get_dic_sub_numbers(itunessd, lphs_offset, lphs_header_table)
+
+        lphs_dics.append([lphs_dic, indexes_of_tracks])
+
+    return bdhs_dic, rths_dics, lphs_dics
+
+
+def dics_to_itunessd(bdhs_dic, rths_dics, lp_dics):
+    itunessd = b''
+    bdhs_bytes = dic_to_bytes(bdhs_dic, bdhs_table)
+    # itunessd += bdhs_header_bytes
+
+    hths_header_dic = {'length': get_header_size(hths_header_table) + 4 * len(rths_dics),
+                       'number_of_tracks': len(rths_dics)}
+
+    hths_header_bytes = dic_to_bytes(hths_header_dic, hths_header_table)
+    # itunessd += hths_header_bytes
+
+    offset = len(bdhs_bytes) + len(hths_header_bytes) + 4 * len(rths_dics)
+
+    hths_all_rths_bytes = get_bytes(rths_dics, offset, rths_table)
+
+    hphs_header_dic = {'length': get_header_size(hphs_header_table) + 4 * len(lp_dics),
+                       'number_of_all_playlists': len(lp_dics),
+                       }
+
+
+
+
+#########################################################################
+#########################################################################
+
+
+def get_dic_sub_numbers(itunessd, offset, table, sub_int_size=None):
+    sub_int_size = sub_int_size or 4
+
+    header_size = get_header_size(table)
+    dic = decode_dic(clean_unknown(split_to_dic(itunessd[offset: offset + header_size], table), table), table)
+
+    offset_of_subs_start = offset + header_size
+    offset_of_subs_end = offset + dic['length']
+
+    subs_offsets_bytes = split_by_step(itunessd[offset_of_subs_start: offset_of_subs_end], sub_int_size)
+
+    subs_offsets = []
+    for one in subs_offsets_bytes:
+        subs_offsets.append(int.from_bytes(one, 'little'))
+
+    return dic, subs_offsets
+
+
+def get_bytes(dics, offset, table):
+
+    offsets_bytes = b''
+    all_bytes = b''
+
+    for dic in dics:
+        offsets_bytes += offset.to_bytes(length=4, byteorder='little')
+
+        offset += get_header_size(table)
+
+        all_bytes += dic_to_bytes(dic, table)
+
+    return offsets_bytes + all_bytes
+
+
+########################################################################
+########################################################################
+
 
 bdhs_table = (
     {'name': 'header_id',                  'size': 4,  'type': 'string',  'must_be': 'bdhs'},
@@ -161,133 +260,49 @@ bdhs_table = (
 )
 
 
-class Itunessd:
-    def __init__(self, itunessd_bytes=None):
-
-        self.tracks = List()
-        self.playlists = List()
-
-        if itunessd_bytes:
-            bdhs_size = get_header_size(bdhs_table)
-
-            bdhs_header_bytes = itunessd_bytes[0:bdhs_size]
-
-            dic = split_to_dic(bdhs_header_bytes, bdhs_table)
-            if dic['header_id'].decode() != 'bdhs':
-                raise DataError
-
-            self.enable_voiceover = bool(int_from_bytes(dic['enable_voiceover']))
-            self.max_volume = int_from_bytes(dic['max_volume'])
-
-            self.tracks = Tracks(itunessd_bytes, dic['sounds_header_offset'])
-            self.playlists = Playlists(itunessd_bytes, dic['playlists_header_offset'], self.tracks)
-
-        else:
-            pass
-
-        self.voiceover_lang = ''
-        self.max_volume = ''
-
-        self.sounds_voices = List()
-        self.playlists_voices = List()
-
-    def write_itunessd(self):
-        pass
-
 hths_header_table = (
-    {'name': 'header_id',        'size': 4, 'type': 'string', 'must_be': 'hths'},
-    {'name': 'length',           'size': 4, 'type': 'number'},
-    {'name': 'number_of_tracks', 'size': 4, 'type': 'number'},
-    {'name': 'unknown_1',        'size': 8, 'type': 'unknown'},
+    {'name': 'header_id',                'size': 4, 'type': 'string', 'must_be': 'hths'},
+    {'name': 'length',                   'size': 4, 'type': 'number'},
+    {'name': 'number_of_tracks',         'size': 4, 'type': 'number'},
+    {'name': 'unknown_1',                'size': 8, 'type': 'unknown'},
 
-    # offset_of_track             4
+    # offset_of_track                    'size': 4
     # offset_of_track
     # ......
 )
 hths_subs_offset_size = 4
 
 
-class Tracks(List):
-    def __init__(self, itunessd_bytes=None, offset=None):
-        super().__init__()
-
-        if itunessd_bytes and offset:
-            dic, tracks_offsets = get_dic_and_subs(itunessd_bytes, offset,
-                                                   hths_header_table, hths_subs_offset_size)
-
-            if dic['header_id'].decode() != 'hths':
-                raise DataError
-
-            for track_offset in tracks_offsets:
-                self.append(Track(itunessd_bytes, int_from_bytes(track_offset)))
-
-    def _get_bytes(self):
-        pass
-
-
 rths_table = (
-    {'name': 'header_id',                     'size': 4,   'type': 'string', 'must_be': 'rths'},
-    {'name': 'length',                        'size': 4,   'type': 'number'},
-    {'name': 'start_at_pos_ms',               'size': 4,   'type': 'number'},  # 从几秒开始播放？
-    {'name': 'stop_at_pos_ms',                'size': 4,   'type': 'number'},  # 从几秒后结束？
-    {'name': 'volume_gain',                   'size': 4,   'type': 'number'},
+    {'name': 'header_id',                      'size': 4,   'type': 'string', 'must_be': 'rths'},
+    {'name': 'length',                         'size': 4,   'type': 'number'},
+    {'name': 'start_at_pos_ms',                'size': 4,   'type': 'number'},  # 从几秒开始播放？
+    {'name': 'stop_at_pos_ms',                 'size': 4,   'type': 'number'},  # 从几秒后结束？
+    {'name': 'volume_gain',                    'size': 4,   'type': 'number'},
 
-    {'name': 'filetype',                      'size': 4,   'type': 'number'},
+    {'name': 'filetype',                       'size': 4,   'type': 'number'},
 
-    {'name': 'filename',                      'size': 256, 'type': 'string'},
+    {'name': 'filename',                       'size': 256, 'type': 'string'},
 
-    {'name': 'bookmark',                      'size': 4,   'type': 'number'},
-    {'name': 'dont_skip_on_shuffle',          'size': 1,   'type': 'bool'},
-    {'name': 'remember_playing_pos',          'size': 1,   'type': 'bool'},
-    {'name': 'part_of_uninterruptable_album', 'size': 1,   'type': 'bool'},
-    {'name': 'unknown_1',                     'size': 1,   'type': 'unknown'},
-    {'name': 'pregap',                        'size': 4,   'type': 'number'},  # 播放之前空闲几秒？
-    {'name': 'postgap',                       'size': 4,   'type': 'number'},  # 播放之后空闲几秒？
-    {'name': 'number_of_sampless',            'size': 4,   'type': 'number'},  # 采样率？
-    {'name': 'unknown_file_related_data1',    'size': 4,   'type': 'unknown'},
-    {'name': 'gapless_data',                  'size': 4,   'type': 'number'},  # 无缝数据？
-    {'name': 'unknown_file_related_data2',    'size': 4,   'type': 'unknown'},
-    {'name': 'album_id',                      'size': 4,   'type': 'number'},
-    {'name': 'track_number',                  'size': 2,   'type': 'number'},
-    {'name': 'disc_number',                   'size': 2,   'type': 'number'},
-    {'name': 'unknown_2',                     'size': 8,   'type': 'unknown'},
-    {'name': 'dbid',                          'size': 8,   'type': 'number'},
-    {'name': 'artist_id',                     'size': 4,   'type': 'number'},
-    {'name': 'unknown_3',                     'size': 32,  'type': 'unknown'},
+    {'name': 'bookmark',                       'size': 4,   'type': 'number'},
+    {'name': 'dont_skip_on_shuffle',           'size': 1,   'type': 'bool'},
+    {'name': 'remember_playing_pos',           'size': 1,   'type': 'bool'},
+    {'name': 'part_of_uninterruptable_album',  'size': 1,   'type': 'bool'},
+    {'name': 'unknown_1',                      'size': 1,   'type': 'unknown'},
+    {'name': 'pregap',                         'size': 4,   'type': 'number'},  # 播放之前空闲几秒？
+    {'name': 'postgap',                        'size': 4,   'type': 'number'},  # 播放之后空闲几秒？
+    {'name': 'number_of_sampless',             'size': 4,   'type': 'number'},  # 采样率？
+    {'name': 'unknown_file_related_data1',     'size': 4,   'type': 'unknown'},
+    {'name': 'gapless_data',                   'size': 4,   'type': 'number'},  # 无缝数据？
+    {'name': 'unknown_file_related_data2',     'size': 4,   'type': 'unknown'},
+    {'name': 'album_id',                       'size': 4,   'type': 'number'},
+    {'name': 'track_number',                   'size': 2,   'type': 'number'},
+    {'name': 'disc_number',                    'size': 2,   'type': 'number'},
+    {'name': 'unknown_2',                      'size': 8,   'type': 'unknown'},
+    {'name': 'dbid',                           'size': 8,   'type': 'number'},
+    {'name': 'artist_id',                      'size': 4,   'type': 'number'},
+    {'name': 'unknown_3',                      'size': 32,  'type': 'unknown'},
 )
-
-
-class Track:
-    def __init__(self, itunessd_bytes=None, offset=None):
-
-        if itunessd_bytes and offset:
-            _size = sum([i['size'] for i in rths_table])
-            data = itunessd_bytes[offset: offset + _size]
-            d = split_to_dic(data, rths_table)
-            if d['header_id'] != b'rths':
-                raise DataError
-
-            self.start_at_pos_ms = int_from_bytes(d['start_at_pos_ms'])
-            self.stop_at_pos_ms = int_from_bytes(d['stop_at_pos_ms'])
-            self.volume_gain = int_from_bytes(d['volume_gain'])
-
-            self.filename = d['filename'].decode()
-
-            self.book_mark = int_from_bytes(d['bookmark'])
-            self.dont_skip_on_shuffle = bool(int_from_bytes(d['dont_skip_on_shuffle']))
-            self.remember_playing_pos = bool(int_from_bytes(d['remember_playing_pos']))
-            self.part_of_uninterruptable_album = bool(int_from_bytes(d['part_of_uninterruptable_album']))
-
-            self.album_id = int_from_bytes(d['album_id'])
-            self.track_number = int_from_bytes(d['track_number'])
-            self.dbid = dbid_from_bytes(d['dbid'])
-            self.artist_id = int_from_bytes(d['artist_id'])
-
-        else:
-            pass
-
-    def _get_bytes(self):
-        pass
 
 
 hphs_header_table = (
@@ -299,14 +314,17 @@ hphs_header_table = (
 
     # \xFF*4 if no_of_normal_pls is 0 else 1
     {'name': 'playlist_flag_normal',           'size': 4,  'type': 'number'},
+
     {'name': 'number_of_normal_playlists',     'size': 4,  'type': 'number'},
 
     # \xFF*4 if no_of_audiobook_pls is 0, else no_of_master_pl + no_of_normal_pls + no_of_podcast_pls
     {'name': 'playlist_flag_audiobook',        'size': 4,  'type': 'number'},
+
     {'name': 'number_of_audiobook_playlists',  'size': 4,  'type': 'number'},
 
     # \xFF*4 if no_of_podcast_pls is 0, else no_of_master_pl + no_of_normal_pls
     {'name': 'playlist_flag_podcast',          'size': 4,  'type': 'number'},
+
     {'name': 'number_of_podcast_playlists',    'size': 4,  'type': 'number'},
 
     {'name': 'unknown_1',                      'size': 4,  'type': 'unknown', 'seems_always_be': b'\xFF'*4},
@@ -321,31 +339,13 @@ hphs_header_table = (
 hphs_subs_offset_size = 4
 
 
-class Playlists(List):
-    def __init__(self, itunessd_bytes=None, offset=None, _sounds=None):
-        super().__init__()
-
-        if itunessd_bytes and offset:
-
-            dic, playlists_offsets = get_dic_and_subs(itunessd_bytes, offset,
-                                                      hphs_header_table, hphs_subs_offset_size)
-
-            if dic['header_id'].decode() != 'hphs':
-                raise DataError
-
-            for playlist_offset in playlists_offsets:
-                self.append(Playlist(itunessd_bytes, int_from_bytes(playlist_offset), _sounds=_sounds))
-
-    def _get_bytes(self):
-        pass
-
 lphs_header_table = (
     {'name': 'header_id',                 'size': 4,  'type': 'string', 'must_be': 'lphs'},
     {'name': 'length',                    'size': 4,  'type': 'number'},
     {'name': 'number_of_all_sound',       'size': 4,  'type': 'number'},
     {'name': 'number_of_normal_sound',    'size': 4,  'type': 'number'},
 
-    # when type is 1, dbid is all 0, voice use iPod_Control/Speakable/Messages/sv01.wav
+    # when type is 1, dbid is all 0, voice use iPod_Control/Speakable/Messages/sv01-sv0a.wav
     {'name': 'dbid',                      'size': 8,  'type': 'number'},
 
     # 1: master,  2: normal,  3: podcast,  4: audiobook
@@ -357,18 +357,3 @@ lphs_header_table = (
     # ....
 )
 lphs_subs_index_size = 4
-
-
-class Playlist(List):
-    def __init__(self, itunessd_bytes=None, offset=None, _sounds=None):
-        super().__init__()
-        if itunessd_bytes and offset:
-            dic, sounds_indexes = get_dic_and_subs(itunessd_bytes, offset, lphs_header_table, lphs_subs_index_size)
-            if dic['header_id'].decode() != 'lphs':
-                raise DataError
-
-            for index in sounds_indexes:
-                self.append(_sounds(index))
-
-    def _get_bytes(self):
-        pass

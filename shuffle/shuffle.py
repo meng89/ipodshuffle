@@ -11,7 +11,7 @@ from shuffle import audiorec
 
 from . import itunessd
 from .baseclasses import List
-# baseclasses ? see https://github.com/meng89/epubuilder/blob/feature-rw/epubuilder/baseclasses.py
+# baseclasses ?  see https://github.com/meng89/epubuilder/blob/feature-rw/epubuilder/baseclasses.py
 
 MUSIC = 'music'
 AUDIOBOOK = 'audiobook'
@@ -61,18 +61,24 @@ class Shuffle:
 
         self._itunessd_path = self.base_dir + '/' + self._ctrl_folder + '/iTunes/iTunesSD'
 
+        bdhs_dic = None
+        rths_dics = None
+        lphs_dic_indexes_s = None
+
         if os.path.exists(self._itunessd_path):
             if os.path.isfile(self._itunessd_path):
-                self.itunessd = itunessd.Itunessd(open(self._itunessd_path, 'rb').read())
+                bytes_data = open(self._itunessd_path, 'rb').read()
+                bdhs_dic, rths_dics, lphs_dic_indexes_s = itunessd.itunessd_to_dics(bytes_data)
             else:
                 raise Exception
-        else:
-            self.itunessd = itunessd.Itunessd()
+
+        self._dic = bdhs_dic
+
+        self.tracks = Tracks(self, rths_dics)
+
+        self.playlists = Playlists(self, lphs_dic_indexes_s)
 
         self.sounds = Sounds(_shuffle=self)
-
-        self.tracks = Tracks
-        self.playlists = Playlists()
 
         self.tracks_voicedb = Voicedb(logs_path=self.base_dir + '/' + 'tracks_voice_logs.json',
                                       stored_dir=self.base_dir + '/' + 'Speakable' + '/' + 'Tracks',
@@ -81,6 +87,80 @@ class Shuffle:
         self.playlists_voicedb = Voicedb(logs_path=self.base_dir + '/' + 'playlists_voice_logs.json',
                                          stored_dir=self.base_dir + '/' + 'Speakable' + '/' + 'Playlists',
                                          users=self.playlists)
+
+    def write(self):
+        bdhs_dic = self._dic.copy()
+        rths_dics = self.tracks.get_dics()
+        lphs_dic_indexes_s = self.playlists.get_dic_indexes_s()
+
+        bytes_data = itunessd.dics_to_itunessd(bdhs_dic, rths_dics, lphs_dic_indexes_s)
+
+        open(self._itunessd_path, 'wb').write(bytes_data)
+
+
+class Tracks(List):
+    def __init__(self, shuffle, rths_dics=None):
+        super().__init__()
+
+        self._shuffle = shuffle
+        rths_dics = rths_dics or []
+        for rths_dic in rths_dics:
+            self.append(Track(self, rths_dic))
+
+    def get_dics(self):
+        dics = []
+        for track in self:
+            dics.append(track.get_dic())
+        return dics
+
+
+class Track:
+    def __init__(self, shuffle, rths_dic=None, sound=None):
+        self._shuffle = shuffle
+
+        if rths_dic:
+            self._dic = rths_dic
+        elif sound:
+            self.sound = sound
+        else:
+            raise Exception
+
+    def get_dic(self):
+        return self._dic
+
+    def set_voice(self, text, lang, dbid):
+        pass
+
+
+class Playlists(List):
+    def __init__(self, shuffle, lphs_dics_indexes=None):
+        super().__init__()
+        self._shuffle = shuffle
+
+        lphs_dics_indexes = lphs_dics_indexes or []
+        for lphs_dic, indexes in lphs_dics_indexes:
+            self.append(Playlist(shuffle, lphs_dic, indexes))
+
+    def get_dic_indexes_s(self):
+        dic_indexes_s = []
+        for playlist in self:
+            dic_indexes_s.append(playlist.get_dic_indexes())
+
+        return dic_indexes_s
+
+
+class Playlist(List):
+    def __init__(self, shuffle, lphs_dic=None, indexes_of_tracks=None):
+        super().__init__()
+        self._shuffle = shuffle
+        self._dic = lphs_dic
+
+        indexes_of_tracks = indexes_of_tracks or []
+        for index in indexes_of_tracks:
+            self.append(shuffle.tracks[index])
+
+    def get_dic_indexes(self):
+        return self._dic, [self._shuffle.tracks.index(track) for track in self]
 
 
 class Sounds:
@@ -179,29 +259,6 @@ class Sounds:
         open(self._logs_path, 'w').write(json.dumps(self._logs))
 
 
-class Tracks(List):
-    pass
-
-
-class Track:
-    def __init__(self, sound):
-        self.sound = sound
-        self.voice_id = None
-
-    def set_voice(self, text, lang, dbid):
-        pass
-
-
-class Playlists(List):
-    def __init__(self):
-        super().__init__()
-
-
-class Playlist(List):
-    def __init__(self):
-        super().__init__()
-
-
 class Voicedb:
     def __init__(self, logs_path, stored_dir, users):
         self._logs_path = logs_path
@@ -293,5 +350,3 @@ class SystemVoice:
 
 class MassagesVoice:
     pass
-
-

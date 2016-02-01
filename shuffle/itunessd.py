@@ -106,7 +106,7 @@ playlist_header_table = (
 
     {'name': 'number_of_all_track',       'size': 4,  'type': 'number'},
 
-    # ???
+    # Number of non podcast or audiobook songs.
     {'name': 'number_of_normal_track',    'size': 4,  'type': 'number'},
 
     # when type is 1, dbid is all 0, voice use iPod_Control/Speakable/Messages/sv01-sv0a.wav
@@ -147,7 +147,7 @@ def dbid_from_bytes(data):
     return '{:X}'.format(int_from_bytes(data))
 
 
-def get_header_size(table):
+def get_table_size(table):
     return sum([i['size'] for i in table])
 
 
@@ -273,7 +273,7 @@ def dic_to_bytes(dic, table):
 def get_dic_sub_numbers(itunessd, offset, table, sub_int_size=None):
     sub_int_size = sub_int_size or 4
 
-    header_size = get_header_size(table)
+    header_size = get_table_size(table)
     dic = decode_dic(clean_unknown(split_to_dic(itunessd[offset: offset + header_size], table), table), table)
 
     offset_of_subs_start = offset + header_size
@@ -288,19 +288,20 @@ def get_dic_sub_numbers(itunessd, offset, table, sub_int_size=None):
     return dic, subs_offsets
 
 
-def get_bytes(dics, offset, table):
+def get_bytes(dics, length_before_offsets, table):
 
     offsets_bytes = b''
-    all_bytes = b''
+    dics_bytes = b''
 
+    offset = length_before_offsets + 4 * len(dics)
     for dic in dics:
         offsets_bytes += offset.to_bytes(length=4, byteorder='little')
 
-        offset += get_header_size(table)
+        offset += get_table_size(table)
 
-        all_bytes += dic_to_bytes(dic, table)
+        dics_bytes += dic_to_bytes(dic, table)
 
-    return offsets_bytes + all_bytes
+    return offsets_bytes + dics_bytes
 
 
 ########################################################################
@@ -309,7 +310,7 @@ def get_bytes(dics, offset, table):
 
 def itunessd_to_dics(itunessd):
 
-    bdhs_size = get_header_size(db_table)
+    bdhs_size = get_table_size(db_table)
     bdhs_header_bytes = itunessd[0:bdhs_size]
 
     bdhs_dic = decode_dic(clean_unknown(split_to_dic(bdhs_header_bytes, db_table), db_table), db_table)
@@ -336,35 +337,50 @@ def itunessd_to_dics(itunessd):
     return bdhs_dic, rths_dics, lphs_dics
 
 
-def dics_to_itunessd(db_dic, track_dics, playlist_dic_indexes_s):
+def dics_to_itunessd(db_dic, track_dics, playlists_dics_and_indexes):
     itunessd = b''
 
     db_bytes = dic_to_bytes(db_dic, db_table)
 
     # itunessd += bdhs_header_bytes
 
-    tracks_header_dic = {'length': get_header_size(tracks_header_table) + 4 * len(track_dics),
+    tracks_header_dic = {'length': get_table_size(tracks_header_table) + 4 * len(track_dics),
                          'number_of_tracks': len(track_dics)}
 
     tracks_header_bytes = dic_to_bytes(tracks_header_dic, tracks_header_table)
-    # itunessd += hths_header_bytes
 
-    offset = len(get_header_size(db_table)) + len(get_header_size(tracks_header_table)) + 4 * len(track_dics)
+    _length_before_tracks_offsets = get_table_size(db_table) + get_table_size(tracks_header_table)
+    all_tracks_offsets_bytes_tracks_bytes = get_bytes(track_dics, _length_before_tracks_offsets, track_table)
 
-    hths_all_rths_bytes = get_bytes(track_dics, offset, track_table)
-
-    playlists_header_dic = {'length': get_header_size(playlists_header_table) + 4 * len(playlist_dic_indexes_s),
-                            'number_of_all_playlists': len(playlist_dic_indexes_s),
+    playlists_header_dic = {'length': get_table_size(playlists_header_table) + 4 * len(playlists_dics_and_indexes),
+                            'number_of_all_playlists': len(playlists_dics_and_indexes),
                             }
+    playlists_header_bytes = dic_to_bytes(playlists_header_dic, playlists_header_table)
 
-    playlist_bytes_s = []
-    for playlist_header_dic, indexes in playlist_dic_indexes_s:
+    _length_before_playlists_offsets = _length_before_tracks_offsets \
+        + len(all_tracks_offsets_bytes_tracks_bytes) + get_table_size(playlists_header_table)
+
+    all_playlists_bytes_list = []
+    for playlist_header_dic, indexes in playlists_dics_and_indexes:
         dic = playlist_header_dic.copy()
         dic['number_of_all_track'] = len(indexes)
         dic['number_of_normal_track'] = len(indexes)
+        _one_playlist_header_bytes = dic_to_bytes(dic, playlist_header_table)
 
-        lphs_bytes = dic_to_bytes(dic, playlist_header_table)
-        lphs_bytes += b''.join([i.to_bytes(length=4, byteorder='little') for i in indexes])
-        playlist_bytes_s.append(lphs_bytes)
+        _one_playlist_subs_indexes_bytes = b''.join([i.to_bytes(length=4, byteorder='little') for i in indexes])
 
+        all_playlists_bytes_list.append(_one_playlist_header_bytes + _one_playlist_subs_indexes_bytes)
+
+    playlists_offsets_bytes = b''
+    all_playlists_bytes = b''
+    offset = _length_before_playlists_offsets + 4 * len(playlists_dics_and_indexes)
+    for playlist_bytes in all_playlists_bytes_list:
+        playlists_offsets_bytes += offset.to_bytes(4, 'little')
+        offset += len(playlist_bytes)
+        all_playlists_bytes += playlist_bytes
+
+    itunessd = db_bytes + tracks_header_bytes + all_tracks_offsets_bytes_tracks_bytes +\
+        playlists_header_bytes + playlists_offsets_bytes + all_playlists_bytes
+
+    return itunessd
 

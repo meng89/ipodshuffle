@@ -175,7 +175,7 @@ def split_to_dic(data, table):
     dic = {}
     i = 0
     for item in table:
-        dic[item['name']] = data[i:i+item['size']]
+        dic[item['name']] = data[i: i+item['size']]
         i += item['size']
     return dic
 
@@ -224,7 +224,9 @@ def decode_dic(dic, table, ):
         cow = get_cow(key, table)
 
         if cow['type'] == 'string':
-            decoded_value = str(value)
+            # decoded_value = value.decode()
+            import re
+            decoded_value = re.sub('\x00+$', '', value.decode())
         elif cow['type'] == 'number':
             decoded_value = int.from_bytes(value, byteorder='little')
         elif cow['type'] == 'bool':
@@ -243,7 +245,7 @@ def encode_dic(dic, table):
         cow = get_cow(key, table)
 
         if cow['type'] == 'string':
-            encoded_value = bytes(value)
+            encoded_value = value.encode()
         elif cow['type'] == 'number':
             encoded_value = value.to_bytes(byteorder='little', length=cow['size'])
         elif cow['type'] == 'bool':
@@ -310,39 +312,44 @@ def get_bytes(dics, length_before_offsets, table):
 
 def itunessd_to_dics(itunessd):
 
-    bdhs_size = get_table_size(db_table)
-    bdhs_header_bytes = itunessd[0:bdhs_size]
+    db_size = get_table_size(db_table)
+    db_header_bytes = itunessd[0:db_size]
 
-    bdhs_dic = decode_dic(clean_unknown(split_to_dic(bdhs_header_bytes, db_table), db_table), db_table)
+    db_dic = bytes_to_dic(db_header_bytes, db_table)
 
-    if not check_must_be(bdhs_dic, db_table):
+    if not check_must_be(db_dic, db_table):
         raise BytesDataError
 
     # tracks
-    hths_header_dic, rths_offsets = get_dic_sub_numbers(itunessd, bdhs_dic['sounds_header_offset'], tracks_header_table)
-    rths_dics = []
-    for rths_offset in rths_offsets:
-        rths_dic = decode_dic(clean_unknown(split_to_dic(itunessd[rths_offset], track_table), track_table), track_table)
-        rths_dics.append(rths_dic)
+    tracks_header_dic, tracks_offsets = get_dic_sub_numbers(itunessd, db_dic['tracks_header_offset'],
+                                                            tracks_header_table)
+    tracks_dics = []
+    for track_offset in tracks_offsets:
+        track_dic = decode_dic(clean_unknown(split_to_dic(itunessd[track_offset:], track_table), track_table), track_table)
+
+        if not check_must_be(track_dic, track_table):
+            raise BytesDataError
+
+        tracks_dics.append(track_dic)
 
     # playlists
-    hphs_header_dic, lphs_offsets = get_dic_sub_numbers(itunessd, bdhs_dic['playlists_header_offset'],
-                                                        playlists_header_table)
-    lphs_dics = []
-    for lphs_offset in lphs_offsets:
-        lphs_dic, indexes_of_tracks = get_dic_sub_numbers(itunessd, lphs_offset, playlist_header_table)
+    playlists_header_dic, playlists_offsets = get_dic_sub_numbers(itunessd, db_dic['playlists_header_offset'],
+                                                                  playlists_header_table)
+    playlists_dics_and_indexes = []
+    for playlist_offset in playlists_offsets:
+        playlist_header_dic, indexes_of_tracks = get_dic_sub_numbers(itunessd, playlist_offset, playlist_header_table)
 
-        lphs_dics.append([lphs_dic, indexes_of_tracks])
+        if not check_must_be(playlist_header_dic, playlist_header_table):
+            raise BytesDataError
 
-    return bdhs_dic, rths_dics, lphs_dics
+        playlists_dics_and_indexes.append((playlist_header_dic, indexes_of_tracks))
+
+    return db_dic, tracks_dics, playlists_dics_and_indexes
 
 
 def dics_to_itunessd(db_dic, track_dics, playlists_dics_and_indexes):
-    itunessd = b''
 
     db_bytes = dic_to_bytes(db_dic, db_table)
-
-    # itunessd += bdhs_header_bytes
 
     tracks_header_dic = {'length': get_table_size(tracks_header_table) + 4 * len(track_dics),
                          'number_of_tracks': len(track_dics)}
@@ -383,4 +390,3 @@ def dics_to_itunessd(db_dic, track_dics, playlists_dics_and_indexes):
         playlists_header_bytes + playlists_offsets_bytes + all_playlists_bytes
 
     return itunessd
-

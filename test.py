@@ -1,8 +1,12 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 
+import shuffle.itunessd
 
-b = open('/media/data/temp/iPod_Control/iTunes/iTunesSD', 'rb').read()[4976:4980]
-n = int.from_bytes(b, 'little')
+itunessd = open('iTunesSD', 'rb').read()
+
+a, b, c = shuffle.itunessd.itunessd_to_dics(itunessd)
+
+print(a)
 print(b)
-print(n)
+print(c)

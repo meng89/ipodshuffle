@@ -46,10 +46,10 @@ track_table = (
 
     {'name': 'filename',                       'size': 256, 'type': 'string'},
 
-    {'name': 'bookmark',                       'size': 4,   'type': 'number'},
+    {'name': 'bookmark',                       'size': 4,   'type': 'number'},  # 书签？ 暂停位置？
     {'name': 'dont_skip_on_shuffle',           'size': 1,   'type': 'bool'},
-    {'name': 'remember_playing_pos',           'size': 1,   'type': 'bool'},
-    {'name': 'part_of_uninterruptable_album',  'size': 1,   'type': 'bool'},
+    {'name': 'remember_playing_pos',           'size': 1,   'type': 'bool'},    #
+    {'name': 'part_of_uninterruptable_album',  'size': 1,   'type': 'bool'},    # ?
     {'name': 'unknown_1',                      'size': 1,   'type': 'unknown'},
     {'name': 'pregap',                         'size': 4,   'type': 'number'},  # 播放之前空闲几秒？
     {'name': 'postgap',                        'size': 4,   'type': 'number'},  # 播放之后空闲几秒？
@@ -57,12 +57,12 @@ track_table = (
     {'name': 'unknown_file_related_data1',     'size': 4,   'type': 'unknown'},
     {'name': 'gapless_data',                   'size': 4,   'type': 'number'},  # 无缝数据？
     {'name': 'unknown_file_related_data2',     'size': 4,   'type': 'unknown'},
-    {'name': 'album_id',                       'size': 4,   'type': 'number'},
-    {'name': 'track_number',                   'size': 2,   'type': 'number'},
-    {'name': 'disc_number',                    'size': 2,   'type': 'number'},
+    {'name': 'album_id',                       'size': 4,   'type': 'number'},  # ?
+    {'name': 'track_number',                   'size': 2,   'type': 'number'},  # ?
+    {'name': 'disc_number',                    'size': 2,   'type': 'number'},  # ?
     {'name': 'unknown_2',                      'size': 8,   'type': 'unknown'},
     {'name': 'dbid',                           'size': 8,   'type': 'number'},
-    {'name': 'artist_id',                      'size': 4,   'type': 'number'},
+    {'name': 'artist_id',                      'size': 4,   'type': 'number'},  # ?
     {'name': 'unknown_3',                      'size': 32,  'type': 'unknown'},
 )
 

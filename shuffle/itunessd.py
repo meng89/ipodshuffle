@@ -5,7 +5,7 @@ import re
 db_table = (
     {'name': 'header_id',                  'size': 4,  'type': 'unknown', 'value': b'bdhs'},
     {'name': 'unknown_1',                  'size': 4,  'type': 'unknown', 'value': b'\x01\x00\x01\x02'},
-    {'name': 'legth',                      'size': 4,  'type': 'number'},
+    {'name': 'length',                     'size': 4,  'type': 'number'},
     {'name': 'number_of_tracks',           'size': 4,  'type': 'number'},
     {'name': 'number_of_playlists',        'size': 4,  'type': 'number'},
     {'name': 'unknown_2',                  'size': 8,  'type': 'unknown'},
@@ -34,26 +34,33 @@ tracks_header_table = (
 )
 tracks_subs_offset_size = 4
 
-
+# pos = position
 track_table = (
     {'name': 'header_id',                      'size': 4,   'type': 'unknown', 'value': b'rths'},
     {'name': 'length',                         'size': 4,   'type': 'number'},
-    {'name': 'start_at_pos_ms',                'size': 4,   'type': 'number'},  # 从几秒开始播放？
-    {'name': 'stop_at_pos_ms',                 'size': 4,   'type': 'number'},  # 从几秒后结束？
-    {'name': 'volume_gain',                    'size': 4,   'type': 'number'},
+    {'name': 'start_at_pos_ms',                'size': 4,   'type': 'number'},  # 起点 (毫秒)
+    {'name': 'stop_at_pos_ms',                 'size': 4,   'type': 'number'},  # 终点 设为 0 等于播完, 大于音频长度无效果
+
+    # have effect, but how?
+    {'name': 'volume_gain',                    'size': 4,   'type': 'number'},  # 音量增益
 
     {'name': 'filetype',                       'size': 4,   'type': 'number'},
 
     {'name': 'filename',                       'size': 256, 'type': 'string'},
 
-    {'name': 'bookmark',                       'size': 4,   'type': 'number'},  # 书签？ 暂停位置？
+    {'name': 'bookmark',                       'size': 4,   'type': 'number'},  # ?
     {'name': 'dont_skip_on_shuffle',           'size': 1,   'type': 'bool'},
-    {'name': 'remember_playing_pos',           'size': 1,   'type': 'bool'},    #
+    {'name': 'remember_playing_pos',           'size': 1,   'type': 'bool'},    # but saved where?
     {'name': 'part_of_uninterruptable_album',  'size': 1,   'type': 'bool'},    # ?
     {'name': 'unknown_1',                      'size': 1,   'type': 'unknown'},
-    {'name': 'pregap',                         'size': 4,   'type': 'number'},  # 播放之前空闲几秒？
-    {'name': 'postgap',                        'size': 4,   'type': 'number'},  # 播放之后空闲几秒？
+
+    # ??
+    {'name': 'pregap',                         'size': 4,   'type': 'number'},  # 不是播放之前空闲几秒
+    {'name': 'postgap',                        'size': 4,   'type': 'number'},  # 不是播放之后空闲几秒
+
+    # ?? tested ok when filetype 2 is set 0，
     {'name': 'number_of_sampless',             'size': 4,   'type': 'number'},  # 采样率？
+
     {'name': 'unknown_file_related_data1',     'size': 4,   'type': 'unknown'},
     {'name': 'gapless_data',                   'size': 4,   'type': 'number'},  # 无缝数据？
     {'name': 'unknown_file_related_data2',     'size': 4,   'type': 'unknown'},
@@ -214,58 +221,65 @@ def replenish_unknown_type(dic, table):
 
 
 def decode(dic, table):
-    decoded_dic = {}
+    new_dic = {}
     for key, value in dic.items():
         cow = get_cow(key, table)
 
         if cow['type'] == 'string':
             unpad_value = re.sub('\x00+$', '', value.decode())
-            decoded_value = unpad_value
+            new_value = unpad_value
         elif cow['type'] == 'number':
-            decoded_value = int.from_bytes(value, 'little')
+            new_value = int.from_bytes(value, 'little')
         elif cow['type'] == 'bool':
-            decoded_value = bool(int.from_bytes(value, 'little'))
+            new_value = bool(int.from_bytes(value, 'little'))
         else:
-            raise TypeError
-        decoded_dic[key] = decoded_value
+            # raise TypeError
+            new_value = value
 
-    return decoded_dic
+        new_dic[key] = new_value
+
+    return new_dic
 
 
 def encode(dic, table):
-    encoded_dic = {}
+    new_dic = {}
     for key, value in dic.items():
         cow = get_cow(key, table)
         if cow['type'] == 'string':
             padded_value = value + '\x00' * (cow['size'] - len(value))
-            encoded_value = padded_value.encode()
+            new_value = padded_value.encode()
         elif cow['type'] == 'number':
-            encoded_value = value.to_bytes(cow['size'], 'little')
+            new_value = value.to_bytes(cow['size'], 'little')
         elif cow['type'] == 'bool':
-            encoded_value = int(value).to_bytes(cow['size'], 'little')
+            new_value = int(value).to_bytes(cow['size'], 'little')
         else:
-            raise TypeError
-        encoded_dic[key] = encoded_value
+            # raise TypeError
+            new_value = value
+            
+        new_dic[key] = new_value
 
-    return encoded_dic
+    return new_dic
 
 ###############################################################################
 ###############################################################################
 
 
-def chunk_to_dic(chunk, table, do_check_must_be=True):
+def chunk_to_dic(chunk, table, do_check_header_id=True, do_clean_unknown_type=True):
     _dic = split(chunk, table)
 
-    if do_check_must_be and not check_header_id(_dic, table):
+    if do_check_header_id and not check_header_id(_dic, table):
         raise ChunkError
 
-    return decode(clean_unknown_type(_dic, table), table)
+    if do_clean_unknown_type:
+        _dic = clean_unknown_type(_dic, table)
+
+    return decode(_dic, table)
 
 
-def dic_to_chunk(dic, table, do_check_must_be=True):
+def dic_to_chunk(dic, table, do_check_header_id=True):
     _dic = replenish_unknown_type(encode(dic, table), table)
 
-    if do_check_must_be and not check_header_id(_dic, table):
+    if do_check_header_id and not check_header_id(_dic, table):
         raise ChunkError
 
     return join(_dic, table)
@@ -296,7 +310,7 @@ def get_dic_sub_numbers(itunessd, offset, table, sub_int_size=None):
 
 
 def itunessd_to_dics(itunessd):
-
+    # db
     db_size = get_table_size(db_table)
     db_header_chunk = itunessd[0:db_size]
 
@@ -336,32 +350,48 @@ def get_offsets_chunk(length_before_offsets, chunks):
 # ----------------------------------------------------------------------------------------------------------------------
 
 
-def dics_to_itunessd(db_dic, track_dics, playlists_dics_and_indexes):
-    itunessd = b''
+def dics_to_itunessd(db_dic, tracks_dics, playlists_dics_and_indexes):
+    ############################################
+    # db
+    ######
 
-    db_chunk = dic_to_chunk(db_dic, db_table)
+    db_dic['length'] = get_table_size(db_table)
+    db_dic['number_of_tracks'] = len(tracks_dics)
+    db_dic['number_of_playlists'] = len(playlists_dics_and_indexes)
 
-    itunessd += db_chunk
+    db_part_size = get_table_size(db_table)
+
     ####################################################################################################################
     # tracks
-    ####################################################################################################################
+    ##########
+
+    # Chunk of header
     tracks_header_dic = {
-        'length': get_table_size(tracks_header_table) + 4 * len(track_dics),
-        'number_of_tracks': len(track_dics)
+        'length': get_table_size(tracks_header_table) + 4 * len(tracks_dics),
+        'number_of_tracks': len(tracks_dics)
     }
     tracks_header_chunk = dic_to_chunk(tracks_header_dic, tracks_header_table)
 
-    _length_before_tracks_offsets = len(db_chunk) + len(tracks_header_chunk)
-    _tracks_chunks = [dic_to_chunk(dic, track_table) for dic in track_dics]
+    # Chunk of all tracks
 
-    tracks_offsets_chunck = get_offsets_chunk(_length_before_tracks_offsets, _tracks_chunks)
+    [track_dic.update({'length': get_table_size(track_table)}) for track_dic in tracks_dics]
+
+    _tracks_chunks = [dic_to_chunk(dic, track_table) for dic in tracks_dics]
+
     all_tracks_chunck = b''.join(_tracks_chunks)
 
-    itunessd += tracks_header_chunk + tracks_offsets_chunck + all_tracks_chunck
+    # Chunk of offsets
+    _length_before_tracks_offsets = db_part_size + len(tracks_header_chunk)
+    tracks_offsets_chunck = get_offsets_chunk(_length_before_tracks_offsets, _tracks_chunks)
+
+    # Put chunks together
+    track_part_chunk = tracks_header_chunk + tracks_offsets_chunck + all_tracks_chunck
+
     ####################################################################################################################
     # playlists
-    ####################################################################################################################
-    #   header
+    #############
+
+    # Chunk of header
     _playlists_dics = [playlist_indexes[0] for playlist_indexes in playlists_dics_and_indexes]
     _types = [playlist_dic['type'] for playlist_dic in _playlists_dics]
     playlists_header_dic = {
@@ -377,11 +407,11 @@ def dics_to_itunessd(db_dic, track_dics, playlists_dics_and_indexes):
     }
     playlists_header_chunk = dic_to_chunk(playlists_header_dic, playlists_header_table)
 
-    # offsets
-    _length_before_playlists_offsets = len(itunessd) + len(playlists_header_chunk)
+    # Chunk of all playlists
     _playlists_chunks = []
     for playlist_header_dic, indexes in playlists_dics_and_indexes:
         dic = playlist_header_dic.copy()
+        dic['length'] = get_table_size(playlist_header_table) + 4 * len(indexes)
         dic['number_of_all_track'] = len(indexes)
         dic['number_of_normal_track'] = len(indexes) if dic['type'] in (1, 2) else 0
 
@@ -391,9 +421,21 @@ def dics_to_itunessd(db_dic, track_dics, playlists_dics_and_indexes):
 
         _playlists_chunks.append(playlist_chunk)
 
-    playlists_offsets_chunk = get_offsets_chunk(_length_before_playlists_offsets, _playlists_chunks)
     all_playlists_chunk = b''.join(_playlists_chunks)
 
-    itunessd += playlists_header_chunk + playlists_offsets_chunk + all_playlists_chunk
+    # Chunk of offsets
+    _length_before_playlists_offsets = db_part_size + len(track_part_chunk) + len(playlists_header_chunk)
+    playlists_offsets_chunk = get_offsets_chunk(_length_before_playlists_offsets, _playlists_chunks)
+
+    # Put chunks together
+    playlists_part_chunk = playlists_header_chunk + playlists_offsets_chunk + all_playlists_chunk
+
+    ########################################################################
+    db_dic['tracks_header_offset'] = db_part_size
+    db_dic['playlists_header_offset'] = db_part_size + len(track_part_chunk)
+    db_part_chunk = dic_to_chunk(db_dic, db_table)
+    ########################################################################
+
+    itunessd = db_part_chunk + track_part_chunk + playlists_part_chunk
 
     return itunessd

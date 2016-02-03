@@ -277,7 +277,7 @@ def dic_to_chunk(dic, table, do_check_must_be=True):
 
     return join(_dic, table)
 
-###############################################################################
+########################################################################################################################
 ###############################################################################
 
 
@@ -332,42 +332,40 @@ def itunessd_to_dics(itunessd):
 ########################################################################################################################
 
 
-def get_bytes(dics, length_before_offsets, table):
-
+def get_offsets_chunk(length_before_offsets, chunks):
     offsets_bytes = b''
-    dics_bytes = b''
-
-    offset = length_before_offsets + 4 * len(dics)
-    for dic in dics:
+    offset = length_before_offsets + 4 * len(chunks)
+    for dic in chunks:
         offsets_bytes += offset.to_bytes(length=4, byteorder='little')
-
-        offset += get_table_size(table)
-
-        dics_bytes += dic_to_chunk(dic, table)
-
-    return offsets_bytes + dics_bytes
+        offset += len(dic)
+    return offsets_bytes
 
 # ----------------------------------------------------------------------------------------------------------------------
 
 
 def dics_to_itunessd(db_dic, track_dics, playlists_dics_and_indexes):
+    itunessd = b''
 
-    db_bytes = dic_to_chunk(db_dic, db_table)
+    db_chunk = dic_to_chunk(db_dic, db_table)
 
+    itunessd += db_chunk
     ####################################################################################################################
     # tracks
     ####################################################################################################################
     tracks_header_dic = {'length': get_table_size(tracks_header_table) + 4 * len(track_dics),
                          'number_of_tracks': len(track_dics)}
+    tracks_header_chunk = dic_to_chunk(tracks_header_dic, tracks_header_table)
 
-    tracks_header_bytes = dic_to_chunk(tracks_header_dic, tracks_header_table)
+    _length_before_tracks_offsets = len(db_chunk) + len(tracks_header_chunk)
+    _tracks_chunks = [dic_to_chunk(dic, track_table) for dic in track_dics]
+    tracks_offsets_chunck = get_offsets_chunk(_length_before_tracks_offsets, _tracks_chunks)
+    all_tracks_chunck = b''.join(_tracks_chunks)
 
-    _length_before_tracks_offsets = get_table_size(db_table) + get_table_size(tracks_header_table)
-    all_tracks_offsets_bytes_tracks_bytes = get_bytes(track_dics, _length_before_tracks_offsets, track_table)
-
+    itunessd += tracks_header_chunk + tracks_offsets_chunck + all_tracks_chunck
     ####################################################################################################################
     # playlists
     ####################################################################################################################
+    #   header
     _playlists_dics = [playlist_indexes[0] for playlist_indexes in playlists_dics_and_indexes]
     _types = [playlist_dic['type'] for playlist_dic in _playlists_dics]
     playlists_header_dic = {
@@ -382,31 +380,26 @@ def dics_to_itunessd(db_dic, track_dics, playlists_dics_and_indexes):
         'number_of_podcast_playlists': _types.count(PODCAST)
     }
 
-    playlists_header_bytes = dic_to_chunk(playlists_header_dic, playlists_header_table)
+    playlists_header_chunk = dic_to_chunk(playlists_header_dic, playlists_header_table)
 
-    _length_before_playlists_offsets = _length_before_tracks_offsets \
-        + len(all_tracks_offsets_bytes_tracks_bytes) + get_table_size(playlists_header_table)
+    # offsets
+    _length_before_playlists_offsets = len(itunessd) + len(playlists_header_chunk)
 
-    all_playlists_bytes_list = []
+    _playlists_chunks = []
     for playlist_header_dic, indexes in playlists_dics_and_indexes:
         dic = playlist_header_dic.copy()
         dic['number_of_all_track'] = len(indexes)
         dic['number_of_normal_track'] = len(indexes) if dic['type'] in (1, 2) else 0
-        _one_playlist_header_bytes = dic_to_chunk(dic, playlist_header_table)
 
-        _one_playlist_subs_indexes_bytes = b''.join([i.to_bytes(length=4, byteorder='little') for i in indexes])
+        _playlist_header_chunk = dic_to_chunk(dic, playlist_header_table)
+        _indexes_chunk = b''.join([i.to_bytes(length=4, byteorder='little') for i in indexes])
+        playlist_chunk = _playlist_header_chunk + _indexes_chunk
 
-        all_playlists_bytes_list.append(_one_playlist_header_bytes + _one_playlist_subs_indexes_bytes)
+        _playlists_chunks.append(playlist_chunk)
 
-    playlists_offsets_bytes = b''
-    all_playlists_bytes = b''
-    offset = _length_before_playlists_offsets + 4 * len(playlists_dics_and_indexes)
-    for playlist_bytes in all_playlists_bytes_list:
-        playlists_offsets_bytes += offset.to_bytes(4, 'little')
-        offset += len(playlist_bytes)
-        all_playlists_bytes += playlist_bytes
+    playlists_offsets_chunk = get_offsets_chunk(_length_before_playlists_offsets, _playlists_chunks)
+    all_playlists_chunk = b''.join(_playlists_chunks)
 
-    itunessd = db_bytes + tracks_header_bytes + all_tracks_offsets_bytes_tracks_bytes +\
-        playlists_header_bytes + playlists_offsets_bytes + all_playlists_bytes
+    itunessd += playlists_header_chunk + playlists_offsets_chunk + all_playlists_chunk
 
     return itunessd

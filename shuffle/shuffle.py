@@ -17,6 +17,14 @@ MUSIC = 'music'
 AUDIOBOOK = 'audiobook'
 
 
+def int_from_bytes(data):
+    return int.from_bytes(data, byteorder='little')
+
+
+def dbid_from_bytes(data):
+    return '{:X}'.format(int_from_bytes(data))
+
+
 def get_dbid1():
     return ''.join(random.sample('ABCDEF' + string.digits, 16))
 

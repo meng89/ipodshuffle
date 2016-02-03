@@ -299,25 +299,7 @@ def get_dic_sub_numbers(itunessd, offset, table, sub_int_size=None):
 
     return dic, subs_offsets
 
-
-def get_bytes(dics, length_before_offsets, table):
-
-    offsets_bytes = b''
-    dics_bytes = b''
-
-    offset = length_before_offsets + 4 * len(dics)
-    for dic in dics:
-        offsets_bytes += offset.to_bytes(length=4, byteorder='little')
-
-        offset += get_table_size(table)
-
-        dics_bytes += dic_to_chunk(dic, table)
-
-    return offsets_bytes + dics_bytes
-
-
-###############################################################################
-###############################################################################
+# -------------------------------------------------------------------------------------------------------
 
 
 def itunessd_to_dics(itunessd):
@@ -348,6 +330,24 @@ def itunessd_to_dics(itunessd):
     return db_dic, tracks_dics, playlists_dics_and_indexes
 
 ########################################################################################################################
+
+
+def get_bytes(dics, length_before_offsets, table):
+
+    offsets_bytes = b''
+    dics_bytes = b''
+
+    offset = length_before_offsets + 4 * len(dics)
+    for dic in dics:
+        offsets_bytes += offset.to_bytes(length=4, byteorder='little')
+
+        offset += get_table_size(table)
+
+        dics_bytes += dic_to_chunk(dic, table)
+
+    return offsets_bytes + dics_bytes
+
+# ----------------------------------------------------------------------------------------------------------------------
 
 
 def dics_to_itunessd(db_dic, track_dics, playlists_dics_and_indexes):

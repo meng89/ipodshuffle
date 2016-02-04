@@ -9,7 +9,8 @@ import shutil
 from shuffle import audiorec
 
 
-from . import itunessd
+from . import itunessd, itunesstats
+
 from .baseclasses import List
 # baseclasses ?  see https://github.com/meng89/epubuilder/blob/feature-rw/epubuilder/baseclasses.py
 
@@ -64,27 +65,41 @@ def get_checksum(path):
 
 class Shuffle:
     def __init__(self, directory):
+        self.__init_done = False
+
         self.base_dir = os.path.realpath(os.path.normpath(directory))
         self._ctrl_folder = 'iPod_Control'
 
         self._itunessd_path = self.base_dir + '/' + self._ctrl_folder + '/iTunes/iTunesSD'
+        self._itunesstats_path = self.base_dir + '/' + self._ctrl_folder + '/iTunes/iTunesStats'
 
-        bdhs_dic = None
-        rths_dics = None
-        lphs_dic_indexes_s = None
+        header_dic = None
+        tracks_dics = None
+        playlists_dics_and_indexes = None
 
-        if os.path.exists(self._itunessd_path):
-            if os.path.isfile(self._itunessd_path):
-                bytes_data = open(self._itunessd_path, 'rb').read()
-                bdhs_dic, rths_dics, lphs_dic_indexes_s = itunessd.itunessd_to_dics(bytes_data)
-            else:
-                raise Exception
+        tracks_play_count_dics = None
 
-        self._dic = bdhs_dic
+        def read(path, fun):
+            if os.path.exists(path):
+                if os.path.isfile(path):
+                    chunk = open(path, 'rb').read()
+                    return fun(chunk)
+                else:
+                    raise Exception
 
-        self.tracks = Tracks(self, rths_dics)
+        header_dic, tracks_dics, playlists_dics_and_indexes = read(self._itunessd_path, itunessd.itunessd_to_dics)
+        tracks_play_count_dics = read(self._itunesstats_path, itunesstats.itunesstats_to_dics)
 
-        self.playlists = Playlists(self, lphs_dic_indexes_s)
+        if len(tracks_dics) != len(playlists_dics_and_indexes):
+            raise Exception
+
+        tracks_with_play_count_dics_zip = zip(tracks_dics, playlists_dics_and_indexes)
+
+        self._dic = header_dic
+
+        self.tracks = Tracks(self, tracks_with_play_count_dics_zip)
+
+        self.playlists = Playlists(self, playlists_dics_and_indexes)
 
         self.sounds = Sounds(_shuffle=self)
 
@@ -95,25 +110,32 @@ class Shuffle:
         self.playlists_voicedb = Voicedb(logs_path=self.base_dir + '/' + 'playlists_voice_logs.json',
                                          stored_dir=self.base_dir + '/' + 'Speakable' + '/' + 'Playlists',
                                          users=self.playlists)
+        self.__init_done = True
+
+    def __setitem__(self, key, value):
+        if self.__init_done and key not in ('max_volume', 'enable_voiceover'):
+            raise AttributeError
+        self.__dict__[key] = value
 
     def write(self):
-        bdhs_dic = self._dic.copy()
-        rths_dics = self.tracks.get_dics()
-        lphs_dic_indexes_s = self.playlists.get_dic_indexes_s()
+        db_dic = self._dic.copy()
+        tracks_dics = self.tracks.get_dics()
+        playlists_dics_and_indexes = self.playlists.get_dics_and_indexes()
 
-        bytes_data = itunessd.dics_to_itunessd(bdhs_dic, rths_dics, lphs_dic_indexes_s)
+        bytes_data = itunessd.dics_to_itunessd(db_dic, tracks_dics, playlists_dics_and_indexes)
 
         open(self._itunessd_path, 'wb').write(bytes_data)
 
 
 class Tracks(List):
-    def __init__(self, shuffle, rths_dics=None):
+    def __init__(self, shuffle, tracks_with_play_count_dics_zip=None):
         super().__init__()
 
         self._shuffle = shuffle
-        rths_dics = rths_dics or []
-        for rths_dic in rths_dics:
-            self.append(Track(self, rths_dic))
+        tracks_with_play_count_dics_zip = tracks_with_play_count_dics_zip or []
+
+        for dic, play_count_dic in tracks_with_play_count_dics_zip:
+            self.append(Track(self, dic=dic, play_count_dic=play_count_dic))
 
     def get_dics(self):
         dics = []
@@ -123,11 +145,11 @@ class Tracks(List):
 
 
 class Track:
-    def __init__(self, shuffle, rths_dic=None, sound=None):
+    def __init__(self, shuffle, sound=None, dic=None, play_count_dic=None):
         self._shuffle = shuffle
 
-        if rths_dic:
-            self._dic = rths_dic
+        if dic:
+            self._dic = dic
         elif sound:
             self.sound = sound
         else:
@@ -136,7 +158,7 @@ class Track:
     def get_dic(self):
         return self._dic
 
-    def set_voice(self, text, lang, dbid):
+    def set_voice(self, dbid=None):
         pass
 
 
@@ -149,7 +171,7 @@ class Playlists(List):
         for lphs_dic, indexes in lphs_dics_indexes:
             self.append(Playlist(shuffle, lphs_dic, indexes))
 
-    def get_dic_indexes_s(self):
+    def get_dics_and_indexes(self):
         dic_indexes_s = []
         for playlist in self:
             dic_indexes_s.append(playlist.get_dic_indexes())

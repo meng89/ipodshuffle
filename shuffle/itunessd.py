@@ -1,16 +1,14 @@
-#!/usr/bin/env python3
-
 import re
 
-db_table = (
+header_table = (
     {'name': 'header_id',                  'size': 4,  'type': 'unknown', 'value': b'bdhs'},
     {'name': 'unknown_1',                  'size': 4,  'type': 'unknown', 'value': b'\x01\x00\x01\x02'},
     {'name': 'length',                     'size': 4,  'type': 'number'},
     {'name': 'number_of_tracks',           'size': 4,  'type': 'number'},
     {'name': 'number_of_playlists',        'size': 4,  'type': 'number'},
     {'name': 'unknown_2',                  'size': 8,  'type': 'unknown'},
-    {'name': 'max_volume',                 'size': 1,  'type': 'number'},
-    {'name': 'enable_voiceover',           'size': 1,  'type': 'bool'},
+    {'name': 'max_volume',                 'size': 1,  'type': 'number',  'is_custom': True},
+    {'name': 'enable_voiceover',           'size': 1,  'type': 'bool',    'is_custom': True},
     {'name': 'unknown_3',                  'size': 2,  'type': 'unknown'},
 
     # Does not include podcasts or audiobooks in the count.
@@ -20,7 +18,6 @@ db_table = (
     {'name': 'playlists_header_offset',    'size': 4,  'type': 'number'},
     {'name': 'unknown_4',                  'size': 20, 'type': 'unknown'}
 )
-
 
 tracks_header_table = (
     {'name': 'header_id',                'size': 4, 'type': 'unknown', 'value': b'hths'},
@@ -38,38 +35,44 @@ tracks_subs_offset_size = 4
 track_table = (
     {'name': 'header_id',                      'size': 4,   'type': 'unknown', 'value': b'rths'},
     {'name': 'length',                         'size': 4,   'type': 'number'},
-    {'name': 'start_at_pos_ms',                'size': 4,   'type': 'number'},  # 起点 (毫秒)
-    {'name': 'stop_at_pos_ms',                 'size': 4,   'type': 'number'},  # 终点 设为 0 等于播完, 大于音频长度无效果
 
-    # have effect, but how?
-    {'name': 'volume_gain',                    'size': 4,   'type': 'number'},  # 音量增益
+    # 起点 (毫秒)
+    {'name': 'start_at_pos_ms',                'size': 4,   'type': 'number', 'is_custom': True},
+    # 0: playing util end
+    {'name': 'stop_at_pos_ms',                 'size': 4,   'type': 'number', 'is_custom': True},
 
-    {'name': 'filetype',                       'size': 4,   'type': 'number'},
+    # have effect. what is the value meaning?
+    {'name': 'volume_gain',                    'size': 4,   'type': 'number', 'is_custom': True},  # 音量增益
 
-    {'name': 'filename',                       'size': 256, 'type': 'string'},
+    {'name': 'type',                           'size': 4,   'type': 'number', 'is_custom': True},
 
-    {'name': 'bookmark',                       'size': 4,   'type': 'number'},  # ?
-    {'name': 'dont_skip_on_shuffle',           'size': 1,   'type': 'bool'},
-    {'name': 'remember_playing_pos',           'size': 1,   'type': 'bool'},    # but saved where?
-    {'name': 'part_of_uninterruptable_album',  'size': 1,   'type': 'bool'},    # ?
+    {'name': 'filename',                       'size': 256, 'type': 'string', 'is_custom': True},
+
+    # seems not work on 4gen, I don't know if work on 3gen
+    {'name': 'bookmark',                       'size': 4,   'type': 'unknown'},
+
+    {'name': 'dont_skip_on_shuffle',           'size': 1,   'type': 'bool',   'is_custom': True},
+    # save where?
+    {'name': 'remember_playing_pos',           'size': 1,   'type': 'bool',   'is_custom': True},
+    {'name': 'part_of_uninterruptable_album',  'size': 1,   'type': 'bool',   'is_custom': True},
     {'name': 'unknown_1',                      'size': 1,   'type': 'unknown'},
 
-    # ??
-    {'name': 'pregap',                         'size': 4,   'type': 'number'},  # 不是播放之前空闲几秒
-    {'name': 'postgap',                        'size': 4,   'type': 'number'},  # 不是播放之后空闲几秒
+    # ?? seems not work
+    {'name': 'pregap',                         'size': 4,   'type': 'number', 'is_custom': True},  # 不是播放之前空闲几秒
+    {'name': 'postgap',                        'size': 4,   'type': 'number', 'is_custom': True},  # 不是播放之后空闲几秒
 
     # ?? tested ok when filetype 2 is set 0，
-    {'name': 'number_of_sampless',             'size': 4,   'type': 'number'},  # 采样率？
+    {'name': 'number_of_sampless',             'size': 4,   'type': 'number', 'is_custom': True},  # 采样率？
 
     {'name': 'unknown_file_related_data1',     'size': 4,   'type': 'unknown'},
-    {'name': 'gapless_data',                   'size': 4,   'type': 'number'},  # 无缝数据？
+    {'name': 'gapless_data',                   'size': 4,   'type': 'number', 'is_custom': True},  # 无缝数据？
     {'name': 'unknown_file_related_data2',     'size': 4,   'type': 'unknown'},
-    {'name': 'album_id',                       'size': 4,   'type': 'number'},  # ?
-    {'name': 'track_number',                   'size': 2,   'type': 'number'},  # ?
-    {'name': 'disc_number',                    'size': 2,   'type': 'number'},  # ?
+    {'name': 'album_id',                       'size': 4,   'type': 'number', 'is_custom': True},  # ?
+    {'name': 'track_number',                   'size': 2,   'type': 'number', 'is_custom': True},  # ?
+    {'name': 'disc_number',                    'size': 2,   'type': 'number', 'is_custom': True},  # ?
     {'name': 'unknown_2',                      'size': 8,   'type': 'unknown'},
-    {'name': 'dbid',                           'size': 8,   'type': 'number'},
-    {'name': 'artist_id',                      'size': 4,   'type': 'number'},  # ?
+    {'name': 'dbid',                           'size': 8,   'type': 'number', 'is_custom': True},
+    {'name': 'artist_id',                      'size': 4,   'type': 'number', 'is_custom': True},  # ?
     {'name': 'unknown_3',                      'size': 32,  'type': 'unknown'},
 )
 
@@ -118,10 +121,10 @@ playlist_header_table = (
     {'name': 'number_of_normal_track',    'size': 4,  'type': 'number'},
 
     # When type is 1, dbid is 0, voice use iPod_Control/Speakable/Messages/sv01-sv0a.wav
-    {'name': 'dbid',                      'size': 8,  'type': 'number'},
+    {'name': 'dbid',                      'size': 8,  'type': 'number', 'is_custom': True},
 
     # 1: master,  2: normal,  3: podcast,  4: audiobook
-    {'name': 'type',                      'size': 4,  'type': 'number'},
+    {'name': 'type',                      'size': 4,  'type': 'number', 'is_custom': True},
     {'name': 'unknown_1',                 'size': 16, 'type': 'unknown'},
 
     # index_of_all_tracks                 'size': 4
@@ -225,6 +228,9 @@ def decode(dic, table):
     for key, value in dic.items():
         cow = get_cow(key, table)
 
+        if cow is None:
+            continue
+
         if cow['type'] == 'string':
             unpad_value = re.sub('\x00+$', '', value.decode())
             new_value = unpad_value
@@ -245,6 +251,10 @@ def encode(dic, table):
     new_dic = {}
     for key, value in dic.items():
         cow = get_cow(key, table)
+
+        if cow is None:
+            continue
+
         if cow['type'] == 'string':
             padded_value = value + '\x00' * (cow['size'] - len(value))
             new_value = padded_value.encode()
@@ -267,7 +277,7 @@ def encode(dic, table):
 def chunk_to_dic(chunk, table, do_check_header_id=True, do_clean_unknown_type=True):
     _dic = split(chunk, table)
 
-    if do_check_header_id and not check_header_id(_dic, table):
+    if do_check_header_id and 'header_id' in get_all_fields(table) and not check_header_id(_dic, table):
         raise ChunkError
 
     if do_clean_unknown_type:
@@ -279,10 +289,41 @@ def chunk_to_dic(chunk, table, do_check_header_id=True, do_clean_unknown_type=Tr
 def dic_to_chunk(dic, table, do_check_header_id=True):
     _dic = replenish_unknown_type(encode(dic, table), table)
 
-    if do_check_header_id and not check_header_id(_dic, table):
+    if do_check_header_id and 'header_id' in get_all_fields(table) and not check_header_id(_dic, table):
         raise ChunkError
 
     return join(_dic, table)
+
+###########################################################################
+####################################
+
+
+def get_custom_fields(table):
+    fields = []
+    for cow in table:
+        if 'is_custom' in cow.keys() and cow['is_custom'] is True:
+            fields.append(cow['name'])
+    return fields
+
+
+def get_all_fields(table):
+    return [cow['name'] for cow in table]
+
+
+def get_dic_by_fields(dic, fields):
+    new_dic = {}
+    for key, value in dic.items():
+        if key in fields:
+            new_dic[key] = value
+    return new_dic
+
+
+def get_custom_fields_dic(dic, table):
+    return get_dic_by_fields(dic, get_custom_fields(table))
+
+
+def get_legal_fields_dic(dic, table):
+    return get_dic_by_fields(dic, get_all_fields(table))
 
 ########################################################################################################################
 ###############################################################################
@@ -310,31 +351,31 @@ def get_dic_sub_numbers(itunessd, offset, table, sub_int_size=None):
 
 
 def itunessd_to_dics(itunessd):
-    # db
-    db_size = get_table_size(db_table)
-    db_header_chunk = itunessd[0:db_size]
+    # header
+    header_size = get_table_size(header_table)
+    header_chunk = itunessd[0:header_size]
 
-    db_dic = chunk_to_dic(db_header_chunk, db_table)
+    header_dic = chunk_to_dic(header_chunk, header_table)
 
     # tracks
-    tracks_header_dic, tracks_offsets = get_dic_sub_numbers(itunessd, db_dic['tracks_header_offset'],
+    tracks_header_dic, tracks_offsets = get_dic_sub_numbers(itunessd, header_dic['tracks_header_offset'],
                                                             tracks_header_table)
     tracks_dics = []
     for track_offset in tracks_offsets:
-        track_dic = chunk_to_dic(itunessd[track_offset:], track_table)
-
+        _track_dic = chunk_to_dic(itunessd[track_offset:], track_table)
+        track_dic = get_custom_fields_dic(_track_dic, track_table)
         tracks_dics.append(track_dic)
 
     # playlists
-    playlists_header_dic, playlists_offsets = get_dic_sub_numbers(itunessd, db_dic['playlists_header_offset'],
+    playlists_header_dic, playlists_offsets = get_dic_sub_numbers(itunessd, header_dic['playlists_header_offset'],
                                                                   playlists_header_table)
     playlists_dics_and_indexes = []
     for playlist_offset in playlists_offsets:
-        playlist_header_dic, indexes_of_tracks = get_dic_sub_numbers(itunessd, playlist_offset, playlist_header_table)
-
+        _playlist_header_dic, indexes_of_tracks = get_dic_sub_numbers(itunessd, playlist_offset, playlist_header_table)
+        playlist_header_dic = get_custom_fields_dic(_playlist_header_dic, playlist_header_table)
         playlists_dics_and_indexes.append((playlist_header_dic, indexes_of_tracks))
 
-    return db_dic, tracks_dics, playlists_dics_and_indexes
+    return get_custom_fields_dic(header_dic, header_table), tracks_dics, playlists_dics_and_indexes
 
 ########################################################################################################################
 
@@ -350,16 +391,17 @@ def get_offsets_chunk(length_before_offsets, chunks):
 # ----------------------------------------------------------------------------------------------------------------------
 
 
-def dics_to_itunessd(db_dic, tracks_dics, playlists_dics_and_indexes):
+def dics_to_itunessd(header_dic, tracks_dics, playlists_dics_and_indexes):
     ############################################
-    # db
+    # header
     ######
 
-    db_dic['length'] = get_table_size(db_table)
-    db_dic['number_of_tracks'] = len(tracks_dics)
-    db_dic['number_of_playlists'] = len(playlists_dics_and_indexes)
+    header_dic['length'] = get_table_size(header_table)
+    header_dic['number_of_tracks'] = len(tracks_dics)
+    header_dic['number_of_playlists'] = len(playlists_dics_and_indexes)
+    header_dic['number_of_tracks2'] = 0
 
-    db_part_size = get_table_size(db_table)
+    header_part_size = get_table_size(header_table)
 
     ####################################################################################################################
     # tracks
@@ -381,7 +423,7 @@ def dics_to_itunessd(db_dic, tracks_dics, playlists_dics_and_indexes):
     all_tracks_chunck = b''.join(_tracks_chunks)
 
     # Chunk of offsets
-    _length_before_tracks_offsets = db_part_size + len(tracks_header_chunk)
+    _length_before_tracks_offsets = header_part_size + len(tracks_header_chunk)
     tracks_offsets_chunck = get_offsets_chunk(_length_before_tracks_offsets, _tracks_chunks)
 
     # Put chunks together
@@ -415,6 +457,9 @@ def dics_to_itunessd(db_dic, tracks_dics, playlists_dics_and_indexes):
         dic['number_of_all_track'] = len(indexes)
         dic['number_of_normal_track'] = len(indexes) if dic['type'] in (1, 2) else 0
 
+        if dic['type'] == MASTER:
+            header_dic['number_of_tracks2'] = len(indexes)
+
         _playlist_header_chunk = dic_to_chunk(dic, playlist_header_table)
         _indexes_chunk = b''.join([i.to_bytes(4, 'little') for i in indexes])
         playlist_chunk = _playlist_header_chunk + _indexes_chunk
@@ -424,18 +469,18 @@ def dics_to_itunessd(db_dic, tracks_dics, playlists_dics_and_indexes):
     all_playlists_chunk = b''.join(_playlists_chunks)
 
     # Chunk of offsets
-    _length_before_playlists_offsets = db_part_size + len(track_part_chunk) + len(playlists_header_chunk)
+    _length_before_playlists_offsets = header_part_size + len(track_part_chunk) + len(playlists_header_chunk)
     playlists_offsets_chunk = get_offsets_chunk(_length_before_playlists_offsets, _playlists_chunks)
 
     # Put chunks together
     playlists_part_chunk = playlists_header_chunk + playlists_offsets_chunk + all_playlists_chunk
 
     ########################################################################
-    db_dic['tracks_header_offset'] = db_part_size
-    db_dic['playlists_header_offset'] = db_part_size + len(track_part_chunk)
-    db_part_chunk = dic_to_chunk(db_dic, db_table)
+    header_dic['tracks_header_offset'] = header_part_size
+    header_dic['playlists_header_offset'] = header_part_size + len(track_part_chunk)
+    header_part_chunk = dic_to_chunk(header_dic, header_table)
     ########################################################################
 
-    itunessd = db_part_chunk + track_part_chunk + playlists_part_chunk
+    itunessd = header_part_chunk + track_part_chunk + playlists_part_chunk
 
     return itunessd

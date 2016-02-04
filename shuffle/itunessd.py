@@ -255,7 +255,7 @@ def encode(dic, table):
         else:
             # raise TypeError
             new_value = value
-            
+
         new_dic[key] = new_value
 
     return new_dic

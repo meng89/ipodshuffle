@@ -3,7 +3,11 @@
 
 import pprint
 
-import shuffle.itunessd, shuffle.itunesstats
+import shuffle.itunessd
+import shuffle.itunesstats
+
+import shuffle
+
 
 itunessd_path = 'iTunesSD'
 itunesstats_path = 'iTunesStats'
@@ -66,8 +70,24 @@ def print1():
     a, b, c = shuffle.itunessd.itunessd_to_dics(open(itunessd_path, 'rb').read())
     print(pp.pprint(b))
 
+
+ipod_path = '/media/data/temp/ipod'
+
+
+def info(base):
+    ipod = shuffle.Shuffle(base)
+    print('info:')
+    print('max_volume: ', ipod.max_volume)
+    print('enable_voiceover: ', ipod.enable_voiceover)
+    print('-------------------------------------------------')
+    print('number of tracks: ', len(ipod.tracks))
+    print('number of playlists: ', len(ipod.playlists))
+
+
 if __name__ == '__main__':
     # tmp2()
     # print1()
-    test_itunessd()
-    test_itunesstats()
+    # test_itunessd()
+    # test_itunesstats()
+
+    info(ipod_path)

@@ -6,7 +6,7 @@ import string
 import shutil
 
 
-from shuffle import audiorec
+from . import audio
 
 
 from . import itunessd, itunesstats
@@ -65,19 +65,11 @@ def get_checksum(path):
 
 class Shuffle:
     def __init__(self, directory):
-        self.__init_done = False
-
-        self.base_dir = os.path.realpath(os.path.normpath(directory))
+        self.base = os.path.realpath(os.path.normpath(directory))
         self._ctrl_folder = 'iPod_Control'
 
-        self._itunessd_path = self.base_dir + '/' + self._ctrl_folder + '/iTunes/iTunesSD'
-        self._itunesstats_path = self.base_dir + '/' + self._ctrl_folder + '/iTunes/iTunesStats'
-
-        header_dic = None
-        tracks_dics = None
-        playlists_dics_and_indexes = None
-
-        tracks_play_count_dics = None
+        self._itunessd_path = self.base + '/' + self._ctrl_folder + '/iTunes/iTunesSD'
+        self._itunesstats_path = self.base + '/' + self._ctrl_folder + '/iTunes/iTunesStats'
 
         def read(path, fun):
             if os.path.exists(path):
@@ -90,32 +82,66 @@ class Shuffle:
         header_dic, tracks_dics, playlists_dics_and_indexes = read(self._itunessd_path, itunessd.itunessd_to_dics)
         tracks_play_count_dics = read(self._itunesstats_path, itunesstats.itunesstats_to_dics)
 
-        if len(tracks_dics) != len(playlists_dics_and_indexes):
+        if len(tracks_dics) != len(tracks_play_count_dics):
             raise Exception
 
-        tracks_with_play_count_dics_zip = zip(tracks_dics, playlists_dics_and_indexes)
+        tracks_with_play_count_dics_zip = zip(tracks_dics, tracks_play_count_dics)
 
         self._dic = header_dic
 
-        self.tracks = Tracks(self, tracks_with_play_count_dics_zip)
+        self.__dict__['tracks'] = Tracks(self, tracks_with_play_count_dics_zip)
 
-        self.playlists = Playlists(self, playlists_dics_and_indexes)
+        self.__dict__['playlists'] = Playlists(self, playlists_dics_and_indexes)
 
-        self.sounds = Sounds(_shuffle=self)
+        self.__dict__['sounds'] = Sounds(self,
+                                         logs_path=os.path.join(self.base, self._ctrl_folder, 'sounds_logs.json'),
+                                         stored_dir=os.path.join(self.base, self._ctrl_folder, 'sounds'))
 
-        self.tracks_voicedb = Voicedb(logs_path=self.base_dir + '/' + 'tracks_voice_logs.json',
-                                      stored_dir=self.base_dir + '/' + 'Speakable' + '/' + 'Tracks',
-                                      users=self.tracks)
+        self.__dict__['tracks_voicedb'] = \
+            Voicedb(logs_path=os.path.join(self.base, self._ctrl_folder, 'tracks_voice_logs.json'),
+                    stored_dir=os.path.join(self.base, self._ctrl_folder, 'Speakable', 'Tracks'),
+                    users=self.tracks)
 
-        self.playlists_voicedb = Voicedb(logs_path=self.base_dir + '/' + 'playlists_voice_logs.json',
-                                         stored_dir=self.base_dir + '/' + 'Speakable' + '/' + 'Playlists',
-                                         users=self.playlists)
-        self.__init_done = True
+        self.__dict__['playlists_voicedb'] = \
+            Voicedb(logs_path=os.path.join(self.base, self._ctrl_folder, 'playlists_voice_logs.json'),
+                    stored_dir=os.path.join(self.base, self._ctrl_folder, 'Speakable', 'Playlists'),
+                    users=self.playlists)
 
-    def __setitem__(self, key, value):
-        if self.__init_done and key not in ('max_volume', 'enable_voiceover'):
-            raise AttributeError
-        self.__dict__[key] = value
+    @property
+    def max_volume(self):
+        return self._dic['max_volume']
+
+    @max_volume.setter
+    def max_volume(self, value):
+        self._dic['max_volume'] = value
+
+    @property
+    def enable_voiceover(self):
+        return self._dic['enable_voiceover']
+
+    @enable_voiceover.setter
+    def enable_voiceover(self, value):
+        self._dic['enable_voiceover'] = value
+
+    @property
+    def tracks(self):
+        return self.__dict__['tracks']
+
+    @property
+    def playlists(self):
+        return self.__dict__['playlists']
+
+    @property
+    def sounds(self):
+        return self.__dict__['sounds']
+
+    @property
+    def tracks_voicedb(self):
+        return self.__dict__['tracks_voicedb']
+
+    @property
+    def playlists_voicedb(self):
+        return self.__dict__['playlists_voicedb']
 
     def write(self):
         db_dic = self._dic.copy()
@@ -146,20 +172,215 @@ class Tracks(List):
 
 class Track:
     def __init__(self, shuffle, sound=None, dic=None, play_count_dic=None):
+        self._is_inited = False
+        self._resetable_keys = []
         self._shuffle = shuffle
 
-        if dic:
+        self._dbid = dic['dbid']
+
+        if dic and play_count_dic:
             self._dic = dic
+            self._play_count_dic = play_count_dic
         elif sound:
             self.sound = sound
         else:
             raise Exception
 
-    def get_dic(self):
-        return self._dic
+        self._is_inited = True
 
-    def set_voice(self, dbid=None):
-        pass
+    # def __setattr__(self, key, value):
+    #    if self._is_inited and key not in self._resetable_keys:
+    #        raise AttributeError
+    #    else:
+    #        self.__dict__[key] = value
+
+    # def __getattr__(self, key):
+    #   if key == 'type':
+    #       return audio.get_type(self.shuffle.base_dir + '/' + self.filename)
+    #   else:
+    #       return self.__dict__[key]
+
+    ###################################################
+
+    @property
+    def start_at_pos_ms(self):
+        return self._dic['start_at_pos_ms']
+
+    @start_at_pos_ms.setter
+    def start_at_pos_ms(self, value):
+        self._dic['start_at_pos_ms'] = value
+
+    ###################################################
+
+    @property
+    def stop_at_pos_ms(self):
+        return self._dic['stop_at_pos_ms']
+
+    @stop_at_pos_ms.setter
+    def stop_at_pos_ms(self, value):
+        self._dic['stop_at_pos_ms'] = value
+
+    @property
+    def volume_gain(self):
+        return self._dic['volume_gain']
+
+    @volume_gain.setter
+    def volume_gain(self, value):
+        self._dic['volume_gain'] = value
+
+    @property
+    def type(self):
+        return self._dic['type']
+
+    @type.setter
+    def type(self, value):
+        self._dic['type'] = value
+
+    @property
+    def filename(self):
+        return self._dic['filename']
+
+    @property
+    def dont_skip_on_shuffle(self):
+        return self._dic['dont_skip_on_shuffle']
+
+    @dont_skip_on_shuffle.setter
+    def dont_skip_on_shuffle(self, value):
+        self._dic['dont_skip_on_shuffle'] = value
+
+    @property
+    def remember_playing_pos(self):
+        return self._dic['remember_playing_pos']
+
+    @remember_playing_pos.setter
+    def remember_playing_pos(self, value):
+        self._dic['remember_playing_pos'] = value
+
+    @property
+    def part_of_uninterruptable_album(self):
+        return self._dic['part_of_uninterruptable_album']
+
+    @part_of_uninterruptable_album.setter
+    def part_of_uninterruptable_album(self, value):
+        self._dic['part_of_uninterruptable_album'] = value
+
+    @property
+    def pregap(self):
+        return self._dic['pregap']
+
+    @pregap.setter
+    def pregap(self, value):
+        self._dic['pregap'] = value
+
+    @property
+    def postgap(self):
+        return self._dic['postgap']
+
+    @postgap.setter
+    def postgap(self, value):
+        self._dic['postgap'] = value
+
+    @property
+    def number_of_sampless(self):
+        return self._dic['number_of_sampless']
+
+    @number_of_sampless.setter
+    def number_of_sampless(self, value):
+        self._dic['number_of_sampless'] = value
+
+    @property
+    def gapless_data(self):
+        return self._dic['gapless_data']
+
+    @gapless_data.setter
+    def gapless_data(self, value):
+        self._dic['gapless_data'] = value
+
+    @property
+    def album_id(self):
+        return self._dic['album_id']
+
+    @album_id.setter
+    def album_id(self, value):
+        self._dic['album_id'] = value
+
+    @property
+    def track_number(self):
+        return self._dic['track_number']
+
+    @track_number.setter
+    def track_number(self, value):
+        self._dic['track_number'] = value
+
+    @property
+    def disc_number(self):
+        return self._dic['disc_number']
+
+    @disc_number.setter
+    def disc_number(self, value):
+        self._dic['disc_number'] = value
+
+    @property
+    def dbid(self):
+        return self._dic['dbid']
+
+    @dbid.setter
+    def dbid(self, value):
+        self._dic['dbid'] = value
+
+    @property
+    def artist_id(self):
+        return self._dic['artist_id']
+
+    @artist_id.setter
+    def artist_id(self, value):
+        self._dic['artist_id'] = value
+
+    # ======================================================
+
+    @property
+    def bookmark_time(self):
+        return self._play_count_dic['bookmark_time']
+
+    @bookmark_time.setter
+    def bookmark_time(self, value):
+        self._play_count_dic['bookmark_time'] = value
+
+    @property
+    def play_count(self):
+        return self._play_count_dic['play_count']
+
+    @play_count.setter
+    def play_count(self, value):
+        self._play_count_dic['play_count'] = value
+
+    @property
+    def time_of_last_play(self):
+        return self._play_count_dic['time_of_last_play']
+
+    @time_of_last_play.setter
+    def time_of_last_play(self, value):
+        self._play_count_dic['time_of_last_play'] = value
+
+    @property
+    def skip_count(self):
+        return self._play_count_dic['skip_count']
+
+    @skip_count.setter
+    def skip_count(self, value):
+        self._play_count_dic['skip_count'] = value
+
+    @property
+    def time_of_last_skip(self):
+        return self._play_count_dic['time_of_last_skip']
+
+    @time_of_last_skip.setter
+    def time_of_last_skip(self, value):
+        self._play_count_dic['time_of_last_skip'] = value
+
+    ########################################################
+    def get_dics(self):
+        return self._dic, self._play_count_dic
 
 
 class Playlists(List):
@@ -189,18 +410,32 @@ class Playlist(List):
         for index in indexes_of_tracks:
             self.append(shuffle.tracks[index])
 
+    @property
+    def type(self):
+        return self._dic['type']
+
+    @type.setter
+    def type(self, value):
+        self._dic['type'] = value
+
+    @property
+    def dbid(self):
+        return self._dic['dbid']
+
     def get_dic_indexes(self):
-        return self._dic, [self._shuffle.tracks.index(track) for track in self]
+        return self._dic, (self._shuffle.tracks.index(track) for track in self)
 
 
 class Sounds:
-    def __init__(self, _shuffle):
-        self._shuffle = _shuffle
+    def __init__(self, shuffle, logs_path, stored_dir):
+        self._shuffle = shuffle
 
-        self._stored_dir = 'sounds'
-
-        self._logs_path = self._shuffle.base_dir + '/' + self._shuffle.control_folder + '/' + 'sounds_logs.json'
-        self._logs = json.loads(open(self._logs_path).read())
+        self._logs_path = logs_path
+        self._stored_dir = stored_dir
+        try:
+            self._logs = json.loads(open(self._logs_path).read())
+        except FileNotFoundError:
+            self._logs = {}
 
     def _del_not_exists(self):
         new_logs = {}
@@ -246,8 +481,8 @@ class Sounds:
         return path
 
     def add(self, path, checksum=None):
-        if not audiorec.get_filetype(path):
-            raise TypeError('This file type is not supported.')
+        if not audio.get_type(path):
+            raise TypeError('The type of this file is not supported.')
 
         checksum = checksum or checksum(path)
 
@@ -294,7 +529,10 @@ class Voicedb:
         self._logs_path = logs_path
         self._stored_dir = stored_dir
         self._users = users
-        self._logs = json.loads(open(self._logs_path).read())
+        try:
+            self._logs = json.loads(open(self._logs_path).read())
+        except FileNotFoundError:
+            self._logs = {}
 
     def _path(self, dbid):
         return self._stored_dir + '/' + dbid + '.wav'
@@ -329,7 +567,7 @@ class Voicedb:
         pass
 
     def add(self, path, text, lang, checksum):
-        if not audiorec.get_filetype(path) == 'wav':
+        if not audio.get_type(path) == audio.WAV:
             raise TypeError
 
         checksum = checksum or get_checksum(path)

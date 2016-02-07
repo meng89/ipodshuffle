@@ -3,11 +3,10 @@
 
 import pprint
 
-import shuffle.itunessd
-import shuffle.itunesstats
+import ipodshuffle.itunessd
+import ipodshuffle.itunesstats
 
-import shuffle
-
+import ipodshuffle
 
 itunessd_path = 'iTunesSD'
 itunesstats_path = 'iTunesStats'
@@ -24,8 +23,8 @@ pp = pprint.PrettyPrinter(indent=4)
 
 
 def test_itunessd():
-    a, b, c = shuffle.itunessd.itunessd_to_dics(itunessd)
-    itunessd2 = shuffle.itunessd.dics_to_itunessd(a, b, c)
+    a, b, c = ipodshuffle.itunessd.itunessd_to_dics(itunessd)
+    itunessd2 = ipodshuffle.itunessd.dics_to_itunessd(a, b, c)
 
     print(len(itunessd), len(itunessd2), itunessd == itunessd2)
 
@@ -40,13 +39,13 @@ def test_itunessd():
 
 
 def test_itunesstats():
-    tracks_dics = shuffle.itunesstats.itunesstats_to_dics(itunesstats)
-    itunesstats2 = shuffle.itunesstats.dics_to_itunesstats(tracks_dics)
+    tracks_dics = ipodshuffle.itunesstats.itunesstats_to_dics(itunesstats)
+    itunesstats2 = ipodshuffle.itunesstats.dics_to_itunesstats(tracks_dics)
     print(len(itunesstats), len(itunesstats2), itunesstats == itunesstats2)
 
 
 def tmp2():
-    db_dic, tracks_dics, playlists_dics_and_indexes = shuffle.itunessd.itunessd_to_dics(itunessd)
+    db_dic, tracks_dics, playlists_dics_and_indexes = ipodshuffle.itunessd.itunessd_to_dics(itunessd)
 
     for track_dic in tracks_dics:
         if track_dic['filename'] == '/iPod_Control/Music/F02/KVRT.m4a':
@@ -60,14 +59,14 @@ def tmp2():
             # track_dic['pregap'] = 0
             # track_dic['postgap'] = 0
 
-    new_itunessd = shuffle.itunessd.dics_to_itunessd(db_dic, tracks_dics, playlists_dics_and_indexes)
+    new_itunessd = ipodshuffle.itunessd.dics_to_itunessd(db_dic, tracks_dics, playlists_dics_and_indexes)
 
     open(itunessd_path, 'wb').write(new_itunessd)
     # print(pp.pprint(tracks_dics))
 
 
 def print1():
-    a, b, c = shuffle.itunessd.itunessd_to_dics(open(itunessd_path, 'rb').read())
+    a, b, c = ipodshuffle.itunessd.itunessd_to_dics(open(itunessd_path, 'rb').read())
     print(pp.pprint(b))
 
 
@@ -75,13 +74,20 @@ ipod_path = '/media/data/temp/ipod'
 
 
 def info(base):
-    ipod = shuffle.Shuffle(base)
-    print('info:')
+    ipod = ipodshuffle.Shuffle(base)
+    print('-------------------------------------------------')
     print('max_volume: ', ipod.max_volume)
     print('enable_voiceover: ', ipod.enable_voiceover)
-    print('-------------------------------------------------')
     print('number of tracks: ', len(ipod.tracks))
     print('number of playlists: ', len(ipod.playlists))
+    print('-------------------------------------------------')
+    ipod.sounds.clean_logs()
+    ipod.sounds.write_logs()
+    for pl in ipod.playlists:
+        print(pl.type)
+        print(pl.dbid)
+        for track in pl.tracks:
+            print(track.filename)
 
 
 if __name__ == '__main__':

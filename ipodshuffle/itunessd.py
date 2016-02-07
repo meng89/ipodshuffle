@@ -38,7 +38,7 @@ track_table = (
 
     # 起点 (毫秒)
     {'name': 'start_at_pos_ms',                'size': 4,   'type': 'number', 'is_custom': True},
-    # 0: playing util end
+    # 0: playing until end
     {'name': 'stop_at_pos_ms',                 'size': 4,   'type': 'number', 'is_custom': True},
 
     # have effect. what is the value meaning?

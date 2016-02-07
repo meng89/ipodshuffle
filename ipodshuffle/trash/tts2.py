@@ -3,7 +3,7 @@ import json
 import uuid
 
 
-logs_filename = 'voice_logs.json'
+logs_filename = 'voice_logs_example1.json'
 
 logs_fullpath = os.path.expanduser("~") + os.sep + '.'
 

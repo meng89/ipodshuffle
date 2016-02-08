@@ -396,16 +396,21 @@ class Playlists(List):
 
         return dic_indexes_s
 
+    def add(self):
+        pl = Playlist(self._shuffle)
+        return pl
+
 
 class Playlist(List):
-    def __init__(self, shuffle, playlist_dic=None, indexes_of_tracks=None):
+    def __init__(self, shuffle, dic=None, indexes_of_tracks=None):
         super().__init__()
         self._shuffle = shuffle
-        self._dic = playlist_dic
+        self._dic = dic or {}
 
         self.__dict__['tracks'] = []
 
         indexes_of_tracks = indexes_of_tracks or []
+
         for index in indexes_of_tracks:
             self.tracks.append(shuffle.tracks[index])
 

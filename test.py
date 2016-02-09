@@ -90,10 +90,25 @@ def info(base):
             print(track.filename)
 
 
-if __name__ == '__main__':
-    # tmp2()
-    # print1()
-    # test_itunessd()
-    # test_itunesstats()
+def a(src, ipod_base, langs):
+    print(src)
+    print(ipod_base)
+    print(langs)
 
-    info(ipod_path)
+if __name__ == '__main__':
+    import sys
+
+    # print(sys.argv)
+
+    args = {}
+    for one in sys.argv[1:]:
+        k, v = one.split('=')
+
+        if ',' in v:
+            value = v.split(',')
+        else:
+            value = v
+
+        args[k] = value
+
+    a(**args)

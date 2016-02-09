@@ -1,6 +1,6 @@
 
 # 平仮名
-hiragana =\
+hiragana = \
     'ぁあぃいぅうぇえぉおかがきぎく'\
     'ぐけげこごさざしじすずせぜそぞた'\
     'だちぢっつづてでとどなにぬねのは'\
@@ -9,7 +9,7 @@ hiragana =\
     'ゐゑをんゔゕゖ゙゚゛゜ゝゞゟ'
 
 # 片仮名
-katakana =\
+katakana = \
     '゠ァアィイゥウェエォオカガキギク'\
     'グケゲコゴサザシジスズセゼソゾタ'\
     'ダチヂッツヅテデトドナニヌネノハ'\
@@ -20,9 +20,9 @@ katakana =\
 
 katakana_ext = 'ㇰㇱㇲㇳㇴㇵㇶㇷㇸㇹㇺㇻㇼㇽㇾㇿ'
 
-japanese = hiragana + katakana + katakana_ext
+japanese_chars = hiragana + katakana + katakana_ext
 
-korean = \
+korean_chars = \
     'ㅏㅑㅓㅕㅗㅛㅜㅠㅡㅣㅐㅔㅒㅖㅘㅙㅚㅢㅝㅞㅟ'\
     'ㄱ가갸거겨고교구규그기개게걔계과괘괴긔궈궤귀'\
     'ㄴ나냐너녀노뇨누뉴느니내네냬녜놔놰뇌늬눠눼뉘'\
@@ -50,11 +50,25 @@ def chars_detect(text):
     k = 0
     unknown = 0
     for char in text:
-        if char in japanese:
+        if char in japanese_chars:
             j += 1
-        elif char in korean:
+        elif char in korean_chars:
             k += 1
         else:
             unknown += 1
 
-    return ['ja', j], ['ko', k]
+    if j >= k > 0:
+        return 'ja'
+    elif k >= j > 0:
+        return 'ko'
+    else:
+        return None
+
+
+def has_ja_char(text):
+    return len(set(text) & set(japanese_chars))
+
+
+def has_ko_char(text):
+    return len(set(text) & set(korean_chars))
+

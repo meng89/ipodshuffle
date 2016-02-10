@@ -76,7 +76,7 @@ def cjk_fix(seted_langs, code, text):
     return fixed_code
 
 
-def sync(src=None, ipod=None, langs=None, ttskey=None):
+def sync(src=None, ipod=None, enable_voiceover=True, langs=None, ttskey=None):
 
     src = src or dir_path2
     tts_engine = ipodshuffle.tts.voicerss
@@ -92,7 +92,7 @@ def sync(src=None, ipod=None, langs=None, ttskey=None):
     audiobooks = get_audiobooks(src+'/'+'audiobooks')
 
     shuffle = ipodshuffle.Shuffle(ipod)
-
+    shuffle.enable_voiceover = enable_voiceover
     shuffle.sounds.clean_logs()
 
     shuffle.playlists.clear()
@@ -135,14 +135,17 @@ def sync(src=None, ipod=None, langs=None, ttskey=None):
 
         # print(tts_code, text)
 
+        master_pl.tracks.append(track)
+
         track_dbid = shuffle.tracks_voicedb.get_dbid(text, tts_code)
 
-        if not track_dbid: # the voice not in ipod
+        if not track_dbid:  # the voice not in ipod
 
             tts_path = ttsdb.get_path_by_text_lang(text, tts_code)
 
-            if not tts_path: # the voice not in local
+            if not tts_path:  # the voice not in local
                 data = tts_engine.tts(text, tts_code, ttskey)
+                print('Get a new voice: {}, {}'.format(tts_code, text))
                 tmp_file = tempfile.NamedTemporaryFile(delete=False)
                 tmp_file_name = tmp_file.name
                 tmp_file.close()

@@ -165,6 +165,8 @@ class Shuffle:
 
         playlists_dics_and_indexes = self.playlists.get_dics_and_indexes()
 
+        print(playlists_dics_and_indexes)
+
         itunessd_chunk = itunessd.dics_to_itunessd(db_dic, tracks_dics, playlists_dics_and_indexes)
         itunesstats_chunk = itunesstats.dics_to_itunesstats(tracks_play_count_dics)
 
@@ -447,6 +449,11 @@ class Playlists(List):
         for lphs_dic, indexes in lphs_dics_indexes:
             self.append(Playlist(shuffle, lphs_dic, indexes))
 
+    def add(self):
+        pl = Playlist(self._shuffle)
+        self.append(pl)
+        return pl
+
     def get_dics_and_indexes(self):
         dic_indexes_s = []
         for playlist in self:
@@ -454,23 +461,23 @@ class Playlists(List):
 
         return dic_indexes_s
 
-    def add(self):
-        pl = Playlist(self._shuffle)
-        return pl
 
-
-class Playlist(List):
+class Playlist:  # not list
     def __init__(self, shuffle, dic=None, indexes_of_tracks=None):
         super().__init__()
         self._shuffle = shuffle
-        self._dic = dic or {}
 
         self.__dict__['tracks'] = []
 
+        self._dic = dic or {}
+
         indexes_of_tracks = indexes_of_tracks or []
 
-        for index in indexes_of_tracks:
-            self.tracks.append(shuffle.tracks[index])
+        if self._dic:
+            for index in indexes_of_tracks:
+                self.tracks.append(shuffle.tracks[index])
+        else:
+            self.dbid = '0000000000000000'
 
     @property
     def type(self):
@@ -484,12 +491,17 @@ class Playlist(List):
     def dbid(self):
         return self._dic['dbid']
 
+    @dbid.setter
+    def dbid(self, value):
+        self._dic['dbid'] = value
+
     @property
     def tracks(self):
         return self.__dict__['tracks']
 
     def get_dic_indexes(self):
-        return self._dic, (self._shuffle.tracks.index(track) for track in self)
+        indexes = [self._shuffle.tracks.index(track) for track in self.tracks]
+        return self._dic, indexes
 
 
 class JsonLog:

@@ -13,7 +13,7 @@ url = 'http://api.voicerss.org/?'
 
 
 def tts(text, lang, key):
-    parameters = {'src': text, 'hl': lang, 'key': key, 'c': 'WAV', 'f': '48khz_16bit_stereo'}
+    parameters = {'src': text, 'hl': lang, 'key': key, 'c': 'WAV', 'f': '22khz_16bit_mono'}
 
     req = urllib.request.Request(url, urllib.parse.urlencode(parameters).encode('ascii'))
 

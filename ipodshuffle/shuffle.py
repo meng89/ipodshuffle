@@ -12,21 +12,14 @@ from . import itunessd, itunesstats, audio, tools
 from .baseclasses import List
 # baseclasses ?  see https://github.com/meng89/epubuilder/blob/feature-rw/epubuilder/baseclasses.py
 
-MUSIC = 'music'
-AUDIOBOOK = 'audiobook'
+from .itunessd import MASTER, NORMAL, PODCAST, AUDIOBOOK
 
-
-# def int_from_bytes(data):
-#    return int.from_bytes(data, byteorder='little')
-
-
-# def dbid_from_bytes(data):
-#    return '{:X}'.format(int_from_bytes(data))
-
-
-# def dbid_to_bytes(dbid):
-#    number = int(dbid, 16)
-#    return number.to_bytes(length=8, byteorder='little')
+PL_MAPS = {
+    MASTER: 'master',
+    NORMAL: 'normal',
+    PODCAST: 'podcast',
+    AUDIOBOOK: 'audiobook'
+}
 
 
 def make_dbid1():
@@ -195,7 +188,7 @@ class Tracks(List):
             tracks_with_play_count_dics_zip = zip(tracks_dics, tracks_play_count_dics)
 
         for dic, play_count_dic in tracks_with_play_count_dics_zip:
-            self.append(Track(self, dic=dic, play_count_dic=play_count_dic))
+            self.append(Track(self._shuffle, dic=dic, play_count_dic=play_count_dic))
 
     def add(self, path_in_ipod):
         # if path_in_ipod not in self._shuffle.sounds:

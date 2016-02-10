@@ -1,30 +1,45 @@
 import ipodshuffle.shuffle
 
 
+from ipodshuffle.shuffle import PL_MAPS
+from ipodshuffle.audio import TYPE_MAP
+
+L1 = '=' * 80
+L2 = '-' * 50
+
+
 def show(ipod):
     shuffle = ipodshuffle.shuffle.Shuffle(ipod)
-    print('=' * 50)
+
+    print(L1)
     print('enable_voiceover: ', shuffle.enable_voiceover)
     print('max_volumex: ', shuffle.max_volume)
     print('number of tracks: ', len(shuffle.tracks))
     print('number of playlists: ', len(shuffle.playlists))
-    print('=' * 50)
-
+    print(L1)
     print()
 
-    print('=' * 50)
+    print('Tracks:')
+    print(L1)
     for track in shuffle.tracks:
+        print('index: ', shuffle.tracks.index(track))
+        print('type: ', TYPE_MAP[track.type])
         print('filename: ', track.filename)
         print('dbid: ', track.dbid)
-    print('=' * 50)
+        if track != shuffle.tracks[-1]:
+            print(L2)
+    print(L1)
 
     print()
 
-    print('=' * 50)
+    print('Playlists:')
+    print(L1)
     for pl in shuffle.playlists:
-        print('type: ', pl.type)
+        print('type: ', PL_MAPS[pl.type])
+
         print('dbid: ', pl.dbid)
         print('number of tracks: ', len(pl.tracks))
         print('index of tracks: ', [shuffle.tracks.index(track) for track in pl.tracks])
-    print('=' * 50)
-
+        if pl != shuffle.playlists[-1]:
+            print(L2)
+    print(L1)

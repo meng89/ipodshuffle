@@ -224,7 +224,9 @@ def replenish_unknown_type(dic, table):
 
 
 def dbid_from_bytes(chunk):
-    return '{:X}'.format(int.from_bytes(chunk, 'little'))
+    dbid = '{:X}'.format(int.from_bytes(chunk, 'little'))
+    dbid = (16 - len(dbid)) * '0' + dbid
+    return dbid
 
 
 def dbid_to_bytes(dbid):

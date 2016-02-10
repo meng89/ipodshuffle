@@ -6,13 +6,20 @@ import urllib.parse
 import tempfile
 
 
-class GetTtsError(Exception):
+class GetTTSError(Exception):
     pass
 
-url = 'http://api.voicerss.org/?'
+
+class LangCodeError(Exception):
+    pass
 
 
 def tts(text, lang, key):
+    if not is_available(lang):
+        raise LangCodeError
+
+    url = 'http://api.voicerss.org/?'
+
     parameters = {'src': text, 'hl': lang, 'key': key, 'c': 'WAV', 'f': '22khz_16bit_mono'}
 
     req = urllib.request.Request(url, urllib.parse.urlencode(parameters).encode('ascii'))
@@ -25,7 +32,7 @@ def tts(text, lang, key):
             content_length = int(v)
 
     if content_length < 100:
-        raise GetTtsError(response.read().decode())
+        raise GetTTSError(response.read().decode())
 
     return response.read()
 
@@ -63,13 +70,13 @@ def is_available(lang):
     return lang in [l[0] for l in langs]
 
 
-def to_iso_639_1(lang):
-    iso_639_1_code = None
+def to_langid_code(lang):
+    langid_code = None
     for l in langs:
         if l[0] == lang:
-            iso_639_1_code = l[0].split('-')[0]
+            langid_code = l[0].split('-')[0]
             break
-    return iso_639_1_code
+    return langid_code
 
 
 def to_lang_codes(iso_639_1_code):

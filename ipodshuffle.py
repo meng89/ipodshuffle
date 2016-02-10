@@ -1,8 +1,10 @@
-from .show import show
+#!/usr/bin/env python3
 
-from .sync import sync
+from show import show
 
-from .set import set_
+from sync import sync
+
+from set import set_
 
 actions = {
     'show': show,
@@ -14,8 +16,6 @@ actions = {
 if __name__ == '__main__':
     import sys
 
-    # sync(dir_path2)
-
     args = {}
 
     action = None
@@ -24,7 +24,8 @@ if __name__ == '__main__':
         k, v = one.split('=')
 
         if k == 'action':
-            
+            action = v
+            continue
 
         if ',' in v:
             value = v.split(',')
@@ -33,4 +34,4 @@ if __name__ == '__main__':
 
         args[k] = value
 
-    sync(**args)
+    actions[action](**args)

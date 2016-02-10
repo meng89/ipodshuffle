@@ -38,20 +38,18 @@ import mutagen
 import sndhdr
 
 MP3 = 1
-ACC = 2
-
+AAC = 2
+# ? = 3
 WAV = 4
 ALAC = 5
 AIFF = 6
 
-
-types_map = {
-    1: {'format': 'mp3',  'exts': ['mp3']},
-    2: {'format': 'acc',  'exts': ['m4a', 'm4b']},
-    # 3 ???
-    4: {'format': 'wav',  'exts': ['wav']},
-    5: {'format': 'alac', 'exts': ['m4a']},
-    6: {'format': 'aiff', 'exts': ['aif']}
+TYPE_MAP = {
+    MP3: 'mp3',    # mp3
+    AAC: 'aac',    # m4a, m4b
+    WAV: 'wav',    # wav
+    ALAC: 'alac',  # m4a
+    AIFF: 'aiff',  # aif
 }
 
 
@@ -64,8 +62,8 @@ def get_type(path):
         if 'audio/mp3' in audio.mime:
             file_type = MP3
         elif 'audio/mp4' in audio.mime:
-            if audio.info.codec == 'mp4a.40.2':  # 'acc-lc'
-                file_type = ACC
+            if audio.info.codec == 'mp4a.40.2':  # 'aac-lc'
+                file_type = AAC
             elif audio.info.codec == 'alac':
                 file_type = ALAC
 

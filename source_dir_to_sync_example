@@ -1,8 +1,8 @@
- iPod_Control
-          |-- pl1
+ source
+          |-- music
           |    +-- iTunesSD
           |
-          |-- pl2
+          |-- podcasts
           |    |-- Messages
           |    |        |-- bv00.wav
           |    |        +-- ...

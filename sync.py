@@ -79,6 +79,7 @@ def cjk_fix(seted_langs, code, text):
 def sync(src=None, ipod=None, enable_voiceover=True, langs=None, ttskey=None):
 
     src = src or dir_path2
+
     tts_engine = ipodshuffle.tts.voicerss
 
     src = os.path.realpath(src)
@@ -163,20 +164,3 @@ def sync(src=None, ipod=None, enable_voiceover=True, langs=None, ttskey=None):
         track.dbid = track_dbid
 
     shuffle.write()
-
-if __name__ == '__main__':
-    import sys
-
-    # sync(dir_path2)
-
-    args = {}
-    for one in sys.argv[1:]:
-        k, v = one.split('=')
-
-        if ',' in v:
-            value = v.split(',')
-        else:
-            value = v
-        args[k] = value
-
-    sync(**args)

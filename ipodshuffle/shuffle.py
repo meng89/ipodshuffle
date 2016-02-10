@@ -16,19 +16,24 @@ MUSIC = 'music'
 AUDIOBOOK = 'audiobook'
 
 
-def int_from_bytes(data):
-    return int.from_bytes(data, byteorder='little')
+# def int_from_bytes(data):
+#    return int.from_bytes(data, byteorder='little')
 
 
-def dbid_from_bytes(data):
-    return '{:X}'.format(int_from_bytes(data))
+# def dbid_from_bytes(data):
+#    return '{:X}'.format(int_from_bytes(data))
 
 
-def get_dbid1():
+# def dbid_to_bytes(dbid):
+#    number = int(dbid, 16)
+#    return number.to_bytes(length=8, byteorder='little')
+
+
+def make_dbid1():
     return ''.join(random.sample('ABCDEF' + string.digits, 16))
 
 
-def get_dbid2():
+def make_dbid2():
     dbid_string = ''
     for x in random.sample(range(0, 255), 8):
         s = hex(x)[2:]
@@ -37,7 +42,7 @@ def get_dbid2():
         dbid_string += s.upper()
     return dbid_string
 
-get_dbid = get_dbid2
+make_dbid = make_dbid2
 
 
 def get_mtime_size(path):
@@ -83,14 +88,9 @@ class Shuffle:
             if os.path.exists(self._itunesstats_path):
                 tracks_play_count_dics = read(self._itunesstats_path, itunesstats.itunesstats_to_dics)
 
-            if len(tracks_dics) != len(tracks_play_count_dics):
-                tracks_play_count_dics = [None] * len(tracks_dics)
-
-            tracks_with_play_count_dics_zip = zip(tracks_dics, tracks_play_count_dics)
-
             self._dic = header_dic
 
-            self.__dict__['tracks'] = Tracks(self, tracks_with_play_count_dics_zip)
+            self.__dict__['tracks'] = Tracks(self, tracks_dics, tracks_play_count_dics)
 
             self.__dict__['playlists'] = Playlists(self, playlists_dics_and_indexes)
 
@@ -150,17 +150,6 @@ class Shuffle:
     def playlists_voicedb(self):
         return self.__dict__['playlists_voicedb']
 
-    def write(self):
-        db_dic = self._dic.copy()
-        tracks_dics = self.tracks.get_dics()
-        playlists_dics_and_indexes = self.playlists.get_dics_and_indexes()
-
-        itunessd_chunk = itunessd.dics_to_itunessd(db_dic, tracks_dics, playlists_dics_and_indexes)
-
-        os.makedirs(os.path.split(self._itunessd_path)[0], exist_ok=True)
-        with open(self._itunessd_path, 'wb') as f:
-            f.write(itunessd_chunk)
-
     def get_path_in_ipod(self, path):
 
         path_in_pod = None
@@ -169,53 +158,105 @@ class Shuffle:
 
         return path_in_pod
 
+    def write(self):
+        db_dic = self._dic.copy()
+
+        tracks_dics, tracks_play_count_dics = self.tracks.tracks_dics_and_tracks_play_count_dics()
+
+        playlists_dics_and_indexes = self.playlists.get_dics_and_indexes()
+
+        itunessd_chunk = itunessd.dics_to_itunessd(db_dic, tracks_dics, playlists_dics_and_indexes)
+        itunesstats_chunk = itunesstats.dics_to_itunesstats(tracks_play_count_dics)
+
+        os.makedirs(os.path.split(self._itunessd_path)[0], exist_ok=True)
+        with open(self._itunessd_path, 'wb') as f:
+            f.write(itunessd_chunk)
+
+        os.makedirs(os.path.split(self._itunesstats_path)[0], exist_ok=True)
+        with open(self._itunesstats_path, 'wb') as f:
+            f.write(itunesstats_chunk)
+
 
 class Tracks(List):
-    def __init__(self, shuffle, tracks_with_play_count_dics_zip=None):
+    def __init__(self, shuffle, tracks_dics=None, tracks_play_count_dics=None):
         super().__init__()
 
         self._shuffle = shuffle
-        tracks_with_play_count_dics_zip = tracks_with_play_count_dics_zip or []
+
+        tracks_with_play_count_dics_zip = []
+
+        if tracks_dics:
+            tracks_play_count_dics = tracks_play_count_dics or []
+            if len(tracks_dics) != len(tracks_play_count_dics):
+                tracks_play_count_dics = [None] * len(tracks_dics)
+
+            tracks_with_play_count_dics_zip = zip(tracks_dics, tracks_play_count_dics)
 
         for dic, play_count_dic in tracks_with_play_count_dics_zip:
             self.append(Track(self, dic=dic, play_count_dic=play_count_dic))
 
-    def get_dics(self):
-        dics = []
+    def add(self, path_in_ipod):
+        # if path_in_ipod not in self._shuffle.sounds:
+        #    raise Exception
+
+        track = Track(self._shuffle, path_in_ipod)
+        self.append(track)
+        return track
+
+    def tracks_dics_and_tracks_play_count_dics(self):
+
+        tracks_dics = []
+        play_count_dics = []
+
         for track in self:
-            dics.append(track.get_dic())
-        return dics
+            dic, play_count_dic = track.get_dics()
+            tracks_dics.append(dic)
+            play_count_dics.append(play_count_dic)
+
+        return tracks_dics, play_count_dics
 
 
 class Track:
-    def __init__(self, shuffle, sound=None, dic=None, play_count_dic=None):
-        self._is_inited = False
-        self._resetable_keys = []
+    def __init__(self, shuffle, path_in_ipod=None, dic=None, play_count_dic=None):
         self._shuffle = shuffle
-
-        self._dbid = dic['dbid']
+        # self._dbid = dic['dbid']
 
         if dic and play_count_dic:
             self._dic = dic
             self._play_count_dic = play_count_dic
-        elif sound:
-            self.sound = sound
+
+        elif path_in_ipod:
+            self._dic = {}
+            self._play_count_dic = {}
+
+            self.start_at_pos_ms = 0
+            self.stop_at_pos_ms = 0
+            self.volume_gain = 0
+            self._dic['filename'] = '/' + path_in_ipod
+            self.dont_skip_on_shuffle = 0
+            self.remember_playing_pos = 0
+            self.part_of_uninterruptable_album = 0
+            self.pregap = 0
+            self.postgap = 0
+            self.number_of_sampless = 0
+            self.gapless_data = 0
+            self.album_id = 0
+            self.track_number = 0
+            self.disc_number = 0
+            self.dbid = '0000000000000000'
+            self.artist_id = 0
+
+            self.bookmark_time = 0
+            self.play_count = 0
+            self.skip_count = 0
+            self.time_of_last_skip = 0
+            self.time_of_last_play = 0
         else:
             raise Exception
 
-        self._is_inited = True
-
-    # def __setattr__(self, key, value):
-    #    if self._is_inited and key not in self._resetable_keys:
-    #        raise AttributeError
-    #    else:
-    #        self.__dict__[key] = value
-
-    # def __getattr__(self, key):
-    #   if key == 'type':
-    #       return audio.get_type(self.shuffle.base_dir + '/' + self.filename)
-    #   else:
-    #       return self.__dict__[key]
+    @property
+    def fullpath(self):
+        return self._shuffle.base + '/' + self.filename
 
     ###################################################
 
@@ -247,11 +288,7 @@ class Track:
 
     @property
     def type(self):
-        return self._dic['type']
-
-    @type.setter
-    def type(self, value):
-        self._dic['type'] = value
+        return audio.get_type(self.fullpath)
 
     @property
     def filename(self):
@@ -397,6 +434,7 @@ class Track:
 
     ########################################################
     def get_dics(self):
+        self._dic['type'] = self.type
         return self._dic, self._play_count_dic
 
 
@@ -616,17 +654,14 @@ class SoundsDB(JsonLog):
 class Voicedb(JsonLog):
     def __init__(self, logs_path, stored_dir):
         super().__init__(logs_path)
-
         self._stored_dir = stored_dir
 
-        self._ramdom_name = get_dbid2
+        os.makedirs(self._stored_dir, exist_ok=True)
+
+        self._ramdom_name = make_dbid2
 
     def _fullpath(self, filename):
         return os.path.join(self._stored_dir, filename)
-
-    @abstractmethod
-    def get_random_name(self):
-        pass
 
     def del_wrong_logs(self):
         pass
@@ -642,10 +677,14 @@ class Voicedb(JsonLog):
     def clean(self):
         pass
 
+    @abstractmethod
+    def get_random_name(self):
+        pass
+
     def get_new_filename(self):
         file_name = None
         while True:
-            file_name = self._ramdom_name()
+            file_name = self.get_random_name()
             if file_name not in self._logs.keys() and not os.path.exists(self._fullpath(file_name)):
                 break
         return file_name
@@ -661,14 +700,16 @@ class Voicedb(JsonLog):
                 raise FileExistsError
 
         filename = self.get_new_filename() + '.wav'
-        shutil.copyfile(path, self._stored_dir + '/' + filename)
+        full_path = self._fullpath(filename)
+
+        shutil.copyfile(path, full_path)
 
         self._logs[filename] = {
             'text': text,
             'lang': lang,
             'checksum': checksum,
-            'mtime': os.path.getmtime(filename),
-            'size': os.path.getsize(filename),
+            'mtime': os.path.getmtime(full_path),
+            'size': os.path.getsize(full_path),
             'user_defined': user_defined
         }
 
@@ -676,14 +717,14 @@ class Voicedb(JsonLog):
 
         return filename
 
-    def get_filename_by_text_lang(self, text, lang):
+    def _get_filename_by_text_lang(self, text, lang):
         filename = None
         for _filename, info in self._logs.items():
             if info['text'] == text and lang == lang:
                 filename = _filename
         return filename
 
-    def get_filename_by_checksum(self, checksum):
+    def _get_filename_by_checksum(self, checksum):
         filename = None
         for _filename, info in self._logs.items():
             if info['checksum'] == checksum:
@@ -691,7 +732,7 @@ class Voicedb(JsonLog):
         return filename
 
     def remove(self, filename):
-        os.remove(self._stored_dir + '/' + filename)
+        os.remove(self._fullpath(filename))
         del self._logs[filename]
 
 
@@ -701,7 +742,7 @@ class IpodVoice(Voicedb):
         self._users = users
 
     def get_random_name(self):
-        return get_dbid2()
+        return make_dbid2()
 
     def clean_store_dir(self):
         files_to_del = []
@@ -723,12 +764,18 @@ class IpodVoice(Voicedb):
         self.clean_store_dir()
 
     def get_dbid(self, text=None, lang=None, checksum=None):
+        dbid = None
+
+        filename = None
         if text and lang:
-            return os.path.splitext(self.get_filename_by_text_lang(text, lang))[0]
+            filename = self._get_filename_by_text_lang(text, lang)
         elif checksum:
-            return os.path.splitext(self.get_filename_by_checksum(checksum))[0]
-        else:
-            raise Exception
+            filename = self._get_filename_by_checksum(checksum)
+
+        if filename:
+            dbid = os.path.splitext(filename)[0]
+
+        return dbid
 
 
 class SystemVoice:

@@ -59,6 +59,7 @@ def get_type(path):
     file_type = None
 
     audio = mutagen.File(path)
+
     if audio:
         if 'audio/mp3' in audio.mime:
             file_type = MP3

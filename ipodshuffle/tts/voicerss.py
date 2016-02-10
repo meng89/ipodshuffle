@@ -3,14 +3,31 @@
 import urllib.request
 import urllib.parse
 
+import tempfile
+
+
+class GetTtsError(Exception):
+    pass
+
 url = 'http://api.voicerss.org/?'
 
 
 def tts(text, lang, key):
     parameters = {'src': text, 'hl': lang, 'key': key, 'c': 'WAV', 'f': '48khz_16bit_stereo'}
-    data = urllib.request.urlopen(url, urllib.parse.urlencode(parameters).encode('ascii'))
 
-    return data.read()
+    req = urllib.request.Request(url, urllib.parse.urlencode(parameters).encode('ascii'))
+
+    response = urllib.request.urlopen(req)
+
+    content_length = None
+    for k, v in response.getheaders():
+        if k == 'Content-Length':
+            content_length = int(v)
+
+    if content_length < 100:
+        raise GetTtsError(response.read().decode())
+
+    return response.read()
 
 langs = [
     ['ca-es', 'Catalan'],
@@ -65,3 +82,5 @@ def to_lang_codes(iso_639_1_code):
             lang_codes.append(lang)
     print(lang_codes)
     return lang_codes
+
+

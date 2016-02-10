@@ -71,7 +71,7 @@ track_table = (
     {'name': 'track_number',                   'size': 2,   'type': 'number', 'is_custom': True},  # ?
     {'name': 'disc_number',                    'size': 2,   'type': 'number', 'is_custom': True},  # ?
     {'name': 'unknown_2',                      'size': 8,   'type': 'unknown'},
-    {'name': 'dbid',                           'size': 8,   'type': 'number', 'is_custom': True},
+    {'name': 'dbid',                           'size': 8,   'type': 'dbid',   'is_custom': True},
     {'name': 'artist_id',                      'size': 4,   'type': 'number', 'is_custom': True},  # ?
     {'name': 'unknown_3',                      'size': 32,  'type': 'unknown'},
 )
@@ -121,7 +121,7 @@ playlist_header_table = (
     {'name': 'number_of_normal_track',    'size': 4,  'type': 'number'},
 
     # When type is 1, dbid is 0, voice use iPod_Control/Speakable/Messages/sv01-sv0a.wav
-    {'name': 'dbid',                      'size': 8,  'type': 'number', 'is_custom': True},
+    {'name': 'dbid',                      'size': 8,  'type': 'dbid',   'is_custom': True},
 
     # 1: master,  2: normal,  3: podcast,  4: audiobook
     {'name': 'type',                      'size': 4,  'type': 'number', 'is_custom': True},
@@ -223,24 +223,34 @@ def replenish_unknown_type(dic, table):
 ###############################################################################
 
 
+def dbid_from_bytes(chunk):
+    return '{:X}'.format(int.from_bytes(chunk, 'little'))
+
+
+def dbid_to_bytes(dbid):
+    return int(dbid, 16).to_bytes(length=8, byteorder='little')
+
+
 def decode(dic, table):
     new_dic = {}
-    for key, value in dic.items():
+    for key, chunk in dic.items():
         cow = get_cow(key, table)
 
         if cow is None:
             continue
 
         if cow['type'] == 'string':
-            unpad_value = re.sub('\x00+$', '', value.decode())
+            unpad_value = re.sub('\x00+$', '', chunk.decode())
             new_value = unpad_value
         elif cow['type'] == 'number':
-            new_value = int.from_bytes(value, 'little')
+            new_value = int.from_bytes(chunk, 'little')
         elif cow['type'] == 'bool':
-            new_value = bool(int.from_bytes(value, 'little'))
+            new_value = bool(int.from_bytes(chunk, 'little'))
+        elif cow['type'] == 'dbid':
+            new_value = dbid_from_bytes(chunk)
         else:
             # raise TypeError
-            new_value = value
+            new_value = chunk
 
         new_dic[key] = new_value
 
@@ -257,16 +267,18 @@ def encode(dic, table):
 
         if cow['type'] == 'string':
             padded_value = value + '\x00' * (cow['size'] - len(value))
-            new_value = padded_value.encode()
+            chunk = padded_value.encode()
         elif cow['type'] == 'number':
-            new_value = value.to_bytes(cow['size'], 'little')
+            chunk = value.to_bytes(cow['size'], 'little')
         elif cow['type'] == 'bool':
-            new_value = int(value).to_bytes(cow['size'], 'little')
+            chunk = int(value).to_bytes(cow['size'], 'little')
+        elif cow['type'] == 'dbid':
+            chunk = dbid_to_bytes(value)
         else:
             # raise TypeError
-            new_value = value
+            chunk = value
 
-        new_dic[key] = new_value
+        new_dic[key] = chunk
 
     return new_dic
 

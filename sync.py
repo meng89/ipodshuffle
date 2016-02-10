@@ -1,10 +1,12 @@
 #!/usr/bin/env python3
 
 import os
+import tempfile
 
 import langid
 
 import ipodshuffle.tts.voicerss
+import ipodshuffle.tts.tts_db
 
 import ipodshuffle.tools as tools
 
@@ -19,6 +21,11 @@ from ipodshuffle.itunessd import MASTER, NORMAL, PODCAST, AUDIOBOOK
 
 dir_path = '/media/data/temp/sounds/'
 dir_path2 = '/media/data/ipod_src/'
+
+config_dir = os.path.join(os.path.expanduser('~'), '.config/ipodshuffle')
+cache_dir = os.path.join(os.path.expanduser('~'), '.cache/ipodshuffle')
+os.makedirs(config_dir, exist_ok=True)
+os.makedirs(cache_dir, exist_ok=True)
 
 
 def visit(dir_files_list, dirname, names):
@@ -69,7 +76,7 @@ def cjk_fix(seted_langs, code, text):
     return fixed_code
 
 
-def sync(src=None, ipod=None, langs=None):
+def sync(src=None, ipod=None, langs=None, ttskey=None):
 
     src = src or dir_path2
     tts_engine = ipodshuffle.tts.voicerss
@@ -91,8 +98,10 @@ def sync(src=None, ipod=None, langs=None):
     shuffle.playlists.clear()
     shuffle.tracks.clear()
 
-    master = shuffle.playlists.add()
-    master.type = MASTER
+    master_pl = shuffle.playlists.add()
+    master_pl.type = MASTER
+
+    ttsdb = ipodshuffle.tts.tts_db.Db(os.path.join(cache_dir, 'tts_logs.json'), os.path.join(cache_dir, 'voices'))
 
     tts_codes = {}
 
@@ -110,16 +119,45 @@ def sync(src=None, ipod=None, langs=None):
         # text = text.split('-')[1]
 
         langid_code = langid.classify(text)[0]
-        # code = cjk_fix(gave_codes, code, text)
-
-        # tts_lang_code =
 
         tts_code = tts_codes[langid_code] if langid_code in tts_codes.keys()\
             else tts_engine.to_lang_codes(langid_code)[0]
 
         path_in_ipod = shuffle.sounds.add(file)
 
+        track = None
+        for TRACK in shuffle.tracks:
+            if TRACK.filename == path_in_ipod:
+                track = TRACK
+
+        if not track:
+            track = shuffle.tracks.add(path_in_ipod)
+
         # print(tts_code, text)
+
+        track_dbid = shuffle.tracks_voicedb.get_dbid(text, tts_code)
+
+        if not track_dbid: # the voice not in ipod
+
+            tts_path = ttsdb.get_path_by_text_lang(text, tts_code)
+
+            if not tts_path: # the voice not in local
+                data = tts_engine.tts(text, tts_code, ttskey)
+                tmp_file = tempfile.NamedTemporaryFile(delete=False)
+                tmp_file_name = tmp_file.name
+                tmp_file.close()
+
+                with open(tmp_file_name, 'wb') as f:
+                    f.write(data)
+
+                ttsdb.add(tmp_file_name, text, tts_code)
+                tts_path = ttsdb.get_path_by_text_lang(text, tts_code)
+
+            shuffle.tracks_voicedb.add(tts_path, text, tts_code)
+
+            track_dbid = shuffle.tracks_voicedb.get_dbid(text, tts_code)
+
+        track.dbid = track_dbid
 
     shuffle.write()
 

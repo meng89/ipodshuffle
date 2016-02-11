@@ -3,8 +3,6 @@
 import urllib.request
 import urllib.parse
 
-import tempfile
-
 
 class GetTTSError(Exception):
     pass
@@ -67,27 +65,33 @@ langs = [
 
 
 def is_available(lang):
-    return lang in [l[0] for l in langs]
+    return lang.lower() in [l[0].lower() for l in langs]
 
 
 def to_langid_code(lang):
     langid_code = None
     for l in langs:
-        if l[0] == lang:
+        if l[0].lower() == lang.lower():
             langid_code = l[0].split('-')[0]
             break
     return langid_code
 
 
-def to_lang_codes(iso_639_1_code):
-    print(iso_639_1_code)
+def to_langs(langid_code):
+    print('here')
+    _langs = []
 
-    lang_codes = []
     for lang in [lang[0] for lang in langs]:
         code = lang.split('-')[0]
-        if code == iso_639_1_code:
-            lang_codes.append(lang)
-    print(lang_codes)
-    return lang_codes
+        if code.lower() == langid_code:
+            _langs.append(lang)
+
+    return _langs
 
 
+def get_lang_map():
+    lang_map = {}
+    for l in langs:
+        langid_code = to_langid_code(l[0])
+        lang_map[langid_code] = l[0]
+    return lang_map

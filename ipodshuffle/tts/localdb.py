@@ -1,9 +1,8 @@
-from ipodshuffle.shuffle import Voicedb, make_dbid2
+from ipodshuffle.shuffle import make_dbid2
+from ipodshuffle.log import VoiceDB
 
-# 1, 检查有没有 这个音频，有就返回，没有就添加。
 
-
-class Db(Voicedb):
+class LocalDB(VoiceDB):
     def __init__(self, logs_path, stored_dir):
         super().__init__(logs_path, stored_dir)
 
@@ -14,6 +13,6 @@ class Db(Voicedb):
         filename = self._get_filename_by_text_lang(text, lang)
 
         if filename:
-            return self._fullpath(filename)
+            return self.get_full_path(filename)
         else:
             return None

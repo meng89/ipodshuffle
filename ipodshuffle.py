@@ -1,37 +1,75 @@
 #!/usr/bin/env python3
 
-from show import show
+import sys
 
-from sync import sync
+from collections import OrderedDict
 
-from set import set_
+import show
+import set
+import sync
 
-actions = {
-    'show': show,
-    'sync': sync,
-    'set': set_,
-}
+
+modules = OrderedDict()
+
+for _name, _module in (['show', show], ['set', set], ['sync', sync]):
+    modules[_name] = _module
+
+
+class ArgumentsError(Exception):
+    pass
+
+
+def help3():
+    script_name = format(sys.argv[0])
+    s = 'usage: {} fun=<fun> <arg1>=<value1> <arg2>=<value2> ... \n'.format(script_name) + \
+        '  or : {} help\n'.format(script_name) + \
+        '\n'
+
+    s += 'All funs are:\n'
+    for name, module in modules.items():
+        s += '\n'
+        s += '   {:<7}description:  {}\n'.format(name, module.description)
+        s += module.get_help_strings(indet=10) or '\n'
+
+    print(s, end='')
+
+
+def main(**kwargs):
+
+    if 'help' in kwargs.keys() and kwargs['help']:
+        help3()
+
+    elif 'fun' in kwargs.keys():
+        name = kwargs.pop('fun')
+        modules[name].fun(**kwargs)
+
+    else:
+        help3()
 
 
 if __name__ == '__main__':
-    import sys
 
-    args = {}
+    _kwargs = {}
 
-    action = None
+    for _one in sys.argv[1:]:
 
-    for one in sys.argv[1:]:
-        k, v = one.split('=')
-
-        if k == 'action':
-            action = v
+        if '=' not in _one:
+            _kwargs[_one] = True
             continue
+
+        k, v = _one.split('=')
 
         if ',' in v:
             value = v.split(',')
+        elif v.lower() == 'true':
+            value = True
+        elif v.lower() == 'false':
+            value = False
+        elif v.isdigit():
+            value = int(v)
         else:
             value = v
 
-        args[k] = value
+        _kwargs[k] = value
 
-    actions[action](**args)
+    main(**_kwargs)

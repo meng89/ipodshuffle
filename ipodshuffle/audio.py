@@ -44,12 +44,12 @@ WAV = 4
 ALAC = 5
 AIFF = 6
 
-TYPE_MAP = {
-    MP3: 'mp3',    # mp3
-    AAC: 'aac',    # m4a, m4b
-    WAV: 'wav',    # wav
-    ALAC: 'alac',  # m4a
-    AIFF: 'aiff',  # aif
+AUDIO_MAP = {
+    MP3: 'MP3',    # mp3
+    AAC: 'AAC',    # m4a, m4b
+    WAV: 'WAV',    # wav
+    ALAC: 'ALAC',  # m4a
+    AIFF: 'AIFF',  # aif
 }
 
 

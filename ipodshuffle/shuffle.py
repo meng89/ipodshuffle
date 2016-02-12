@@ -76,8 +76,8 @@ class Shuffle:
 
             print('iTunesSD is wrong, start as empty now!')
 
-            self.enable_voiceover = 0
-            self.max_volume = 0
+            self.enable_voiceover = True
+            self.max_volume = 15
             self.__dict__['tracks'] = Tracks(self)
             self.__dict__['playlists'] = Playlists(self)
 

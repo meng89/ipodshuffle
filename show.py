@@ -37,7 +37,7 @@ def show(base):
         print('INDEX: ', player.tracks.index(track))
         print('type: ', AUDIO_MAP[track.type])
         print('filename: ', track.filename)
-        text, lang = player.tracks_voicedb.get_text_lang_from_dbid(track.dbid)
+        text, lang = player.tracks_voicedb.get_text_lang(track.dbid + '.wav')
         print('dbid: {}, lang: {}, text: {}.'.format(track.dbid, repr(lang), repr(text)))
 
         if track != player.tracks[-1]:
@@ -51,7 +51,7 @@ def show(base):
     for pl in player.playlists:
         print('type: ', PL_MAP[pl.type])
         if pl.type != MASTER:
-            text, lang = player.playlists_voicedb.get_text_lang_from_dbid(pl.dbid)
+            text, lang = player.playlists_voicedb.get_text_lang(pl.dbid + '.wav')
             print('dbid: {} (lang: {}, text: {})'.format(pl.dbid, repr(lang), repr(text)))
         else:
             print()

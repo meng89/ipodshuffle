@@ -95,6 +95,29 @@ class Shuffle:
                         stored_dir=os.path.join(self.base, self.ctrl_folder, 'Speakable', 'Playlists'),
                         users=self.playlists)
 
+    def write(self):
+        db_dic = self._dic.copy()
+
+        tracks_dics, tracks_play_count_dics = self.tracks.tracks_dics_and_tracks_play_count_dics()
+
+        playlists_dics_and_indexes = self.playlists.get_dics_and_indexes()
+
+        itunessd_chunk = itunessd.dics_to_itunessd(db_dic, tracks_dics, playlists_dics_and_indexes)
+        itunesstats_chunk = itunesstats.dics_to_itunesstats(tracks_play_count_dics)
+
+        os.makedirs(os.path.split(self._itunessd_path)[0], exist_ok=True)
+
+        if self._itunessd_chunk != itunessd_chunk:
+            with open(self._itunessd_path, 'wb') as f:
+                f.write(itunessd_chunk)
+            self._itunessd_chunk = itunessd_chunk
+
+        if self._itunesstats_chunk != itunesstats_chunk:
+            os.makedirs(os.path.split(self._itunesstats_path)[0], exist_ok=True)
+            with open(self._itunesstats_path, 'wb') as f:
+                f.write(itunesstats_chunk)
+            self._itunesstats_chunk = itunesstats_chunk
+
     @property
     def max_volume(self):
         return self._dic['max_volume']
@@ -138,24 +161,6 @@ class Shuffle:
             path_in_pod = realpath[len(self.base) + 1:]
 
         return path_in_pod
-
-    def write(self):
-        db_dic = self._dic.copy()
-
-        tracks_dics, tracks_play_count_dics = self.tracks.tracks_dics_and_tracks_play_count_dics()
-
-        playlists_dics_and_indexes = self.playlists.get_dics_and_indexes()
-
-        itunessd_chunk = itunessd.dics_to_itunessd(db_dic, tracks_dics, playlists_dics_and_indexes)
-        itunesstats_chunk = itunesstats.dics_to_itunesstats(tracks_play_count_dics)
-
-        os.makedirs(os.path.split(self._itunessd_path)[0], exist_ok=True)
-        with open(self._itunessd_path, 'wb') as f:
-            f.write(itunessd_chunk)
-
-        os.makedirs(os.path.split(self._itunesstats_path)[0], exist_ok=True)
-        with open(self._itunesstats_path, 'wb') as f:
-            f.write(itunesstats_chunk)
 
 
 class Tracks(List):
@@ -560,6 +565,11 @@ class VoiceOverDB(VoiceDB):
         if filename:
             dbid = os.path.splitext(filename)[0]
         return dbid
+
+    def get_text_lang(self, filename):
+        extra = self._Store.get_extra(filename)
+        text, lang = extra['text'], extra['lang']
+        return text, lang
 
 
 class SystemVoice:

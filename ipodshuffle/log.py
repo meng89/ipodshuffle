@@ -1,124 +1,247 @@
 import json
 import os
 import shutil
-from abc import abstractmethod
+import uuid
 
 from . import audio
 from .utils import get_checksum
 
 
+class FileNotInLogError(Exception):
+    pass
+
+
+class FileAlreadyInError(Exception):
+    pass
+
+# Sounds in ipod need:      Storage Log
+#
+# Two voices in ipod need:  Storage Log LogExt
+#
+# voices in local need:     Storage Log LogExt
+#
+# sounds in local need:             Log
+#
+# Storage Log LogExt
+
+# It's all files of course.
+
+
 class Log:
-    def __init__(self, logs_path):
-        self._logs_path = logs_path
+    def __init__(self, log_path):
+
+        self._log_path = os.path.realpath(log_path)
 
         self._original_logs_str = '{}'
         self._log = {}
-        os.makedirs(os.path.split(self._logs_path)[0], exist_ok=True)
+        os.makedirs(os.path.split(self._log_path)[0], exist_ok=True)
 
         try:
-            with open(self._logs_path) as f:
+            with open(self._log_path) as f:
                 self._original_logs_str = f.read()
         except FileNotFoundError:
             pass
-        self._log = json.loads(self._original_logs_str, )
+        self._log = json.loads(self._original_logs_str)
 
     def write_log(self):
         new_logs_str = json.dumps(self._log, sort_keys=True, indent=4, ensure_ascii=False)
         if new_logs_str != self._original_logs_str:
-            open(self._logs_path, 'w').write(new_logs_str)
+
+            with open(self._log_path, 'w') as f:
+                f.write(new_logs_str)
+
             self._original_logs_str = new_logs_str
 
 
-class VoiceDB(Log):
-    def __init__(self, logs_path, stored_dir):
-        super().__init__(logs_path)
-        self._stored_dir = stored_dir
+class Log2:
+    def __init__(self, log_path):
 
-        os.makedirs(self._stored_dir, exist_ok=True)
+        self._log_path = os.path.realpath(log_path)
 
-    def del_not_exists(self):
-        no_exists_files = []
-        for path, info in self._log.items():
-            full_path = self._stored_dir + '/' + path
-            if not os.path.exists(full_path) or not os.path.isfile(full_path):
-                no_exists_files.append(path)
+        os.makedirs(os.path.split(self._log_path)[0], exist_ok=True)
 
-        for path in no_exists_files:
-            del self._log[path]
+        try:
+            f = open(self._log_path)
+            self._original_logs_str = f.read()
+            f.close()
 
-    def del_wrong_logs(self):
-        pass
-        dbids_to_del = []
+        except FileNotFoundError:
+            self._original_logs_str = '{}'
+
+        self._log = json.loads(self._original_logs_str)
+
+    def write_log(self):
+
+        new_logs_str = json.dumps(self._log, sort_keys=True, indent=4, ensure_ascii=False)
+
+        if new_logs_str != self._original_logs_str:
+            f = open(self._log_path, 'w')
+            f.write(new_logs_str)
+            f.flush()
+            f.close()
+            self._original_logs_str = new_logs_str
+
+
+########################################################################################################################
+########################################################################################################################
+
+class Storage(Log2):
+    def __init__(self, log_path, storage_dir, random_name_fun=None):
+        super().__init__(log_path)
+        self._storage_dir = storage_dir
+
+        os.makedirs(self._storage_dir, exist_ok=True)
+
+        self._get_random_name = random_name_fun or uuid.uuid1
+
+    def realpath(self, filename):
+        return os.path.join(self._storage_dir, filename)
+
+    # ------------------------------------------------------------------------------
+
+    def del_log_if_file_no_exists(self):
+        no_exist_in_fs_filenames = []
+
         for filename, info in self._log.items():
-            voice_path = self.get_full_path(filename)
-            if info['mtime'] != os.path.getmtime(voice_path) or info['size'] != os.path.getsize(voice_path):
-                dbids_to_del.append(filename)
+            realpath = self.realpath(filename)
 
-        for dbid in dbids_to_del:
-            del self._log[dbid]
+            if not os.path.exists(realpath) or not os.path.isfile(realpath):
+                no_exist_in_fs_filenames.append(filename)
+
+        for filename in no_exist_in_fs_filenames:
+            del self._log[filename]
+
+        self.write_log()
+
+    def del_log_if_file_wrong(self):
+        wrong_filenames = []
+        for filename, info in self._log.items():
+            full_path = self.realpath(filename)
+            if info['mtime'] != os.path.getmtime(full_path) or info['size'] != os.path.getsize(full_path):
+                wrong_filenames.append(filename)
+
+        for filename in wrong_filenames:
+            del self._log[filename]
+
+        self.write_log()
+
+    def remove_file_if_not_logged(self):
+        pass
 
     def clean(self):
-        self.del_not_exists()
-        self.del_wrong_logs()
+        self.del_log_if_file_no_exists()
+        self.del_log_if_file_wrong()
 
-    @abstractmethod
-    def get_random_name(self):
-        pass
+    # ------------------------------------------------------------------------------
 
-    def get_new_filename(self):
-        file_name = None
+    def _get_new_name(self):
+        new_name = None
         while True:
-            file_name = self.get_random_name()
-            if file_name not in self._log.keys() and not os.path.exists(self.get_full_path(file_name)):
+            new_name = self._get_random_name()
+            if new_name not in self._log.keys():
                 break
-        return file_name
+        return new_name
 
-    def add(self, path, text, lang, checksum=None, user_defined=None):
-        if not audio.get_type(path) == audio.WAV:
-            raise TypeError
+    # ------------------------------------------------------------------------------
 
-        checksum = checksum or get_checksum(path)
+    def get_filename(self, checksum):
+        filename = None
+        for _filename, metadata in self._log.items():
+            if metadata['checksum'] == checksum:
+                filename = _filename
+                break
+        return filename
 
-        for file_in_dir, info in self._log.items():
-            if info['checksum'] == checksum:
-                print(lang, text, path)
-                raise FileExistsError
+    def add(self, src, checksum=None,):
 
-        filename = self.get_new_filename() + '.wav'
-        full_path = self.get_full_path(filename)
+        checksum = checksum or get_checksum(src)
 
-        shutil.copyfile(path, full_path)
+        filename = self.get_filename(checksum)
+        if filename:
+            raise FileAlreadyInError('file: {}'.format(filename))
 
-        self._log[filename] = {
-            'text': text,
-            'lang': lang,
+        new_name = self._get_new_name()
+        new_realpath = self._storage_dir + '/' + new_name
+
+        shutil.copyfile(src, new_realpath)
+
+        self._log[new_name] = {
             'checksum': checksum,
-            'mtime': os.path.getmtime(full_path),
-            'size': os.path.getsize(full_path),
-            'user_defined': user_defined
+            'mtime': os.path.getmtime(new_realpath),
+            'size': os.path.getsize(new_realpath)
         }
 
         self.write_log()
 
-        return filename
-
-    def _get_filename_by_text_lang(self, text, lang):
-        filename = None
-        for _filename, info in self._log.items():
-            if info['text'] == text and info['lang'] == lang:
-                filename = _filename
-        return filename
-
-    def _get_filename_by_checksum(self, checksum):
-        filename = None
-        for _filename, info in self._log.items():
-            if info['checksum'] == checksum:
-                filename = _filename
-        return filename
+    # ------------------------------------------------------------------------------
 
     def remove(self, filename):
-        os.remove(self.get_full_path(filename))
+        os.remove(self.realpath(filename))
         del self._log[filename]
 
-    def get_full_path(self, filename):
-        return os.path.join(self._stored_dir, filename)
+        self.write_log()
+    # ------------------------------------------------------------------------------
+
+    def get_filenames(self):
+        return self._log.keys()
+
+    def get_extra(self, filename):
+        return self._log[filename].setdefault('extra', {})
+
+    def set_extra(self, filename, extra):
+        self._log[filename]['extra'] = extra
+
+        self.write_log()
+
+########################################################################################################################
+########################################################################################################################
+
+
+class VoiceDB:
+    def __init__(self, log_path, storage_dir, random_name_fun):
+        self._Store = Storage(log_path, storage_dir, random_name_fun)
+
+    def clean(self):
+        self._Store.clean()
+
+    def add(self, src, text, lang, checksum=None):
+
+        checksum = checksum or get_checksum(src)
+
+        if not audio.get_type(src) == audio.WAV:
+            raise TypeError
+
+        filename = self.get_filename(text, lang)
+
+        if filename:
+            raise Exception
+
+        try:
+            self._Store.add(src, checksum)
+
+        except FileAlreadyInError:
+            pass
+
+        filename = self._Store.get_filename(checksum)
+        extra = {
+            'text': text,
+            'lang': lang
+        }
+        self._Store.set_extra(filename, extra)
+
+    def get_filename(self, text, lang):
+        filename = None
+        for _filename in self.get_filenames():
+            _extra = self._Store.get_extra(_filename)
+            _text, _lang = _extra.setdefault('text', None), _extra.setdefault('lang', None)
+            if _text == text and _lang == lang:
+                filename = _filename
+                break
+
+        return filename
+
+    def get_filenames(self):
+        return self._Store.get_filenames()
+
+    def realpath(self, filename):
+        return self._Store.realpath(filename)

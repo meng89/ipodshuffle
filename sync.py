@@ -4,6 +4,7 @@ import os
 import tempfile
 
 from mutagen.easyid3 import EasyID3
+from mutagen.id3 import ID3NoHeaderError
 
 import langid
 
@@ -13,7 +14,7 @@ from ipodshuffle.audio import get_type as get_audio_type
 
 from ipodshuffle.shuffle import MASTER, NORMAL, PODCAST, AUDIOBOOK
 
-import ipodshuffle.tts.localdb
+from ipodshuffle.tts.localvoice import LocalVoiceDB
 
 import ipodshuffle.utils
 
@@ -30,13 +31,46 @@ def filename(path):
     return os.path.splitext(os.path.split(path)[1])[0]
 
 
-def id3_title(path):
+def beautify_for_tts(text):
+    new_text = None
+    if '-' in text:
+        new_text = text.replace('-', ',')
+
+    return new_text
+
+
+def id3_title_artist(path):
     title = None
-    audio = EasyID3(path)
-    titles = audio['title']
-    if titles:
-        title = titles[0]
-    return title
+    artist = None
+
+    try:
+        audio = EasyID3(path)
+    except ID3NoHeaderError:
+        pass
+    else:
+
+        for k, v in audio.items():
+            if k == 'title':
+                title = v[0]
+            elif k == 'artist':
+                artist = v[0]
+
+    return title, artist
+
+
+def title_artist_or_filename(path):
+
+    title, artist = id3_title_artist(path)
+    if title:
+        text = title
+        if artist:
+            text += ', ' + artist
+
+    else:
+        text = beautify_for_tts(filename(path))
+
+    return text
+
 
 ###########################################################################
 
@@ -167,15 +201,15 @@ def voice_things(ipod_voicedb, local_voicedb, ttsengine, langs=None, **kwargs):
 
         dbid = ipod_voicedb.get_dbid(text, lang)
         if not dbid:  # The voice not in ipod tracks/playlists db
-            print('Voice {} {} not in tracks/playlists, try to get from local ...'.format(repr(lang), repr(text)), end='')
+            print('Voice {} {} not in tracks/playlists, try get from local ...'.format(repr(lang), repr(text)), end='')
 
-            local_voice_path = local_voicedb.get_path_by_text_lang(text, lang)
+            local_voice_path = local_voicedb.get_path(text, lang)
 
             if local_voice_path:
                 print('found!')
 
             else:  # The voice not in local
-                print('Not in local, try to get from tts engine.')
+                print('Not in local, try get from tts engine.')
 
                 print('Get a new voice: "{}", "{}" ...'.format(lang, text), end='')
                 voice_data = tts(text, lang)
@@ -189,7 +223,8 @@ def voice_things(ipod_voicedb, local_voicedb, ttsengine, langs=None, **kwargs):
                     f.write(voice_data)
 
                 local_voicedb.add(tmp_file_name, text, lang)
-                local_voice_path = local_voicedb.get_path_by_text_lang(text, lang)
+
+                local_voice_path = local_voicedb.get_path(text, lang)
 
             ipod_voicedb.add(local_voice_path, text, lang)
             dbid = ipod_voicedb.get_dbid(text, lang)
@@ -245,8 +280,9 @@ def sync(src, base, **tts_kwargs):
 
     if player.enable_voiceover:
 
-        local_voicedb = ipodshuffle.tts.localdb.LocalDB(os.path.join(CACHE_DIR, 'voices_logs.json'),
-                                                        os.path.join(CACHE_DIR, 'voices'))
+        local_voicedb = ipodshuffle.tts.localvoice.LocalVoiceDB(os.path.join(CACHE_DIR, 'voices_log.json'),
+                                                                os.path.join(CACHE_DIR, 'voices'))
+        local_voicedb.clean()
 
         get_track_dbid = voice_things(player.tracks_voicedb, local_voicedb, **tts_kwargs)
         get_playlist_dbid = voice_things(player.playlists_voicedb, local_voicedb, **tts_kwargs)
@@ -273,9 +309,9 @@ def sync(src, base, **tts_kwargs):
 
                 track.dbid = get_track_dbid(text, langid_lang)
 
-    def add_playlists(title_files, pl_type, text_fun):
+    def add_playlists(title_and_files, pl_type, text_fun):
 
-        for title, files in title_files:
+        for title, files in title_and_files:
             pl = player.playlists.add()
             pl.type = pl_type
 
@@ -288,10 +324,10 @@ def sync(src, base, **tts_kwargs):
 
     master_pl = player.playlists.add()
     master_pl.type = MASTER
-    add_files_to_pl(master_pl, master[1], filename)
+    add_files_to_pl(master_pl, master[1], title_artist_or_filename)
 
-    add_playlists(normals, NORMAL, filename)
-    add_playlists(podcasts, PODCAST, id3_title)
+    add_playlists(normals, NORMAL, title_artist_or_filename)
+    add_playlists(podcasts, PODCAST, title_artist_or_filename)
     add_playlists(audiobooks, AUDIOBOOK, filename)
 
     player.write()

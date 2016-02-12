@@ -24,3 +24,4 @@ def get_help_strings(indet=None):
     s = ' ' * indet + 'usage:  base=<path> enable_voiceover=[true|false] max_volume=[0-17]\n'
 
     return s
+

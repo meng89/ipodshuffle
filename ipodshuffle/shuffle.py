@@ -1,19 +1,14 @@
 import os
 import random
-import shutil
 import string
 
 from . import itunessd, itunesstats, audio
 
-from .utils import get_checksum, get_all_files
-from .log import VoiceDB, Log
+from .utils import get_checksum
 
-
-# from .baseclasses import List
+from .log import VoiceDB, Storage, FileAlreadyInError
 
 from collections import UserList as List
-
-# baseclasses ?  see https://github.com/meng89/epubuilder/blob/feature-rw/epubuilder/baseclasses.py
 
 from .itunessd import MASTER, NORMAL, PODCAST, AUDIOBOOK
 
@@ -39,6 +34,10 @@ def make_dbid2():
     return dbid_string
 
 make_dbid = make_dbid2
+
+
+def make_dbid_name():
+    return make_dbid() + '.wav'
 
 
 class Shuffle:
@@ -79,18 +78,18 @@ class Shuffle:
             self.__dict__['playlists'] = Playlists(self)
 
         self.__dict__['sounds'] = SoundDB(self,
-                                          logs_path=os.path.join(self.base, self.ctrl_folder, 'sounds_log.json'),
-                                          stored_dir=os.path.join(self.base, self.ctrl_folder, 'sounds'))
+                                          os.path.join(self.base, self.ctrl_folder, 'sounds_log.json'),
+                                          os.path.join(self.base, self.ctrl_folder, 'sounds'))
 
         self.__dict__['tracks_voicedb'] = \
-            ShuffleVoiceDB(logs_path=os.path.join(self.base, self.ctrl_folder, 'tracks_voices_log.json'),
-                           stored_dir=os.path.join(self.base, self.ctrl_folder, 'Speakable', 'Tracks'),
-                           users=self.tracks)
+            VoiceOverDB(log_path=os.path.join(self.base, self.ctrl_folder, 'tracks_voices_log.json'),
+                        stored_dir=os.path.join(self.base, self.ctrl_folder, 'Speakable', 'Tracks'),
+                        users=self.tracks)
 
         self.__dict__['playlists_voicedb'] = \
-            ShuffleVoiceDB(logs_path=os.path.join(self.base, self.ctrl_folder, 'playlists_voices_log.json'),
-                           stored_dir=os.path.join(self.base, self.ctrl_folder, 'Speakable', 'Playlists'),
-                           users=self.playlists)
+            VoiceOverDB(log_path=os.path.join(self.base, self.ctrl_folder, 'playlists_voices_log.json'),
+                        stored_dir=os.path.join(self.base, self.ctrl_folder, 'Speakable', 'Playlists'),
+                        users=self.playlists)
 
     @property
     def max_volume(self):
@@ -128,11 +127,11 @@ class Shuffle:
     def playlists_voicedb(self):
         return self.__dict__['playlists_voicedb']
 
-    def get_path_in_ipod(self, path):
+    def get_path_in_ipod(self, realpath):
 
         path_in_pod = None
-        if path[0:len(self.base)] == self.base:
-            path_in_pod = path[len(self.base)+1:]
+        if realpath[0:len(self.base)] == self.base:
+            path_in_pod = realpath[len(self.base) + 1:]
 
         return path_in_pod
 
@@ -483,136 +482,37 @@ class Playlist:  # not list
         return self._dic, indexes
 
 
-class SoundDB(Log):
-    def __init__(self, shuffle, logs_path, stored_dir):
-        super().__init__(logs_path)
+def get_name():
+    return ''.join(random.sample(string.ascii_uppercase, 6))
+
+
+class SoundDB(Storage):
+    def __init__(self, shuffle, log_path, storage_dir):
+        super().__init__(log_path, storage_dir, random_name_fun=get_name)
 
         self._shuffle = shuffle
 
-        self._stored_dir = stored_dir
+        self.storage_dir = storage_dir
 
-    def del_not_exists(self):
-        no_exists_files = []
-        for path_in_ipod, metadata in self._log.items():
-            full_path = self._shuffle.base + '/' + path_in_ipod
-            if not os.path.exists(full_path) or not os.path.isfile(full_path):
-                no_exists_files.append(path_in_ipod)
-
-        for path in no_exists_files:
-            del self._log[path]
-
-    def updata_changed(self):
-        changed_logs = {}
-        for path_in_ipod, metadata in self._log.items():
-            path_in_os = self._shuffle.base + '/' + path_in_ipod
-
-            if os.path.getsize(path_in_os) != metadata['size'] or os.path.getmtime(path_in_os) != metadata['mtime']:
-                changed_logs[path_in_ipod] = {
-                    'mtime': os.path.getmtime(path_in_os),
-                    'size': os.path.getsize(path_in_os),
-                    'checksum': get_checksum(path_in_os)
-                }
-
-        self._log.update(changed_logs)
-
-    def update_from_tracks(self):
-        not_log_tracks_filenames = []
-        for track in self._shuffle.tracks:
-            if track.filename[1:] not in self._log.keys():
-                not_log_tracks_filenames.append(track.filename[1:])
-
-        tracks_logs_notinlogs = {}
-        for path_in_ipod in not_log_tracks_filenames:
-            path_in_os = self._shuffle.base + '/' + path_in_ipod
-            tracks_logs_notinlogs[path_in_ipod] = {
-                    'mtime': os.path.getmtime(path_in_os),
-                    'size': os.path.getsize(path_in_os),
-                    'checksum': get_checksum(path_in_os)
-                }
-        self._log.update(tracks_logs_notinlogs)
-
-    def updata_from_stored_dir(self):
-        for file in [file for file in get_all_files(self._stored_dir) if audio.get_type(file)]:
-            if self._shuffle.get_path_in_ipod(file) not in self._log.keys():
-                self.add(file)
-
-    def rebuilt_logs_from_stored_dir(self):
-        pass
-
-    def remove_not_in_logs_files(self):
-        pass
-
-    def clean(self):
-        self.del_not_exists()
-        self.updata_changed()
-        self.update_from_tracks()
-
-        self.updata_from_stored_dir()
-
-        self.write_log()
-
-    def filelist(self):
-        return tuple(self._log.keys())
-
-    def get(self, checksum):
-        path = None
-        for key, info in self._log.items():
-            if info['checksum'] == checksum:
-                path = key
-                break
-        return path
-
-    def add(self, path, checksum=None):
-        if not audio.get_type(path):
+    def add(self, src, checksum=None):
+        if not audio.get_type(src):
             raise TypeError('The type of this file is not supported.')
+        checksum = checksum or get_checksum(src)
 
-        checksum = checksum or get_checksum(path)
+        try:
+            super().add(src, checksum)
+        except FileAlreadyInError:
+            pass
 
+        return self.get_path_in_ipod(checksum)
+
+    def get_path_in_ipod(self, checksum):
         path_in_ipod = None
 
-        path_in_ipod_but_not_in_logs = self._shuffle.get_path_in_ipod(path)
-
-        if path_in_ipod_but_not_in_logs:
-            path_in_ipod = path_in_ipod_but_not_in_logs
-
-            self._log[path_in_ipod] = {
-                'checksum': checksum,
-                'mtime': os.path.getmtime(path),
-                'size': os.path.getsize(path)
-            }
-
-        for PATH, metadata in self._log.items():
-            if metadata['checksum'] == checksum:
-                path_in_ipod = PATH
-                break
-
-        if not path_in_ipod:  # Mean this file is not in ipod.
-
-            target_path = None
-
-            # 1. get random filename which not use.
-            while True:
-                # at most 65533 files in one folder
-                target_path = os.path.join(self._stored_dir, ''.join(random.sample(string.ascii_uppercase, 6)))
-
-                path_in_ipod = self._shuffle.get_path_in_ipod(target_path)
-
-                if not os.path.exists(target_path) and path_in_ipod not in self._log.keys():
-                    break
-
-            # 2. copy file
-            # target_path = self._shuffle.base_dir + '/' + path_in_ipod
-            os.makedirs(os.path.split(target_path)[0], exist_ok=True)
-            shutil.copyfile(path, target_path)
-
-            # 3. update logs
-            self._log[path_in_ipod] = {
-                'checksum': checksum,
-                'mtime': os.path.getmtime(target_path),
-                'size': os.path.getsize(target_path)
-            }
-
-        self.write_log()
+        filename = self.get_filename(checksum)
+        realpath = self.realpath(filename)
+        if filename:
+            path_in_ipod = self._shuffle.get_path_in_ipod(realpath)
 
         return path_in_ipod
 
@@ -621,73 +521,38 @@ class SoundDB(Log):
         del self._shuffle.sounds_logs[path]
 
 
-class ShuffleVoiceDB(VoiceDB):
-    def __init__(self, logs_path, stored_dir, users):
-        super().__init__(logs_path, stored_dir)
+class VoiceOverDB(VoiceDB):
+    def __init__(self, log_path, stored_dir, users=None):
+        super().__init__(log_path, stored_dir, random_name_fun=make_dbid_name)
+
+        self._storage_dir = stored_dir
         self._users = users
 
-    def get_random_name(self):
-        return make_dbid2()
+    def remove_not_in_use(self):
+        files_to_remove = []
 
-    def clean_store_dir(self):
-        files_to_del = []
-        for file in os.listdir(self._stored_dir):
-            name, ext = os.path.splitext(file)
-            if (name not in self._log.keys() and name not in [user.dbid for user in self._users]) or ext != '.wav':
-                files_to_del.append(file)
+        for filename in os.listdir(self._storage_dir):
+            dbid, ext = os.path.splitext(filename)
 
-        for file in files_to_del:
-            full_path = self._stored_dir + '/' + file
+            if filename not in self.get_filenames() and dbid not in [user.dbid for user in self._users]:
+                files_to_remove.append(self.realpath(filename))
 
-            if os.path.isfile(full_path):
-                os.remove(full_path)
+        for realpath in files_to_remove:
+            if os.path.isfile(realpath):
+                os.remove(realpath)
             else:
-                os.removedirs(full_path)
+                os.removedirs(realpath)
 
     def clean(self):
         super().clean()
-        self.clean_store_dir()
+        self.remove_not_in_use()
 
-    def get_dbid(self, text=None, lang=None, checksum=None):
+    def get_dbid(self, text, lang):
         dbid = None
-
-        filename = None
-        if text and lang:
-            filename = self._get_filename_by_text_lang(text, lang)
-        elif checksum:
-            filename = self._get_filename_by_checksum(checksum)
-
+        filename = self.get_filename(text, lang)
         if filename:
             dbid = os.path.splitext(filename)[0]
-
         return dbid
-
-    def get_filename_from_dbid(self, dbid):
-        filename = None
-
-        _filename = dbid + '.wav'
-        if _filename in self._log.keys():
-            filename = _filename
-
-        return filename
-
-    def get_text_lang_from_dbid(self, dbid):
-        filename = self.get_filename_from_dbid(dbid)
-        text = None
-        lang = None
-        if filename:
-            text = self._log[filename]['text']
-            lang = self._log[filename]['lang']
-
-        return text, lang
-
-    def get_full_path_from_dbid(self, dbid):
-        full_path = None
-
-        filename = self.get_filename_from_dbid(dbid)
-        if filename:
-            full_path = self.get_full_path(filename)
-        return full_path
 
 
 class SystemVoice:

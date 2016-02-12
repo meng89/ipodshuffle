@@ -14,7 +14,7 @@ from ipodshuffle.audio import get_type as get_audio_type
 
 from ipodshuffle.shuffle import MASTER, NORMAL, PODCAST, AUDIOBOOK
 
-from ipodshuffle.tts.localvoice import LocalVoiceDB
+from ipodshuffle.localdb import LocalVoiceDB, FileLog
 
 import ipodshuffle.utils
 
@@ -61,11 +61,18 @@ def id3_title_artist(path):
 def title_artist_or_filename(path):
 
     title, artist = id3_title_artist(path)
+    title.strip()
+    artist.strip()
+
     if title:
         text = title
         if artist:
-            text += ', ' + artist
+            if text[-1] in ('?', ',', '.'):
+                pass
+            else:
+                text += ','
 
+            text += ' ' + artist
     else:
         text = beautify_for_tts(filename(path))
 
@@ -252,6 +259,8 @@ def sync(src, base, **tts_kwargs):
     player.playlists.clear()
     player.tracks.clear()
 
+    local_filelog = FileLog(os.path.join(CACHE_DIR, 'local_file_log.json'))
+
     dires_funs = (
         (src + '/' + 'music', get_master_normals),
         (src + '/' + 'podcasts', get_podcasts),
@@ -280,8 +289,7 @@ def sync(src, base, **tts_kwargs):
 
     if player.enable_voiceover:
 
-        local_voicedb = ipodshuffle.tts.localvoice.LocalVoiceDB(os.path.join(CACHE_DIR, 'voices_log.json'),
-                                                                os.path.join(CACHE_DIR, 'voices'))
+        local_voicedb = LocalVoiceDB(os.path.join(CACHE_DIR, 'voices_log.json'), os.path.join(CACHE_DIR, 'voices'))
         local_voicedb.clean()
 
         get_track_dbid = voice_things(player.tracks_voicedb, local_voicedb, **tts_kwargs)
@@ -291,12 +299,18 @@ def sync(src, base, **tts_kwargs):
 
         for file in files:
 
-            path_in_ipod = player.sounds.add(file)
+            checksum = local_filelog.get_checksum(file)
+            if not checksum:
+                local_filelog.add(file)
+                checksum = local_filelog.get_checksum(file)
+
+            path_in_ipod = player.sounds.add(file, checksum)
 
             track = None
-            for TRACK in player.tracks:
-                if TRACK.path_in_ipod == path_in_ipod:
-                    track = TRACK
+            for _track in player.tracks:
+                if _track.path_in_ipod == path_in_ipod:
+                    track = _track
+
             if not track:
                 track = player.tracks.add(path_in_ipod)
 

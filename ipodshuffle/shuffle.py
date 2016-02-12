@@ -10,7 +10,7 @@ from .log import VoiceDB, Storage, FileAlreadyInError
 
 from collections import UserList as List
 
-from .itunessd import MASTER, NORMAL, PODCAST, AUDIOBOOK
+from .itunessd import ChunkError, MASTER, NORMAL, PODCAST, AUDIOBOOK
 
 PL_MAP = {
     MASTER: 'MASTER',
@@ -48,30 +48,34 @@ class Shuffle:
         self._itunessd_path = self.base + '/' + self.ctrl_folder + '/iTunes/iTunesSD'
         self._itunesstats_path = self.base + '/' + self.ctrl_folder + '/iTunes/iTunesStats'
 
+        self._itunessd_chunk = b''
+        self._itunesstats_chunk = b''
+
         self._dic = {}
 
-        def read(path, fun):
-            if os.path.exists(path):
-                if os.path.isfile(path):
-                    chunk = open(path, 'rb').read()
-                    return fun(chunk)
-                else:
-                    raise Exception
+        try:
+            if os.path.exists(self._itunessd_path):
+                self._itunessd_chunk = open(self._itunessd_path, 'rb').read()
 
-        if os.path.exists(self._itunessd_path):
-            header_dic, tracks_dics, playlists_dics_and_indexes = read(self._itunessd_path, itunessd.itunessd_to_dics)
+            header_dic, tracks_dics, playlists_dics_and_indexes = itunessd.itunessd_to_dics(self._itunessd_chunk)
 
             tracks_play_count_dics = []
+
             if os.path.exists(self._itunesstats_path):
-                tracks_play_count_dics = read(self._itunesstats_path, itunesstats.itunesstats_to_dics)
+                self._itunesstats_chunk = open(self._itunesstats_path, 'rb').read()
+                tracks_play_count_dics = itunesstats.itunesstats_to_dics(self._itunesstats_chunk)
+
+            else:
+                pass
 
             self._dic = header_dic
-
             self.__dict__['tracks'] = Tracks(self, tracks_dics, tracks_play_count_dics)
-
             self.__dict__['playlists'] = Playlists(self, playlists_dics_and_indexes)
 
-        else:
+        except ChunkError:
+
+            print('iTunesSD is wrong, start as empty now!')
+
             self.enable_voiceover = 0
             self.max_volume = 0
             self.__dict__['tracks'] = Tracks(self)
@@ -198,13 +202,22 @@ class Track:
         self._shuffle = shuffle
         # self._dbid = dic['dbid']
 
-        if dic and play_count_dic:
-            self._dic = dic
+        if play_count_dic:
             self._play_count_dic = play_count_dic
+        else:
+            self._play_count_dic = {}
+
+            self.bookmark_time = 0
+            self.play_count = 0
+            self.skip_count = 0
+            self.time_of_last_skip = 0
+            self.time_of_last_play = 0
+
+        if dic:
+            self._dic = dic
 
         elif path_in_ipod:
             self._dic = {}
-            self._play_count_dic = {}
 
             self.start_at_pos_ms = 0
             self.stop_at_pos_ms = 0
@@ -222,12 +235,6 @@ class Track:
             self.disc_number = 0
             self.dbid = '0000000000000000'
             self.artist_id = 0
-
-            self.bookmark_time = 0
-            self.play_count = 0
-            self.skip_count = 0
-            self.time_of_last_skip = 0
-            self.time_of_last_play = 0
         else:
             raise Exception
 

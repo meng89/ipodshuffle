@@ -1,28 +1,8 @@
 #!/usr/bin/env python3
 
-
-class A:
-
-    def __init__(self):
-        self._log = {
-            '1': {
-                'text': 'text',
-                'extra': {}
-            }
-        }
-
-    def get_extra(self):
-        return self._log['1']['extra']
-
-    def p(self):
-        print(self._log)
+chunk = open('/run/media/chenmeng/IPOD2/iPod_Control/iTunes/iTunesSD', 'rb').read()
 
 
+length = int.from_bytes(chunk[8:13], byteorder='little')
 
-a = A()
-
-extra = a.get_extra()
-
-extra['jbm'] = 'jm'
-
-a.p()
+print(length)

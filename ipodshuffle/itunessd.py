@@ -374,6 +374,7 @@ def itunessd_to_dics(itunessd):
     # tracks
     tracks_header_dic, tracks_offsets = get_dic_sub_numbers(itunessd, header_dic['tracks_header_offset'],
                                                             tracks_header_table)
+
     tracks_dics = []
     for track_offset in tracks_offsets:
         _track_dic = chunk_to_dic(itunessd[track_offset:], track_table)

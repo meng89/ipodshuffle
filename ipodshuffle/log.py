@@ -22,38 +22,9 @@ class FileAlreadyInError(Exception):
 #
 # sounds in local need:             Log
 #
-# Storage Log LogExt
-
-# It's all files of course.
 
 
 class Log:
-    def __init__(self, log_path):
-
-        self._log_path = os.path.realpath(log_path)
-
-        self._original_logs_str = '{}'
-        self._log = {}
-        os.makedirs(os.path.split(self._log_path)[0], exist_ok=True)
-
-        try:
-            with open(self._log_path) as f:
-                self._original_logs_str = f.read()
-        except FileNotFoundError:
-            pass
-        self._log = json.loads(self._original_logs_str)
-
-    def write_log(self):
-        new_logs_str = json.dumps(self._log, sort_keys=True, indent=4, ensure_ascii=False)
-        if new_logs_str != self._original_logs_str:
-
-            with open(self._log_path, 'w') as f:
-                f.write(new_logs_str)
-
-            self._original_logs_str = new_logs_str
-
-
-class Log2:
     def __init__(self, log_path):
 
         self._log_path = os.path.realpath(log_path)
@@ -68,7 +39,10 @@ class Log2:
         except FileNotFoundError:
             self._original_logs_str = '{}'
 
-        self._log = json.loads(self._original_logs_str)
+        try:
+            self._log = json.loads(self._original_logs_str)
+        except ValueError:
+            self._log = {}
 
     def write_log(self):
 
@@ -85,7 +59,8 @@ class Log2:
 ########################################################################################################################
 ########################################################################################################################
 
-class Storage(Log2):
+
+class Storage(Log):
     def __init__(self, log_path, storage_dir, random_name_fun=None):
         super().__init__(log_path)
         self._storage_dir = storage_dir
@@ -117,8 +92,19 @@ class Storage(Log2):
         wrong_filenames = []
         for filename, info in self._log.items():
             full_path = self.realpath(filename)
-            if info['mtime'] != os.path.getmtime(full_path) or info['size'] != os.path.getsize(full_path):
+
+            now_mtime = os.path.getmtime(full_path)
+
+            if info['size'] != os.path.getsize(full_path) or abs(info['mtime'] - now_mtime) > 2:
                 wrong_filenames.append(filename)
+                continue
+
+            if 0 < abs(info['mtime'] - now_mtime) <= 2:
+                pass
+                # print("\nFile MTIMEs don't match, but very close: ", full_path)
+                # print('log: {}, now: {}'.format(repr(info['mtime']), repr(os.path.getmtime(full_path))))
+                # print('Just notice, nothing to do')
+                # print("Interesting! I dont know way.")
 
         for filename in wrong_filenames:
             del self._log[filename]
@@ -152,7 +138,7 @@ class Storage(Log2):
                 break
         return filename
 
-    def add(self, src, checksum=None,):
+    def add(self, src, checksum=None):
 
         checksum = checksum or get_checksum(src)
 

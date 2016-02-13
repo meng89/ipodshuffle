@@ -28,24 +28,27 @@
    #+END_SRC
     
 ** set
-    #+BEGIN_EXAMPLE
-    ipodshuffle fun=set base=ipodshuffle_mount_point
-
+   #+BEGIN_SRC
+   ipodshuffle fun=set base=ipodshuffle_mount_point
+   #+END_SRC
 ** TTS things
    Program use Python library langid to figure out track and playlist title.
    For now, have two TTS engine wrapper:
 *** sovx:
     sovx pico2wave. Make sure you already installed it. 
     you can use it like this:
+    #+BEGIN_SRC
     ipodshuffle fun=sync src=<src> base<mount_point> ttsengine=sovx langs=en-US
-
+    #+END_SRC
 *** voicerss
     a http tts engine. supported CJK languages. For now, dayily request is free for 350 times, but use this need to regitstration to get an API key,
     they website: http://www.voicerss.org
     use it like this:
+    #+BEGIN_SRC
     ipodshuffle fun=sync src=ipodshuffle_src base=ipodshuffle_mount_point ttsengine=voicerss langs=zh-cn,en-gb,ja-jp key=sa9ofsa09f8s09sa8f0sa98sa0f9s8
+    #+END_SRC
 
 
 * Usage it as a Python library
-   Only tested in Python 3
-   see ipodshuffle/user_tools/sync.py
+  Only tested in Python 3
+  example see ipodshuffle/user_tools/sync.py

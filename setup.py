@@ -3,7 +3,7 @@ import os
 
 NAME = "ipodshuffle"
 
-VERSION = '0.1.0'
+VERSION = '0.1.1'
 
 DESCRIPTION = 'A Python library and tools to manage iPod shuffle 4 generation'
 
@@ -31,7 +31,9 @@ setup(name=NAME,
       license='MIT',
       url=URL,
       download_url=DOWNLOAD_URL,
-      packages=['ipodshuffle'],
+      packages=['ipodshuffle',
+                'ipodshuffle/user_tools',
+                'ipodshuffle/user_tools/tts'],
       scripts=['ipodshuffle.py'],
       install_requires=[line.strip() for line in open('requirements.txt')],
       classifiers=CLASSIFIERS

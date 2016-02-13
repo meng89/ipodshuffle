@@ -77,7 +77,7 @@ class Shuffle:
             print('iTunesSD is wrong, start as empty now!')
 
             self.enable_voiceover = True
-            self.max_volume = 15
+            self.max_volume = 12
             self.__dict__['tracks'] = Tracks(self)
             self.__dict__['playlists'] = Playlists(self)
 
@@ -178,8 +178,8 @@ class Tracks(List):
 
             tracks_with_play_count_dics_zip = zip(tracks_dics, tracks_play_count_dics)
 
-        for dic, play_count_dic in tracks_with_play_count_dics_zip:
-            self.append(Track(self._shuffle, dic=dic, play_count_dic=play_count_dic))
+        for dic, count_dic in tracks_with_play_count_dics_zip:
+            self.append(Track(self._shuffle, dic=dic, count_dic=count_dic))
 
     def add(self, path_in_ipod):
         # if path_in_ipod not in self._shuffle.sounds:
@@ -203,14 +203,14 @@ class Tracks(List):
 
 
 class Track:
-    def __init__(self, shuffle, path_in_ipod=None, dic=None, play_count_dic=None):
+    def __init__(self, shuffle, path_in_ipod=None, dic=None, count_dic=None):
         self._shuffle = shuffle
         # self._dbid = dic['dbid']
 
-        if play_count_dic:
-            self._play_count_dic = play_count_dic
+        if count_dic:
+            self._count_dic = count_dic
         else:
-            self._play_count_dic = {}
+            self._count_dic = {}
 
             self.bookmark_time = 0
             self.play_count = 0
@@ -386,48 +386,48 @@ class Track:
 
     @property
     def bookmark_time(self):
-        return self._play_count_dic['bookmark_time']
+        return self._count_dic['bookmark_time']
 
     @bookmark_time.setter
     def bookmark_time(self, value):
-        self._play_count_dic['bookmark_time'] = value
+        self._count_dic['bookmark_time'] = value
 
     @property
     def play_count(self):
-        return self._play_count_dic['play_count']
+        return self._count_dic['play_count']
 
     @play_count.setter
     def play_count(self, value):
-        self._play_count_dic['play_count'] = value
+        self._count_dic['play_count'] = value
 
     @property
     def time_of_last_play(self):
-        return self._play_count_dic['time_of_last_play']
+        return self._count_dic['time_of_last_play']
 
     @time_of_last_play.setter
     def time_of_last_play(self, value):
-        self._play_count_dic['time_of_last_play'] = value
+        self._count_dic['time_of_last_play'] = value
 
     @property
     def skip_count(self):
-        return self._play_count_dic['skip_count']
+        return self._count_dic['skip_count']
 
     @skip_count.setter
     def skip_count(self, value):
-        self._play_count_dic['skip_count'] = value
+        self._count_dic['skip_count'] = value
 
     @property
     def time_of_last_skip(self):
-        return self._play_count_dic['time_of_last_skip']
+        return self._count_dic['time_of_last_skip']
 
     @time_of_last_skip.setter
     def time_of_last_skip(self, value):
-        self._play_count_dic['time_of_last_skip'] = value
+        self._count_dic['time_of_last_skip'] = value
 
     ########################################################
     def get_dics(self):
         self._dic['type'] = self.type
-        return self._dic, self._play_count_dic
+        return self._dic, self._count_dic
 
 
 class Playlists(List):
@@ -549,15 +549,11 @@ class VoiceOverDB(VoiceDB):
             if filename not in self.get_filenames() and dbid not in [user.dbid for user in self._users]:
                 files_to_remove.append(self.realpath(filename))
 
-        for realpath in files_to_remove:
-            if os.path.isfile(realpath):
-                os.remove(realpath)
+        for path in files_to_remove:
+            if os.path.isfile(path):
+                os.remove(path)
             else:
-                os.removedirs(realpath)
-
-    def clean(self):
-        super().clean()
-        self.remove_not_in_use()
+                os.removedirs(path)
 
     def get_dbid(self, text, lang):
         dbid = None

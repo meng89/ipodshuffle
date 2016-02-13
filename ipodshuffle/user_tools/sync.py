@@ -14,13 +14,14 @@ from ipodshuffle.audio import get_type as get_audio_type
 
 from ipodshuffle.shuffle import MASTER, NORMAL, PODCAST, AUDIOBOOK
 
-from ipodshuffle.localdb import LocalVoiceDB, FileLog
+from ipodshuffle.localdb import LocalVoiceDB, LocalFileLog
 
 import ipodshuffle.utils
 
-from ipodshuffle.tts.engine import ENGINE_MAP
+from .tts import ENGINE_MAP
+from .tts.error import GetTTSError
 
-from character_detect import has_ja_char, has_ko_char
+from .character_detect import has_ja_char, has_ko_char
 
 
 CACHE_DIR = os.path.join(os.path.expanduser('~'), '.cache/ipodshuffle')
@@ -159,15 +160,14 @@ def get_audiobooks(dire):
     return titles_files
 
 
-def fix_cjk(seted_langs, code, text):
+def fix_zh(code, text):
     fixed_code = code
-    if not seted_langs or 'zh' in seted_langs:
-        if code == 'ja':
-            if not has_ja_char(text):
-                fixed_code = 'zh'
-        elif code == 'ko':
-            if not has_ko_char(text):
-                fixed_code = 'zh'
+
+    if code == 'ja' and not has_ja_char(text):
+        fixed_code = 'zh'
+
+    elif code == 'ko' and not has_ko_char(text):
+        fixed_code = 'zh'
 
     return fixed_code
 
@@ -184,43 +184,46 @@ def voice_things(ipod_voicedb, local_voicedb, ttsengine, langs=None, **kwargs):
 
     tts_engine = ENGINE_MAP[ttsengine]
 
-    langs = langs or []
+    if langs:
+        if not isinstance(langs, list):
+            langs = [langs]
+    else:
+        langs = tts_engine.langs()
+
+    # user langs to langid langs to set, langid langs to user langs to get voice
 
     lang_map = {}
-    for _lang in langs:
-        if not tts_engine.is_available(_lang):
-            raise Exception
 
-        langid_code_ = tts_engine.to_langid_code(_lang)
-        lang_map[langid_code_] = _lang
+    for lang in langs:
+        _langid_code = tts_engine.lang_to_langid_code(lang)
+        lang_map[_langid_code] = lang
 
-    if not lang_map:
-        lang_map = tts_engine.get_lang_map()
+    languages_to_set = [lang_id_code for lang_id_code in lang_map.keys()]
 
-    langid_codes_to_set = lang_map.keys()
-    langid.set_languages(langid_codes_to_set)
+    langid.set_languages(languages_to_set)
 
     tts = wrapper_tts(tts_engine.tts, **kwargs)
 
-    def get_dbid(text, langid_code):
+    def get_or_make_dbid(text):
 
-        lang = lang_map[langid_code]
+        langid_code = langid.classify(text)[0]
 
-        dbid = ipod_voicedb.get_dbid(text, lang)
+        if 'zh' in languages_to_set:
+            langid_code = fix_zh(langid_code, text)
+
+        tts_lang = lang_map[langid_code]
+
+        dbid = ipod_voicedb.get_dbid(text, tts_lang)
         if not dbid:  # The voice not in ipod tracks/playlists db
-            print('Voice {} {} not in tracks/playlists, try get from local ...'.format(repr(lang), repr(text)), end='')
+            print('\nvoice: {}, {} :'.format(repr(tts_lang), repr(text)))
+            print('  not in dir Tracks/Playlists, ', end='')
+            local_voice_path = local_voicedb.get_path(text, tts_lang)
 
-            local_voice_path = local_voicedb.get_path(text, lang)
-
-            if local_voice_path:
-                print('found!')
-
-            else:  # The voice not in local
-                print('Not in local, try get from tts engine.')
-
-                print('Get a new voice: "{}", "{}" ...'.format(lang, text), end='')
-                voice_data = tts(text, lang)
-                print(' done!')
+            if not local_voice_path:  # The voice not in local
+                print('not in local, ', end='')
+                print('try tts ... ', end='')
+                voice_data = tts(text, tts_lang)
+                print('done!')
 
                 tmp_file = tempfile.NamedTemporaryFile(delete=False)
                 tmp_file_name = tmp_file.name
@@ -229,16 +232,18 @@ def voice_things(ipod_voicedb, local_voicedb, ttsengine, langs=None, **kwargs):
                 with open(tmp_file_name, 'wb') as f:
                     f.write(voice_data)
 
-                local_voicedb.add(tmp_file_name, text, lang)
+                local_voicedb.add(tmp_file_name, text, tts_lang)
 
-                local_voice_path = local_voicedb.get_path(text, lang)
+                os.remove(tmp_file_name)
 
-            ipod_voicedb.add(local_voice_path, text, lang)
-            dbid = ipod_voicedb.get_dbid(text, lang)
+                local_voice_path = local_voicedb.get_path(text, tts_lang)
+
+            ipod_voicedb.add(local_voice_path, text, tts_lang)
+            dbid = ipod_voicedb.get_dbid(text, tts_lang)
 
         return dbid
 
-    return get_dbid
+    return get_or_make_dbid
 
 
 description = "Sync tracks and playlists to player"
@@ -253,15 +258,18 @@ def sync(src, base, **tts_kwargs):
     player = ipodshuffle.Shuffle(base)
 
     player.sounds.clean()
+
     player.tracks_voicedb.clean()
     player.playlists_voicedb.clean()
+    # player.tracks_voicedb.remove_not_in_use()
+    # player.playlists_voicedb.remove_not_in_use()
 
     player.playlists.clear()
     player.tracks.clear()
 
-    local_filelog = FileLog(os.path.join(CACHE_DIR, 'local_file_log.json'))
+    local_filelog = LocalFileLog(os.path.join(CACHE_DIR, 'local_file_log.json'))
 
-    dires_funs = (
+    dire_and_funs = (
         (src + '/' + 'music', get_master_normals),
         (src + '/' + 'podcasts', get_podcasts),
         (src + '/' + 'audiobooks', get_audiobooks),
@@ -276,32 +284,30 @@ def sync(src, base, **tts_kwargs):
             z.append(a)
         return z
 
-    master_normals, podcasts, audiobooks = x(dires_funs)
+    master_and_normals, podcasts, audiobooks = x(dire_and_funs)
 
     master = []
     normals = []
-    if master_normals:
-        master = master_normals[0]
-        normals = master_normals[1:]
+    if master_and_normals:
+        master = master_and_normals[0]
+        normals = master_and_normals[1:]
 
-    get_track_dbid = None
-    get_playlist_dbid = None
+    track_get_or_make_dbid = None
+    playlist_get_or_make_dbid = None
 
     if player.enable_voiceover:
 
         local_voicedb = LocalVoiceDB(os.path.join(CACHE_DIR, 'voices_log.json'), os.path.join(CACHE_DIR, 'voices'))
         local_voicedb.clean()
 
-        get_track_dbid = voice_things(player.tracks_voicedb, local_voicedb, **tts_kwargs)
-        get_playlist_dbid = voice_things(player.playlists_voicedb, local_voicedb, **tts_kwargs)
+        track_get_or_make_dbid = voice_things(player.tracks_voicedb, local_voicedb, **tts_kwargs)
+        playlist_get_or_make_dbid = voice_things(player.playlists_voicedb, local_voicedb, **tts_kwargs)
 
-    def add_files_to_pl(pl, files, text_fun):
-
+    def add_files_to_pl(pl, files, get_track_voice_title=None):
         for file in files:
-
             checksum = local_filelog.get_checksum(file)
             if not checksum:
-                local_filelog.add(file)
+                local_filelog.log_it(file)
                 checksum = local_filelog.get_checksum(file)
 
             path_in_ipod = player.sounds.add(file, checksum)
@@ -317,22 +323,22 @@ def sync(src, base, **tts_kwargs):
             pl.tracks.append(track)
 
             if player.enable_voiceover:
-                text = text_fun(file)
-
-                langid_lang = langid.classify(text)[0]
-
-                track.dbid = get_track_dbid(text, langid_lang)
+                text = get_track_voice_title(file)
+                try:
+                    track.dbid = track_get_or_make_dbid(text)
+                except GetTTSError:
+                    print('get track voice failed, ignored.')
 
     def add_playlists(title_and_files, pl_type, text_fun):
-
         for title, files in title_and_files:
             pl = player.playlists.add()
             pl.type = pl_type
 
-            langid_lang = langid.classify(title)[0]
-
             if player.enable_voiceover:
-                pl.dbid = get_playlist_dbid(title, langid_lang)
+                try:
+                    pl.dbid = playlist_get_or_make_dbid(title)
+                except GetTTSError:
+                    print('get playlist voice failed, ignored.')
 
             add_files_to_pl(pl, files, text_fun)
 
@@ -351,5 +357,8 @@ fun = sync
 
 def get_help_strings(indet=None):
     indet = indet or 0
-    s = ' ' * indet + 'usage:  src=<path> base=<path> ttsengine=<enging> <arg1>=value1 <arg2>=value2 ... \n'
+    indet_s = ' ' * indet
+    s = ''
+    s += indet_s + 'usage:  src=<path> base=<path> ttsengine=<enging> <arg1>=value1 <arg2>=value2 ... \n'
+    s +=
     return s

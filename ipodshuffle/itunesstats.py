@@ -1,4 +1,4 @@
-# Device will rebuild iPod_Control/iTunes/iTunesStats if the file is not exists
+# Device will rebuild iPod_Control/iTunes/iTunesStats if it is not exists
 
 from .itunessd import get_table_size, chunk_to_dic, dic_to_chunk, split_by_step, get_custom_fields_dic
 

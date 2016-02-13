@@ -1,7 +1,7 @@
 import os
 import uuid
 
-from ipodshuffle.log import VoiceDB, Log, get_checksum
+from .log import VoiceDB, Log, get_checksum
 
 
 def get_uuid1_hex():
@@ -20,7 +20,7 @@ class LocalVoiceDB(VoiceDB):
         return realpath
 
 
-class FileLog(Log):
+class LocalFileLog(Log):
     def __init__(self, log_path):
         super().__init__(log_path)
 
@@ -38,7 +38,7 @@ class FileLog(Log):
 
         self.write_log()
 
-    def add(self, path):
+    def log_it(self, path):
         realpath = os.path.realpath(path)
 
         if realpath not in self._log.keys():

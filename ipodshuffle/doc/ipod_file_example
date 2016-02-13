@@ -31,7 +31,7 @@
 #          |       |
 #          |       +-- ...
 #          |
-#          |-- sounds_logs.json
-#          |-- original_name_logs.json
-#          +-- voices_logs.json
+#          |-- sounds_log.json
+#          |-- original_name_log.json
+#          +-- voices_log.json
 #

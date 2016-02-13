@@ -1,5 +1,3 @@
-#!/usr/bin/env python
-
 import urllib.request
 import urllib.parse
 
@@ -26,7 +24,7 @@ def tts(text, lang, key, c=None, f=None):
         if k == 'Content-Length':
             content_length = int(v)
 
-    if content_length < 100:
+    if content_length < 10000:
         raise GetTTSError(response.read().decode())
 
     return response.read()

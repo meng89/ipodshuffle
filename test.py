@@ -1,4 +1,7 @@
 #!/usr/bin/env python3
 
-import sys
+from ipodshuffle.audio import get_type
 
+path = '/media/data/Fotheringhay'
+
+print(get_type(path))

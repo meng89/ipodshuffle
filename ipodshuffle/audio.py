@@ -1,39 +1,3 @@
-#  Audio formats supported:
-#
-# .m4a/.m4b         AAC (8 to 320 Kbps),
-# .m4a              Protected AAC (from iTunes Store),
-
-# .mp3              MP3 (8 to 320 Kbps),
-# .mp3              MP3 VBR,
-
-#                   Audible (formats 2, 3, 4, Audible Enhanced Audio, AAX, and AAX+),
-# .m4a              Apple Lossless,
-# .aiff/.aif/.aifc  AIFF,
-# .wav              WAV
-
-# mutagen.File(path).mime
-
-# mp3 : ['audio/mp3', 'audio/x-mp3', 'audio/mpeg', 'audio/mpg', 'audio/x-mpeg', 'application/octet-stream']
-# acc, alac : ['audio/mp4', 'audio/x-m4a', 'audio/mpeg4', 'audio/aac', 'application/octet-stream']
-# flac : ['audio/x-flac', 'application/x-flac', 'application/octet-stream']
-# aiff: ['audio/aiff', 'audio/x-aiff', 'application/octet-stream']
-
-# wav : None!
-
-
-#     http://www.apple.com/shop/buy-ipod/ipod-shuffle
-
-# AAC (8 to 320 Kbps)
-# Protected AAC (from iTunes Store)
-# — (shuffle does not support HE-AAC)
-# MP3 (8 to 320 Kbps)
-# MP3 VBR
-# Audible (formats 2, 3, 4, Audible Enhanced Audio, AAX, and AAX+)
-# Apple Lossless
-# AIFF
-# WAV
-
-
 import mutagen
 import sndhdr
 
@@ -55,9 +19,7 @@ AUDIO_MAP = {
 
 def get_type(path):
     file_type = None
-
     audio = mutagen.File(path)
-
     if audio:
         if 'audio/mp3' in audio.mime:
             file_type = MP3

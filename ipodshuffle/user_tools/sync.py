@@ -1,5 +1,3 @@
-#!/usr/bin/env python3
-
 import os
 import tempfile
 
@@ -107,7 +105,14 @@ def get_sub_files_dires(dire):
 
 
 def get_legal_files(files):
-    return [file for file in files if get_audio_type(file)]
+    legal_files = []
+    for file in files:
+        if get_audio_type(file):
+            legal_files.append(file)
+        else:
+            print('Ignore not legal file: ', file)
+
+    return legal_files
 
 ###############################################################################
 
@@ -214,11 +219,11 @@ def voice_things(ipod_voicedb, local_voicedb, ttsengine, langs=None, **kwargs):
         dbid = ipod_voicedb.get_dbid(text, tts_lang)
         if not dbid:  # The voice not in ipod tracks/playlists db
             print('\nvoice: {}, {} :'.format(repr(tts_lang), repr(text)))
-            print('  not in dir Tracks/Playlists, ', end='')
+            print('  not in dir Tracks/Playlists. ', end='')
             local_voice_path = local_voicedb.get_path(text, tts_lang)
 
             if not local_voice_path:  # The voice not in local
-                print('not in local, ', end='')
+                print('not in local. ', end='')
                 print('try tts ... ', end='')
                 voice_data = tts(text, tts_lang)
                 print('done!')

@@ -179,7 +179,7 @@ def voice_things(ipod_voicedb, local_voicedb, ttsengine, langs=None, **kwargs):
         if not isinstance(langs, list):
             langs = [langs]
     else:
-        langs = tts_engine.langs()
+        langs = tts_engine.langs
 
     # user langs to langid langs to set, langid langs to user langs to get voice
 

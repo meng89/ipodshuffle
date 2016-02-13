@@ -16,9 +16,12 @@
    ipodshuffle fun=sync src=path_to_src_folder base=ipodshuffle_mount_point ttsengine=sovx langs=en-GB
    #+END_SRC
 
-   The folder ipod_src should have three folder: "music", "podcasts" and "audiobooks". all files and folders in it can be 
+   The folder src_folder should have three folder: "music", "podcasts" and "audiobooks". 
+
    In "music": all folders and they child folders will be iPod's NORMAL playlists, title is folder name, if VoiceOver is enabled.
+
    In "podcasts": only child folder will be PODCAST playlists. 
+
    In "audiobooks": child files and folders will be AUDIOBOOK playlists, but child folder of child folder wouldn't.
    
 ** show
@@ -33,16 +36,22 @@
    #+END_SRC
 ** TTS things
    Program use Python library langid to figure out track and playlist title.
+   
    For now, have two TTS engine wrapper:
 *** sovx:
     sovx pico2wave. Make sure you already installed it. 
+   
     you can use it like this:
     #+BEGIN_SRC
     ipodshuffle fun=sync src=<src> base<mount_point> ttsengine=sovx langs=en-US
     #+END_SRC
 *** voicerss
-    a http tts engine. supported CJK languages. For now, dayily request is free for 350 times, but use this need to regitstration to get an API key,
+    a http tts engine. supported CJK languages. 
+
+    For now, dayily request is free for 350 times, but use this need to regitstration to get an API key,
+    
     they website: http://www.voicerss.org
+    
     use it like this:
     #+BEGIN_SRC
     ipodshuffle fun=sync src=ipodshuffle_src base=ipodshuffle_mount_point ttsengine=voicerss langs=zh-cn,en-gb,ja-jp key=sa9ofsa09f8s09sa8f0sa98sa0f9s8
@@ -51,4 +60,5 @@
 
 * Usage it as a Python library
   Only tested in Python 3
+  
   example see ipodshuffle/user_tools/sync.py

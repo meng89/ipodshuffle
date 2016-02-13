@@ -17,7 +17,7 @@ import ipodshuffle.utils
 from .tts import ENGINE_MAP
 from .tts.error import GetTTSError
 
-from .character_detect import has_ja_char, has_ko_char
+from .character_detect import fix_zh
 
 
 CACHE_DIR = os.path.join(os.path.expanduser('~'), '.cache/ipodshuffle')
@@ -161,18 +161,6 @@ def get_audiobooks(dire):
             titles_files.append((title, legal_files))
 
     return titles_files
-
-
-def fix_zh(code, text):
-    fixed_code = code
-
-    if code == 'ja' and not has_ja_char(text):
-        fixed_code = 'zh'
-
-    elif code == 'ko' and not has_ko_char(text):
-        fixed_code = 'zh'
-
-    return fixed_code
 
 
 def wrapper_tts(_fun, **kwargs):

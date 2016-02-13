@@ -4,12 +4,12 @@ import sys
 
 from collections import OrderedDict
 
-from ipodshuffle.user_tools import show, set, sync
+from ipodshuffle.user_tools import show, set_, sync
 
 
 modules = OrderedDict()
 
-for _name, _module in (['show', show], ['set', set], ['sync', sync]):
+for _name, _module in (['show', show], ['set', set_], ['sync', sync]):
     modules[_name] = _module
 
 

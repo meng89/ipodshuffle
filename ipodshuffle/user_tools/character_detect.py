@@ -45,26 +45,6 @@ korean_chars = \
     'ㅉ짜쨔쩌쪄쪼쬬쭈쮸쯔찌째쩨쨰쪠쫘쫴쬐쯰쭤쮀쮜'
 
 
-def chars_detect(text):
-    j = 0
-    k = 0
-    unknown = 0
-    for char in text:
-        if char in japanese_chars:
-            j += 1
-        elif char in korean_chars:
-            k += 1
-        else:
-            unknown += 1
-
-    if j >= k > 0:
-        return 'ja'
-    elif k >= j > 0:
-        return 'ko'
-    else:
-        return None
-
-
 def has_ja_char(text):
     return len(set(text) & set(japanese_chars))
 
@@ -72,3 +52,14 @@ def has_ja_char(text):
 def has_ko_char(text):
     return len(set(text) & set(korean_chars))
 
+
+def fix_zh(code, text):
+    fixed_code = code
+
+    if code == 'ja' and not has_ja_char(text):
+        fixed_code = 'zh'
+
+    elif code == 'ko' and not has_ko_char(text):
+        fixed_code = 'zh'
+
+    return fixed_code

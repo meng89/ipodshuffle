@@ -1,4 +1,4 @@
-#+TITLE ipodshuffle
+#+TITLE: ipodshuffle
 
 * Installation
 ** Gentoo/Linux
@@ -8,10 +8,10 @@
    #+BEGIN_EXAMPLE
    pip install ipodshuffle
    #+END_EXAMPLE
-
+   
 * Usage
 ** as a program
-   *** Sync will
+*** Sync will
    #+BEGIN_EXAMPLE
    ipodshuffle fun=sync src=path_to_src_folder base=path_to_ipod_mount_point ttsengine=sovx langs=en-GB
    #+END_EXAMPLE

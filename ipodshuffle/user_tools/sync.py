@@ -8,11 +8,9 @@ from mutagen.id3 import ID3NoHeaderError
 
 import langid
 
-import ipodshuffle
-
 from ipodshuffle.audio import get_type as get_audio_type
 
-from ipodshuffle.shuffle import MASTER, NORMAL, PODCAST, AUDIOBOOK
+from ipodshuffle import Shuffle, MASTER, NORMAL, PODCAST, AUDIOBOOK
 
 from ipodshuffle.localdb import LocalVoiceDB, LocalFileLog
 
@@ -255,7 +253,7 @@ def sync(src, base, **tts_kwargs):
     src = os.path.realpath(src)
     base = os.path.realpath(base)
 
-    player = ipodshuffle.Shuffle(base)
+    player = Shuffle(base)
 
     player.sounds.clean()
 
@@ -360,5 +358,5 @@ def get_help_strings(indet=None):
     indet_s = ' ' * indet
     s = ''
     s += indet_s + 'usage:  src=<path> base=<path> ttsengine=<enging> <arg1>=value1 <arg2>=value2 ... \n'
-    s +=
+    s += ''
     return s

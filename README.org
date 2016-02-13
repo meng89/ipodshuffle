@@ -3,21 +3,47 @@
 * Installation
 ** Gentoo/Linux
    dev-python/ipodshuffle in this overlay: [[https://github.com/meng89/observer]]
-
+   
 ** PyPi
    #+BEGIN_EXAMPLE
    pip install ipodshuffle
    #+END_EXAMPLE
    
-* Usage
-** as a program
-*** Sync will
-   #+BEGIN_EXAMPLE
-   ipodshuffle fun=sync src=path_to_src_folder base=path_to_ipod_mount_point ttsengine=sovx langs=en-GB
-   #+END_EXAMPLE
+* Usage it as a program
+*** sync
+    For example
+    #+BEGIN_EXAMPLE
+    ipodshuffle fun=sync src=path_to_src_folder base=ipodshuffle_mount_point ttsengine=sovx langs=en-GB
+    #+END_EXAMPLE
 
-   The folder ipod_src should have three folder: "music", "podcasts" and "audiobooks". all files and folders in it can be 
-   In "music": all folders and they child folders will be iPod's NORMAL playlists, title is folder name, if VoiceOver is enabled.
-   In "podcasts": only child folder will be PODCAST playlists. 
-   In "audiobooks": child files and folders will be AUDIOBOOK playlists, but child folder of child folder wouldn't.
-   For example:
+    The folder ipod_src should have three folder: "music", "podcasts" and "audiobooks". all files and folders in it can be 
+    In "music": all folders and they child folders will be iPod's NORMAL playlists, title is folder name, if VoiceOver is enabled.
+    In "podcasts": only child folder will be PODCAST playlists. 
+    In "audiobooks": child files and folders will be AUDIOBOOK playlists, but child folder of child folder wouldn't.
+   
+*** show
+    show information
+    #+BEGIN_EXAMPLE
+    ipodshuffle fun=show base=ipodshuffle_mount_point
+    #+END_EXAMPLE
+    
+*** set
+    #+BEGIN_EXAMPLE
+    ipodshuffle fun=set base=ipodshuffle_mount_point
+
+** TTS things
+   Program use Python library langid to figure out track and playlist title.
+   For now, have two TTS engine wrapper:
+*** sovx:
+    sovx pico2wave. Make sure you already installed it. 
+    you can use it like this:
+    ipodshuffle fun=sync src=<src> base<mount_point> ttsengine=sovx langs=en-US
+
+*** voicerss
+    a http tts engine. supported CJK languages. For now, dayily request is free for 350 times, but use this need to regitstration to get an API key,
+    they website: http://www.voicerss.org
+    use it like this:
+    ipodshuffle fun=sync src=ipodshuffle_src base=ipodshuffle_mount_point ttsengine=voicerss langs=zh-cn,en-gb,ja-jp key=sa9ofsa09f8s09sa8f0sa98sa0f9s8
+** Usage it as a Python library
+   Only tested in Python 3
+   see ipodshuffle/user_tools/sync.py

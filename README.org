@@ -10,7 +10,7 @@
 ** Usage it as a program
 *** sync
    #+BEGIN_SRC
-   ipodshuffle fun=sync src=path_to_src_folder base=ipodshuffle_mount_point ttsengine=sovx langs=en-GB
+   shuffle.py fun=sync src=path_to_src_folder base=ipodshuffle_mount_point ttsengine=sovx langs=en-GB
    #+END_SRC
 
    The folder src_folder should have three folder: "music", "podcasts" and "audiobooks". 
@@ -21,23 +21,25 @@
 *** show
    show information
    #+BEGIN_SRC
-   ipodshuffle fun=show base=ipodshuffle_mount_point
+   shuffle.py fun=show base=ipodshuffle_mount_point
    #+END_SRC
     
 *** set
    #+BEGIN_SRC
-   ipodshuffle fun=set base=ipodshuffle_mount_point
+   shuffle.py fun=set base=ipodshuffle_mount_point
    #+END_SRC
+
 *** TTS things
    Program use Python library langid to figure out track and playlist title.
-   
    For now, have two TTS engine wrapper:
+
 *** sovx:
     sovx pico2wave. Make sure you already installed it. 
     you can use it like this:
     #+BEGIN_SRC
-    ipodshuffle fun=sync src=<src> base<mount_point> ttsengine=sovx langs=en-US
+    shuffle.py fun=sync src=<src> base<mount_point> ttsengine=sovx langs=en-US
     #+END_SRC
+
 *** voicerss
     a http tts engine. supported CJK languages. 
     For now, dayily request is free for 350 times, but use this need to regitstration to get an API key,
@@ -45,7 +47,7 @@
     
     use it like this:
     #+BEGIN_SRC
-    ipodshuffle fun=sync src=ipodshuffle_src base=ipodshuffle_mount_point ttsengine=voicerss langs=zh-cn,en-gb,ja-jp key=sa9ofsa09f8s09sa8f0sa98sa0f9s8
+    shuffle.py fun=sync src=ipodshuffle_src base=ipodshuffle_mount_point ttsengine=voicerss langs=zh-cn,en-gb,ja-jp key=sa9ofsa09f8s09sa8f0sa98sa0f9s8
     #+END_SRC
     
 

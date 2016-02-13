@@ -1,64 +1,57 @@
-#+TITLE: ipodshuffle
-
-* Installation
-** Gentoo/Linux
-   dev-python/ipodshuffle in this overlay: [[https://github.com/meng89/observer]]
-   
+** Installation
+*** Gentoo/Linux
+    dev-python/ipodshuffle in this overlay: [[https://github.com/meng89/observer]]
+    
 ** PyPi
    #+BEGIN_SRC
    pip install ipodshuffle
    #+END_SRC
    
-* Usage it as a program
-
-** sync
+** Usage it as a program
+*** sync
    #+BEGIN_SRC
    ipodshuffle fun=sync src=path_to_src_folder base=ipodshuffle_mount_point ttsengine=sovx langs=en-GB
    #+END_SRC
 
    The folder src_folder should have three folder: "music", "podcasts" and "audiobooks". 
-
    In "music": all folders and they child folders will be iPod's NORMAL playlists, title is folder name, if VoiceOver is enabled.
-
    In "podcasts": only child folder will be PODCAST playlists. 
-
    In "audiobooks": child files and folders will be AUDIOBOOK playlists, but child folder of child folder wouldn't.
    
-** show
+*** show
    show information
    #+BEGIN_SRC
    ipodshuffle fun=show base=ipodshuffle_mount_point
    #+END_SRC
     
-** set
+*** set
    #+BEGIN_SRC
    ipodshuffle fun=set base=ipodshuffle_mount_point
    #+END_SRC
-** TTS things
+*** TTS things
    Program use Python library langid to figure out track and playlist title.
    
    For now, have two TTS engine wrapper:
 *** sovx:
     sovx pico2wave. Make sure you already installed it. 
-   
     you can use it like this:
     #+BEGIN_SRC
     ipodshuffle fun=sync src=<src> base<mount_point> ttsengine=sovx langs=en-US
     #+END_SRC
 *** voicerss
     a http tts engine. supported CJK languages. 
-
     For now, dayily request is free for 350 times, but use this need to regitstration to get an API key,
-    
     they website: http://www.voicerss.org
     
     use it like this:
     #+BEGIN_SRC
     ipodshuffle fun=sync src=ipodshuffle_src base=ipodshuffle_mount_point ttsengine=voicerss langs=zh-cn,en-gb,ja-jp key=sa9ofsa09f8s09sa8f0sa98sa0f9s8
     #+END_SRC
+    
 
+*** Usage it as a Python library
+    Only tested in Python 3
+    example see ipodshuffle/user_tools/sync.py
 
-* Usage it as a Python library
-  Only tested in Python 3
-  
-  example see ipodshuffle/user_tools/sync.py
+** License
+   MIT

@@ -13,7 +13,7 @@
 ** as a program
    *** Sync will
    #+BEGIN_EXAMPLE
-   ipodshuffle fun=sync src=/media/data/ipod_src base=/media/ipodshuffle_mount_point ttsengine=sovx langs=en-GB
+   ipodshuffle fun=sync src=path_to_src_folder base=path_to_ipod_mount_point ttsengine=sovx langs=en-GB
    #+END_EXAMPLE
 
    The folder ipod_src should have three folder: "music", "podcasts" and "audiobooks". all files and folders in it can be 

@@ -3,6 +3,9 @@
 .git/
 .idea/
 
+ipodshuffle.egg-info/
+dist/
+
 build
 dist
 temp

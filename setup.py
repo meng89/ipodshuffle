@@ -3,9 +3,9 @@ import os
 
 NAME = "ipodshuffle"
 
-VERSION = '0.1.8'
+VERSION = '0.1.11'
 
-DESCRIPTION = 'A Python library and tools to manage iPod shuffle 4 generation'
+DESCRIPTION = 'A Python library and CLI tools for iPod shuffle 4th generation with VoiceOver(TTS) support'
 
 LONG_DESCRIPTION = ''
 if os.path.exists('long_description.rst'):
@@ -29,9 +29,12 @@ setup(name=NAME,
       license='MIT',
       url=URL,
       packages=['ipodshuffle',
-                'ipodshuffle/user_tools',
-                'ipodshuffle/user_tools/tts'],
+                'ipodshuffle/tools',
+                'ipodshuffle/tools/tts'],
       scripts=['shuffle.py'],
-      install_requires=['langid>=1.1.5', 'mutagen>=1.27'],
+      install_requires=[
+          'langid>=1.1.5',
+          'mutagen>=1.27'
+      ],
       classifiers=CLASSIFIERS
       )

@@ -17,7 +17,7 @@ import ipodshuffle.utils
 from .tts import ENGINE_MAP
 from .tts.error import GetTTSError
 
-from .character_detect import fix_zh
+from .char_detect import fix_zh
 
 
 CACHE_DIR = os.path.join(os.path.expanduser('~'), '.cache/ipodshuffle')

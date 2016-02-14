@@ -248,7 +248,7 @@ def sync(src, base, **tts_kwargs):
 
     player = Shuffle(base)
 
-    player.sounds.clean()
+    player.audiodb.clean()
 
     player.tracks_voicedb.clean()
     player.playlists_voicedb.clean()
@@ -301,7 +301,7 @@ def sync(src, base, **tts_kwargs):
                 local_filelog.log_it(file)
                 checksum = local_filelog.get_checksum(file)
 
-            path_in_ipod = player.sounds.add(file, checksum)
+            path_in_ipod = player.audiodb.add(file, checksum)
 
             track = None
             for _track in player.tracks:
@@ -350,6 +350,7 @@ def get_help_strings(indet=None):
     indet = indet or 0
     indet_s = ' ' * indet
     s = ''
-    s += indet_s + 'usage:  src=<path> base=<path> ttsengine=<enging> <arg1>=value1 <arg2>=value2 ... \n'
+    s += indet_s + 'usage:  src=<path> base=<path> ttsengine=<enging> langs=lang1,lang2... ' \
+                   '<arg1>=value1 <arg2>=value2 ... \n'
     s += ''
     return s

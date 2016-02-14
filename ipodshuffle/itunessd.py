@@ -1,5 +1,11 @@
 import re
 
+
+"""
+Major functions are itunessd_to_dics and dics_to_itunessd, see their docs
+"""
+
+
 header_table = (
     {'name': 'header_id',                  'size': 4,  'type': 'unknown', 'value': b'bdhs'},
     {'name': 'unknown_1',                  'size': 4,  'type': 'unknown', 'value': b'\x01\x00\x01\x02'},
@@ -42,7 +48,7 @@ track_table = (
     {'name': 'stop_at_pos_ms',                 'size': 4,   'type': 'number', 'is_custom': True},
 
     # have effect. what is the value meaning?
-    {'name': 'volume_gain',                    'size': 4,   'type': 'number', 'is_custom': True},  # 音量增益
+    {'name': 'volume_gain',                    'size': 4,   'type': 'number', 'is_custom': True},
 
     {'name': 'type',                           'size': 4,   'type': 'number', 'is_custom': True},
 
@@ -61,8 +67,7 @@ track_table = (
     {'name': 'pregap',                         'size': 4,   'type': 'number', 'is_custom': True},  # 不是播放之前空闲几秒
     {'name': 'postgap',                        'size': 4,   'type': 'number', 'is_custom': True},  # 不是播放之后空闲几秒
 
-    # ?? tested ok when filetype 2 is set 0，
-    {'name': 'number_of_sampless',             'size': 4,   'type': 'number', 'is_custom': True},  # 采样率？
+    {'name': 'number_of_sampless',             'size': 4,   'type': 'number', 'is_custom': True},
 
     {'name': 'unknown_file_related_data1',     'size': 4,   'type': 'unknown'},
     {'name': 'gapless_data',                   'size': 4,   'type': 'number', 'is_custom': True},  # 无缝数据？
@@ -365,6 +370,10 @@ def get_dic_sub_numbers(itunessd, offset, table, sub_int_size=None):
 
 
 def itunessd_to_dics(itunessd):
+    """
+    :param itunessd: the whole iTunesSD bytes data
+    :return: translate to tree object, see doc of dics_to_itunessd
+    """
     # header
     header_size = get_table_size(header_table)
     header_chunk = itunessd[0:header_size]
@@ -407,6 +416,12 @@ def get_offsets_chunk(length_before_offsets, chunks):
 
 
 def dics_to_itunessd(header_dic, tracks_dics, playlists_dics_and_indexes):
+    """
+    :param header_dic: dic of header_table
+    :param tracks_dics: list of all track_table
+    :param playlists_dics_and_indexes: list of all playlists and all their track's indexs
+    :return: the whole iTunesSD bytes data
+    """
     ############################################
     # header
     ######

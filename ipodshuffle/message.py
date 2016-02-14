@@ -1,5 +1,3 @@
-
-
 en = {
     'bv00': 'Battery Full',
     'bv01': 'Battery 75%',

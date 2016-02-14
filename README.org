@@ -27,10 +27,14 @@ project [[https://github.com/nims11/IPod-Shuffle-4g][IPod-Shuffle-4g]] inspire m
 
 
 *** Usage as a script
+    The script name called 'teresa' from Teresa Teng (邓丽君), a singer.
+
+    Right now, got three functions: sync, show and set.
+
 **** sync
     major tool. sync from src_path to your device, it will log file mtime, size and checksum,
     #+BEGIN_SRC
-    shuffle.py fun=sync src=src_path base=ipodshuffle_path ttsengine=sovx langs=en-GB
+    teresa fun=sync src=src_path base=ipodshuffle_path ttsengine=sovx langs=en-GB
     #+END_SRC
 
     The folder src_path should have three child folders in it: "music", "podcasts" and "audiobooks".
@@ -45,12 +49,12 @@ project [[https://github.com/nims11/IPod-Shuffle-4g][IPod-Shuffle-4g]] inspire m
 **** show
     show information
     #+BEGIN_SRC
-    shuffle.py fun=show base=ipodshuffle_path
+    teresa fun=show base=ipodshuffle_path
     #+END_SRC
     
 **** set
     #+BEGIN_SRC
-    shuffle.py fun=set base=ipodshuffle_path enable_voiceover=true max_volume=12
+    teresa fun=set base=ipodshuffle_path enable_voiceover=true max_volume=12
     #+END_SRC
 
 *** TTS things
@@ -64,7 +68,7 @@ project [[https://github.com/nims11/IPod-Shuffle-4g][IPod-Shuffle-4g]] inspire m
 
     example:
     #+BEGIN_SRC
-    shuffle.py fun=sync src=src_path base=ipodshuffle_path ttsengine=sovx langs=en-US
+    teresa fun=sync src=src_path base=ipodshuffle_path ttsengine=sovx langs=en-US
     #+END_SRC
 
 **** Voicerss
@@ -74,11 +78,13 @@ project [[https://github.com/nims11/IPod-Shuffle-4g][IPod-Shuffle-4g]] inspire m
     
     example:
     #+BEGIN_SRC
-    shuffle.py fun=sync src=src_path base=ipod_path ttsengine=voicerss langs=zh-cn,en-gb,ja-jp key=sa9ofsa09f8s09sa8f0sa98sa0f9s8
+    teresa fun=sync src=src_path base=ipod_path ttsengine=voicerss langs=zh-cn,en-gb,ja-jp key=sa9ofsa09f8s09sa8f0sa98sa0f9s8
     #+END_SRC
     
 
 *** Usage as a Python library
+    modules: ipodshuffle, ipodshuffle.tools, ipodshuffle.tools.tts
+
     Only tested in Python 3
 
     example see ipodshuffle/tools/sync.py

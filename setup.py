@@ -1,9 +1,9 @@
-from setuptools import setup
+from setuptools import setup ,find_packages
 import os
 
 NAME = "ipodshuffle"
 
-VERSION = '0.1.11'
+VERSION = '0.2.0'
 
 DESCRIPTION = 'A Python library and CLI tools for iPod shuffle 4th generation with VoiceOver(TTS) support'
 
@@ -28,10 +28,13 @@ setup(name=NAME,
       author_email='ObserverChan@gmail.com',
       license='MIT',
       url=URL,
-      packages=['ipodshuffle',
-                'ipodshuffle/tools',
-                'ipodshuffle/tools/tts'],
-      scripts=['shuffle.py'],
+      packages=find_packages(),
+
+      entry_points={
+          'console_scripts': [
+              'teresa=ipodshuffle.tools.teresa:main',
+          ]
+      },
       install_requires=[
           'langid>=1.1.5',
           'mutagen>=1.27'

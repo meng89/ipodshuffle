@@ -6,6 +6,11 @@ from collections import OrderedDict
 
 from ipodshuffle.tools import show, set_, sync
 
+"""
+'shuffle.py' is used by IPod-Shuffle-4g.
+teresa may be a good name for this script, from Teresa Teng (邓丽君)
+"""
+
 
 modules = OrderedDict()
 
@@ -17,8 +22,9 @@ class ArgumentsError(Exception):
     pass
 
 
-def help3():
-    script_name = format(sys.argv[0])
+def help_():
+    # script_name = format(sys.argv[0])
+    script_name = 'teresa'
     s = 'usage: {} fun=<fun> <arg1>=<value1> <arg2>=<value2> ... \n'.format(script_name) + \
         '  or : {} help\n'.format(script_name) + \
         '\n'
@@ -32,27 +38,27 @@ def help3():
     print(s, end='')
 
 
-def main(**kwargs):
+def main():
+    kwargs = parse_arg()
 
     if 'help' in kwargs.keys() and kwargs['help']:
-        help3()
+        help_()
 
     elif 'fun' in kwargs.keys():
         name = kwargs.pop('fun')
         modules[name].fun(**kwargs)
 
     else:
-        help3()
+        help_()
 
 
-if __name__ == '__main__':
-
-    _kwargs = {}
+def parse_arg():
+    kwargs = {}
 
     for _one in sys.argv[1:]:
 
         if '=' not in _one:
-            _kwargs[_one] = True
+            kwargs[_one] = True
             continue
 
         k, v = _one.split('=')
@@ -68,6 +74,10 @@ if __name__ == '__main__':
         else:
             value = v
 
-        _kwargs[k] = value
+        kwargs[k] = value
 
-    main(**_kwargs)
+    return kwargs
+
+
+if __name__ == '__main__':
+    main()

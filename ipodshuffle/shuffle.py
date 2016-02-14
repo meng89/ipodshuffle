@@ -12,6 +12,10 @@ from collections import UserList as List
 
 from .itunessd import ChunkError, MASTER, NORMAL, PODCAST, AUDIOBOOK
 
+"""
+Class Shuffle, Playlists, playlist, Tracks, Track, is more like iTunesSD and iTunesStats wrapper,
+should use AudioDB and VoiceDB to store audio and tts voice files.
+"""
 PL_MAP = {
     MASTER: 'MASTER',
     NORMAL: 'NORMAL',
@@ -41,8 +45,8 @@ def make_dbid_name():
 
 
 class Shuffle:
-    def __init__(self, directory):
-        self.base = os.path.realpath(os.path.normpath(directory))
+    def __init__(self, base):
+        self.base = os.path.realpath(os.path.normpath(base))
         self.ctrl_folder = 'iPod_Control'
 
         self._itunessd_path = self.base + '/' + self.ctrl_folder + '/iTunes/iTunesSD'
@@ -81,7 +85,7 @@ class Shuffle:
             self.__dict__['tracks'] = Tracks(self)
             self.__dict__['playlists'] = Playlists(self)
 
-        self.__dict__['sounds'] = SoundDB(self,
+        self.__dict__['sounds'] = AudioDB(self,
                                           os.path.join(self.base, self.ctrl_folder, 'sounds_log.json'),
                                           os.path.join(self.base, self.ctrl_folder, 'sounds'))
 
@@ -105,15 +109,16 @@ class Shuffle:
         itunessd_chunk = itunessd.dics_to_itunessd(db_dic, tracks_dics, playlists_dics_and_indexes)
         itunesstats_chunk = itunesstats.dics_to_itunesstats(tracks_play_count_dics)
 
-        os.makedirs(os.path.split(self._itunessd_path)[0], exist_ok=True)
-
         if self._itunessd_chunk != itunessd_chunk:
+            os.makedirs(os.path.split(self._itunessd_path)[0], exist_ok=True)
+
             with open(self._itunessd_path, 'wb') as f:
                 f.write(itunessd_chunk)
             self._itunessd_chunk = itunessd_chunk
 
         if self._itunesstats_chunk != itunesstats_chunk:
             os.makedirs(os.path.split(self._itunesstats_path)[0], exist_ok=True)
+
             with open(self._itunesstats_path, 'wb') as f:
                 f.write(itunesstats_chunk)
             self._itunesstats_chunk = itunesstats_chunk
@@ -143,7 +148,7 @@ class Shuffle:
         return self.__dict__['playlists']
 
     @property
-    def sounds(self):
+    def audiodb(self):
         return self.__dict__['sounds']
 
     @property
@@ -205,7 +210,7 @@ class Tracks(List):
 class Track:
     def __init__(self, shuffle, path_in_ipod=None, dic=None, count_dic=None):
         self._shuffle = shuffle
-        # self._dbid = dic['dbid']
+        self._dbid = dic['dbid']
 
         if count_dic:
             self._count_dic = count_dic
@@ -498,7 +503,7 @@ def get_name():
     return ''.join(random.sample(string.ascii_uppercase, 6))
 
 
-class SoundDB(Storage):
+class AudioDB(Storage):
     def __init__(self, shuffle, log_path, storage_dir):
         super().__init__(log_path, storage_dir, random_name_fun=get_name)
 

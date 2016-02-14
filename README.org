@@ -11,8 +11,8 @@ project [[https://github.com/nims11/IPod-Shuffle-4g][IPod-Shuffle-4g]] inspire m
 
    [[http://picospeaker.tk/readme.php][svox(PicoSpeaker)]]
 
-**** Installation
-***** Gentoo/Linux
+*** Installation
+**** Gentoo/Linux
 
     app-accessibility/svox in Overlay "ikelos"
 
@@ -20,7 +20,7 @@ project [[https://github.com/nims11/IPod-Shuffle-4g][IPod-Shuffle-4g]] inspire m
 
     use layman add overlays first, then emerge ipodshuffle
 
-***** PyPi
+**** PyPi
    #+BEGIN_SRC
    pip install ipodshuffle
    #+END_SRC

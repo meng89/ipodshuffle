@@ -351,6 +351,6 @@ def get_help_strings(indet=None):
     indet_s = ' ' * indet
     s = ''
     s += indet_s + 'usage:  src=<path> base=<path> ttsengine=<enging> langs=lang1,lang2... ' \
-                   '<arg1>=value1 <arg2>=value2 ... \n'
+                   '<arg1>=value1 ... \n'
     s += ''
     return s

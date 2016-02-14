@@ -210,7 +210,6 @@ class Tracks(List):
 class Track:
     def __init__(self, shuffle, path_in_ipod=None, dic=None, count_dic=None):
         self._shuffle = shuffle
-        self._dbid = dic['dbid']
 
         if count_dic:
             self._count_dic = count_dic

@@ -1,8 +1,7 @@
-import ipodshuffle.shuffle
 
-
-from ipodshuffle.shuffle import PL_MAP, MASTER
+from ipodshuffle import Shuffle, PL_MAP, MASTER
 from ipodshuffle.audio import AUDIO_MAP
+
 
 L1 = '=' * 80
 L2 = '-' * 50
@@ -21,7 +20,7 @@ def help_():
 
 def show(base):
 
-    player = ipodshuffle.shuffle.Shuffle(base)
+    player = Shuffle(base)
 
     print(L1)
     print('enable_voiceover: ', player.enable_voiceover)

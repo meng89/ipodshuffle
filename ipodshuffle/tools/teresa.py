@@ -6,11 +6,6 @@ from collections import OrderedDict
 
 from ipodshuffle.tools import show, set_, sync
 
-"""
-'shuffle.py' is used by IPod-Shuffle-4g.
-teresa may be a good name for this script, from Teresa Teng (邓丽君)
-"""
-
 
 modules = OrderedDict()
 

@@ -4,7 +4,7 @@ import sys
 
 from collections import OrderedDict
 
-from ipodshuffle.user_tools import show, set_, sync
+from ipodshuffle.tools import show, set_, sync
 
 
 modules = OrderedDict()

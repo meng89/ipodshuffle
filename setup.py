@@ -3,7 +3,7 @@ import os
 
 NAME = "ipodshuffle"
 
-VERSION = '0.1.4'
+VERSION = '0.1.8'
 
 DESCRIPTION = 'A Python library and tools to manage iPod shuffle 4 generation'
 
@@ -13,8 +13,6 @@ if os.path.exists('long_description.rst'):
 
 
 URL = 'https://github.com/meng89/{}'.format(NAME)
-
-DOWNLOAD_URL = '{}/archive/v{}.tar.gz'.format(URL, VERSION)
 
 CLASSIFIERS = ['Development Status :: 4 - Beta',
                'Intended Audience :: Developers',
@@ -30,11 +28,10 @@ setup(name=NAME,
       author_email='ObserverChan@gmail.com',
       license='MIT',
       url=URL,
-      download_url=DOWNLOAD_URL,
       packages=['ipodshuffle',
                 'ipodshuffle/user_tools',
                 'ipodshuffle/user_tools/tts'],
       scripts=['shuffle.py'],
-      install_requires=[line.strip() for line in open('requirements.txt')],
+      install_requires=['langid>=1.1.5', 'mutagen>=1.27'],
       classifiers=CLASSIFIERS
       )

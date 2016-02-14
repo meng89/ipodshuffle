@@ -2,7 +2,7 @@
 
 project [[https://github.com/nims11/IPod-Shuffle-4g][IPod-Shuffle-4g]] inspire me.
 
-** Dependencies
+**** Dependencies
    Python 3
 
    [[https://bitbucket.org/lazka/mutagen][mutagen]]>=1.27
@@ -11,8 +11,8 @@ project [[https://github.com/nims11/IPod-Shuffle-4g][IPod-Shuffle-4g]] inspire m
 
    [[http://picospeaker.tk/readme.php][svox(PicoSpeaker)]]
 
-** Installation
-*** Gentoo/Linux
+**** Installation
+***** Gentoo/Linux
 
     app-accessibility/svox in Overlay "ikelos"
 
@@ -20,14 +20,14 @@ project [[https://github.com/nims11/IPod-Shuffle-4g][IPod-Shuffle-4g]] inspire m
 
     use layman add overlays first, then emerge ipodshuffle
 
-** PyPi
+***** PyPi
    #+BEGIN_SRC
    pip install ipodshuffle
    #+END_SRC
 
 
-** Usage as a program
-*** sync
+*** Usage as a script
+***** sync
     major tool. sync from src_path to your device, it will log file mtime, size and checksum,
     #+BEGIN_SRC
     shuffle.py fun=sync src=src_path base=ipodshuffle_path ttsengine=sovx langs=en-GB
@@ -42,31 +42,32 @@ project [[https://github.com/nims11/IPod-Shuffle-4g][IPod-Shuffle-4g]] inspire m
     In "audiobooks": child files and folders will be AUDIOBOOK playlists, but child folder of child folder wouldn't.
 
    Directory structure
-*** show
+***** show
     show information
     #+BEGIN_SRC
     shuffle.py fun=show base=ipodshuffle_path
     #+END_SRC
     
-*** set
+***** set
     #+BEGIN_SRC
     shuffle.py fun=set base=ipodshuffle_path enable_voiceover=true max_volume=12
     #+END_SRC
 
-** TTS things
+***** TTS things
     Program use Python library langid to figure out track and playlist title text langguage,
 
     but not work perfect,use "langs=lang1,lang2..." will limitt langguages range.
 
     For now, have two TTS engine wrapper:
-*** Sovx:
+***** Sovx:
     sovx pico2wave. Make sure you already installed it.
+    
     example:
     #+BEGIN_SRC
     shuffle.py fun=sync src=src_path base=ipodshuffle_path ttsengine=sovx langs=en-US
     #+END_SRC
 
-*** Voicerss
+***** Voicerss
     a http tts engine. support lot of languages(include CJK).
     For now, dayily request is free for 350 times, but use this need to regitstration to get an API key,
     the website: http://www.voicerss.org
@@ -82,5 +83,5 @@ project [[https://github.com/nims11/IPod-Shuffle-4g][IPod-Shuffle-4g]] inspire m
 
     example see ipodshuffle/tools/sync.py
 
-** License
+*** License
    MIT

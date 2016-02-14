@@ -255,6 +255,7 @@ class Track:
     def path_in_ipod(self):
         return self.filename[1:]
     ###################################################
+    ###################################################
 
     @property
     def start_at_pos_ms(self):
@@ -263,8 +264,6 @@ class Track:
     @start_at_pos_ms.setter
     def start_at_pos_ms(self, value):
         self._dic['start_at_pos_ms'] = value
-
-    ###################################################
 
     @property
     def stop_at_pos_ms(self):
@@ -429,6 +428,8 @@ class Track:
         self._count_dic['time_of_last_skip'] = value
 
     ########################################################
+    ########################################################
+
     def get_dics(self):
         self._dic['type'] = self.type
         return self._dic, self._count_dic

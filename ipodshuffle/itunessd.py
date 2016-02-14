@@ -314,7 +314,7 @@ def dic_to_chunk(dic, table, do_check_header_id=True):
     return join(_dic, table)
 
 ###########################################################################
-####################################
+###########################################################################
 
 
 def get_custom_fields(table):
@@ -418,8 +418,8 @@ def get_offsets_chunk(length_before_offsets, chunks):
 def dics_to_itunessd(header_dic, tracks_dics, playlists_dics_and_indexes):
     """
     :param header_dic: dic of header_table
-    :param tracks_dics: list of all track_table
-    :param playlists_dics_and_indexes: list of all playlists and all their track's indexs
+    :param tracks_dics: list of all track_table's dics
+    :param playlists_dics_and_indexes: list of all playlists and all their track's indexes
     :return: the whole iTunesSD bytes data
     """
     ############################################

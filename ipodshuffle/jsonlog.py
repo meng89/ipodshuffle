@@ -14,17 +14,11 @@ class FileNotInLogError(Exception):
 class FileAlreadyInError(Exception):
     pass
 
-# Sounds in ipod need:      Storage Log
-#
-# Two voices in ipod need:  Storage Log LogExt
-#
-# voices in local need:     Storage Log LogExt
-#
-# sounds in local need:             Log
-#
 
-
-class Log:
+class JsonLog:
+    """
+    only read and write json file to log_path
+    """
     def __init__(self, log_path):
 
         self._log_path = os.path.realpath(log_path)
@@ -60,7 +54,10 @@ class Log:
 ########################################################################################################################
 
 
-class Storage(Log):
+class Storage(JsonLog):
+    """
+    storage files, use random_name_fun to create name for new file.
+    """
     def __init__(self, log_path, storage_dir, random_name_fun=None):
         super().__init__(log_path)
         self._storage_dir = storage_dir
@@ -74,7 +71,7 @@ class Storage(Log):
 
     # ------------------------------------------------------------------------------
 
-    def del_log_if_file_no_exists(self):
+    def del_log_if_file_no_exist(self):
         no_exist_in_fs_filenames = []
 
         for filename, info in self._log.items():
@@ -104,7 +101,7 @@ class Storage(Log):
                 # print("\nFile MTIMEs don't match, but very close: ", full_path)
                 # print('log: {}, now: {}'.format(repr(info['mtime']), repr(os.path.getmtime(full_path))))
                 # print('Just notice, nothing to do')
-                # print("Interesting! I dont know way.")
+                # print("Interesting! I dont know why.")
 
         for filename in wrong_filenames:
             del self._log[filename]
@@ -115,7 +112,7 @@ class Storage(Log):
         pass
 
     def clean(self):
-        self.del_log_if_file_no_exists()
+        self.del_log_if_file_no_exist()
         self.del_log_if_file_wrong()
 
     # ------------------------------------------------------------------------------

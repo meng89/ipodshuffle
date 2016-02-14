@@ -1,7 +1,7 @@
 import os
 import uuid
 
-from .log import VoiceDB, Log, get_checksum
+from .log import VoiceDB, JsonLog, get_checksum
 
 
 def get_uuid1_hex():
@@ -20,7 +20,7 @@ class LocalVoiceDB(VoiceDB):
         return realpath
 
 
-class LocalFileLog(Log):
+class LocalFileLog(JsonLog):
     def __init__(self, log_path):
         super().__init__(log_path)
 

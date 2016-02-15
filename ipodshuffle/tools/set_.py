@@ -1,19 +1,19 @@
-import ipodshuffle.shuffle
+from ipodshuffle.shuffle import Shuffle
 
 
 description = "Set enable_voiceover and max_volume"
 
 
 def set_(base, enable_voiceover=None, max_volume=None):
-    player = ipodshuffle.shuffle.Shuffle(base)
+    player = Shuffle(base)
 
     if enable_voiceover is not None:
-        player.enable_voiceover = enable_voiceover
+        player.db.enable_voiceover = enable_voiceover
 
     if max_volume is not None:
-        player.max_volume = max_volume
+        player.db.max_volume = max_volume
 
-    player.write()
+    player.write_devicedb()
 
 fun = set_
 
@@ -24,4 +24,3 @@ def get_help_strings(indet=None):
     s = ' ' * indet + 'usage:  base=<path> enable_voiceover=[true|false] max_volume=[0-17]\n'
 
     return s
-

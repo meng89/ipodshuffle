@@ -1,23 +1,12 @@
 import os
 import uuid
 
-from .log import VoiceDB, JsonLog, get_checksum
+from .log import JsonLog, get_checksum
+from .filedb import VoiceDB
 
 
 def get_uuid1_hex():
     return uuid.uuid1().hex
-
-
-class LocalVoiceDB(VoiceDB):
-    def __init__(self, log_path, stored_dir):
-        super().__init__(log_path, stored_dir, random_name_fun=get_uuid1_hex)
-
-    def get_path(self, text, lang):
-        realpath = None
-        filename = self.get_filename(text, lang)
-        if filename:
-            realpath = self.realpath(filename)
-        return realpath
 
 
 class LocalFileLog(JsonLog):
@@ -61,3 +50,15 @@ class LocalFileLog(JsonLog):
     @staticmethod
     def realpath(path):
         return os.path.realpath(path)
+
+
+class LocalVoiceDB(VoiceDB):
+    def __init__(self, log_path, stored_dir):
+        super().__init__(log_path, stored_dir, random_name_fun=get_uuid1_hex)
+
+    def get_path(self, text, lang):
+        realpath = None
+        filename = self.get_filename(text, lang)
+        if filename:
+            realpath = self.realpath(filename)
+        return realpath

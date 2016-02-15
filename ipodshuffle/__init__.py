@@ -1,2 +1,3 @@
-from .shuffle import Shuffle, Playlist, Track, PL_MAP
-from .itunessd import MASTER, NORMAL, PODCAST, AUDIOBOOK
+from .shuffle import Shuffle
+
+from ipodshuffle.device.device import PL_MAP, MASTER, NORMAL, PODCAST, AUDIOBOOK

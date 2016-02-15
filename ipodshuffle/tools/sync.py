@@ -6,13 +6,15 @@ from mutagen.id3 import ID3NoHeaderError
 
 import langid
 
+
 from ipodshuffle.audio import get_type as get_audio_type
 
 from ipodshuffle import Shuffle, MASTER, NORMAL, PODCAST, AUDIOBOOK
 
-from ipodshuffle.localdb import LocalVoiceDB, LocalFileLog
+from ipodshuffle.filedb.localdb import LocalVoiceDB, LocalFileLog
 
 import ipodshuffle.utils
+
 
 from .tts import ENGINE_MAP
 from .tts.error import GetTTSError
@@ -28,7 +30,7 @@ def filename(path):
     return os.path.splitext(os.path.split(path)[1])[0]
 
 
-def beautify_for_tts(text):
+def beautify_text(text):
     new_text = None
     if '-' in text:
         new_text = text.replace('-', ',')
@@ -71,7 +73,7 @@ def title_artist_or_filename(path):
 
             text += ' ' + artist
     else:
-        text = beautify_for_tts(filename(path))
+        text = beautify_text(filename(path))
 
     return text
 
@@ -255,8 +257,8 @@ def sync(src, base, **tts_kwargs):
     # player.tracks_voicedb.remove_not_in_use()
     # player.playlists_voicedb.remove_not_in_use()
 
-    player.playlists.clear()
-    player.tracks.clear()
+    player.db.playlists.clear()
+    player.db.tracks.clear()
 
     local_filelog = LocalFileLog(os.path.join(CACHE_DIR, 'local_file_log.json'))
 
@@ -286,7 +288,7 @@ def sync(src, base, **tts_kwargs):
     track_get_or_make_dbid = None
     playlist_get_or_make_dbid = None
 
-    if player.enable_voiceover:
+    if player.db.enable_voiceover:
 
         local_voicedb = LocalVoiceDB(os.path.join(CACHE_DIR, 'voices_log.json'), os.path.join(CACHE_DIR, 'voices'))
         local_voicedb.clean()
@@ -304,16 +306,16 @@ def sync(src, base, **tts_kwargs):
             path_in_ipod = player.audiodb.add(file, checksum)
 
             track = None
-            for _track in player.tracks:
+            for _track in player.db.tracks:
                 if _track.path_in_ipod == path_in_ipod:
                     track = _track
 
             if not track:
-                track = player.tracks.add(path_in_ipod)
+                track = player.db.tracks.add(path_in_ipod)
 
-            pl.tracks.append(track)
+            pl.Tracks_indexes.append(track)
 
-            if player.enable_voiceover:
+            if player.db.enable_voiceover:
                 text = get_track_voice_title(file)
                 try:
                     track.dbid = track_get_or_make_dbid(text)
@@ -322,10 +324,10 @@ def sync(src, base, **tts_kwargs):
 
     def add_playlists(title_and_files, pl_type, text_fun):
         for title, files in title_and_files:
-            pl = player.playlists.add()
+            pl = player.db.playlists.add()
             pl.type = pl_type
 
-            if player.enable_voiceover:
+            if player.db.enable_voiceover:
                 try:
                     pl.dbid = playlist_get_or_make_dbid(title)
                 except GetTTSError:
@@ -333,7 +335,7 @@ def sync(src, base, **tts_kwargs):
 
             add_files_to_pl(pl, files, text_fun)
 
-    master_pl = player.playlists.add()
+    master_pl = player.db.playlists.add()
     master_pl.type = MASTER
     add_files_to_pl(master_pl, master[1], title_artist_or_filename)
 
@@ -341,7 +343,7 @@ def sync(src, base, **tts_kwargs):
     add_playlists(podcasts, PODCAST, title_artist_or_filename)
     add_playlists(audiobooks, AUDIOBOOK, filename)
 
-    player.write()
+    player.write_devicedb()
 
 fun = sync
 

@@ -247,13 +247,13 @@ class Track:
         else:
             raise Exception
 
-    @property
-    def fullpath(self):
-        return self._shuffle.base + self.filename
+    # @property
+    # def fullpath(self):
+    #    return self._shuffle.base + self.filename
 
-    @property
-    def path_in_ipod(self):
-        return self.filename[1:]
+    # @property
+    # def path_in_ipod(self):
+    #    return self.filename[1:]
     ###################################################
     ###################################################
 
@@ -283,7 +283,12 @@ class Track:
 
     @property
     def type(self):
-        return audio.get_type(self.fullpath)
+        return self._dic['type']
+        # return audio.get_type(self.fullpath)
+
+    @type.setter
+    def type(self, value):
+        self._dic['type'] = value
 
     @property
     def filename(self):

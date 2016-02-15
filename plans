@@ -1,2 +1,2 @@
-1 make module ipodshuffle.shuffle.Shuffle/Track/Playlist as itunessd/itunesstats dics OOP wrapper
-2 use
+1 Make module ipodshuffle.shuffle.Shuffle/Track/Playlist as itunessd/itunesstats dics OOP wrapper
+2 Use argparse to handle argv

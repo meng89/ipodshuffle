@@ -1,17 +1,25 @@
 """
-Shuffle for scritps writer
+Shuffle for scritps writer,
 """
 import os
 import random
+import string
 
-from ipodshuffle.device.device import OOwrapper as DeviceDB
+from ipodshuffle.device.device import Shuffle as ShuffleDB
+from ipodshuffle.device.device import MASTER, NORMAL, PODCAST, AUDIOBOOK
 
 from ipodshuffle.filedb.filedb import VoiceOverDB
 
 from ipodshuffle.filedb.log import Storage
 
-from ipodshuffle.audio import get_type
+from ipodshuffle.utils import get_checksum
 
+from ipodshuffle import audio
+
+
+from ipodshuffle.filedb.log import FileAlreadyInError
+
+from collections import UserList as List
 
 class AudioFileTypeError(Exception):
     pass
@@ -35,7 +43,7 @@ class Shuffle:
             if os.path.exists(self._itunesstats_path):
                 self._itunesstats_chunk = open(self._itunesstats_path, 'rb').read()
 
-        self.db = DeviceDB(self._itunessd_chunk, self._itunesstats_chunk)
+        self.db = ShuffleDB(self._itunessd_chunk, self._itunesstats_chunk)
 
         self.__dict__['audiodb'] = AudioDB(self,
                                            os.path.join(self.base, self._ctrl, 'audio_log.json'),
@@ -50,6 +58,18 @@ class Shuffle:
             VoiceOverDB(log_path=os.path.join(self.base, self._ctrl, 'playlists_voices_log.json'),
                         stored_dir=os.path.join(self.base, self._ctrl, 'Speakable', 'Playlists'),
                         )
+
+        self.__dict__['playlists'] = Playlists(shuffle=self)
+
+        for playlistdb in self.db.playlists:
+
+            _playlist = _Playlist(playlistdb)
+
+            for trackdb_index in playlistdb.indexes_of_tracks:
+                _playlist.append(Track(self.db.tracks[trackdb_index]))
+
+            self.__dict__['playlists'].appent(_playlist)
+
 
     def write_devicedb(self):
         itunessd_chunk, itunesstats_chunk = self.db.get_chunks()
@@ -88,30 +108,54 @@ class Shuffle:
     def tracks_from_checksum(self, checksum):
         pass
 
-    def add_to_audiodb(self, path, checksum):
-        audio_type = get_type(path)
-        if not audio_type:
-            raise AudioFileTypeError(audio_type)
-
-        pass
+    def add_audio(self, src, checksum=None):
+        self.audiodb.add(src, checksum)
 
     def get_tracks_by_checksum(self):
-
         pass
 
-    def add_track(self, path_in_ipod):
-    # if file not in
+    def make_track(self, path_in_ipod=None, checksum=None):
+        if bool(path_in_ipod) == bool(checksum):
+            raise Exception
 
 
-# ipod = Shuffle('/run/media/IPOD1')
-# checksum = ipod.add_audio('xxx/xxx.mp3')
-#
-# for track in ipod.tracks_from_checksum(checksum)
-#     if track.title !=
+class Playlists(List):
+    def __init__(self, shuffle):
+        super().__init__()
+        self._shuffle = shuffle
 
-# ipod.add_voice(text='bye bye', lang='en-gb', default=track)
-# pl.set_voice(text='bye bye', lang='en-gb')
-#
+
+    def add(self, pl_type):
+        if pl_type in ()
+
+
+class Track:
+    def __init__(self, _trackdb):
+        self._db = _trackdb
+
+
+
+class _Playlist(List):
+    def __init__(self, shuffle, pldb):
+        super().__init__()
+
+        self._shuffle=shuffle
+
+        self.title=None
+        self.title_lang=None
+
+
+class NormalPL(_Playlist):
+    def __init__(self, shuffle, pldb):
+        super().__init__(shuffle, pldb)
+
+class PodcastPL(_Playlist):
+    pass
+
+class AudioBook(_Playlist):
+
+
+
 
 
 def get_random_name():
@@ -127,7 +171,6 @@ def get_ipodlike_random_name():
 class AudioDB(Storage):
     def __init__(self, shuffle, log_path, storage_dir):
         super().__init__(log_path, storage_dir, random_name_fun=get_random_name)
-
         self._shuffle = shuffle
 
         self.storage_dir = storage_dir

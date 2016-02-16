@@ -9,22 +9,6 @@ from ipodshuffle import audio
 from .log import Storage, FileAlreadyInError
 
 
-
-    # def get_path_in_ipod(self, checksum):
-    #    path_in_ipod = None
-
-    #    filename = self.get_filename(checksum)
-    #    realpath = self.realpath(filename)
-    #    if filename:
-    #        path_in_ipod = self._shuffle.get_path_in_ipod(realpath)
-
-    #    return path_in_ipod
-
-    # def remove(self, path):
-    #    os.remove(self._shuffle.base_dir + '/' + path)
-    #    del self._shuffle.sounds_logs[path]
-
-
 class VoiceDB:
     def __init__(self, log_path, storage_dir, random_name_fun):
         self._Store = Storage(log_path, storage_dir, random_name_fun)

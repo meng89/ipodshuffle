@@ -18,7 +18,7 @@ PL_MAP = {
 }
 
 
-class OOwrapper:
+class Shuffle:
     def __init__(self, itunessd_chunk=None, itunesstats_chunk=None):
 
         self._dic = {}
@@ -73,18 +73,6 @@ class OOwrapper:
     @property
     def playlists(self):
         return self.__dict__['playlists']
-
-    @property
-    def audiodb(self):
-        return self.__dict__['sounds']
-
-    @property
-    def tracks_voicedb(self):
-        return self.__dict__['tracks_voicedb']
-
-    @property
-    def playlists_voicedb(self):
-        return self.__dict__['playlists_voicedb']
 
 
 class Tracks(List):

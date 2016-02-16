@@ -9,35 +9,6 @@ from ipodshuffle import audio
 from .log import Storage, FileAlreadyInError
 
 
-def get_random_name():
-    return ''.join(random.sample(string.ascii_uppercase, 6))
-
-
-def get_ipodlike_random_name():
-    """
-    :return: F0[1-3]/XXXX.[mp3|m4a|m4b|...]
-    """
-
-
-class AudioDB(Storage):
-    def __init__(self, shuffle, log_path, storage_dir):
-        super().__init__(log_path, storage_dir, random_name_fun=get_random_name)
-
-        self._shuffle = shuffle
-
-        self.storage_dir = storage_dir
-
-    def add(self, src, checksum=None):
-        if not audio.get_type(src):
-            raise TypeError('The type of this file is not supported.')
-        checksum = checksum or get_checksum(src)
-
-        try:
-            super().add(src, checksum)
-        except FileAlreadyInError:
-            pass
-
-        return self.get_path_in_ipod(checksum)
 
     # def get_path_in_ipod(self, checksum):
     #    path_in_ipod = None

@@ -1,11 +1,14 @@
 """
-Shuffle should be
+Shuffle for scritps writer
 """
 import os
+import random
 
 from ipodshuffle.device.device import OOwrapper as DeviceDB
 
-from ipodshuffle.filedb.filedb import AudioDB, VoiceOverDB
+from ipodshuffle.filedb.filedb import VoiceOverDB
+
+from ipodshuffle.filedb.log import Storage
 
 from ipodshuffle.audio import get_type
 
@@ -63,13 +66,12 @@ class Shuffle:
                 f.write(itunesstats_chunk)
             self._itunesstats_chunk = itunesstats_chunk
 
-    def get_path_in_ipod(self, path):
-
+    def path_in_ipod(self, path):
         realpath = os.path.realpath(path)
-        path_in_pod = None
+        path = None
         if realpath[0:len(self.base)] == self.base:
-            path_in_pod = realpath[len(self.base) + 1:]
-        return path_in_pod
+            path = realpath[len(self.base) + 1:]
+        return path
 
     @property
     def audiodb(self):
@@ -86,7 +88,7 @@ class Shuffle:
     def tracks_from_checksum(self, checksum):
         pass
 
-    def add_audio(self, path, checksum):
+    def add_to_audiodb(self, path, checksum):
         audio_type = get_type(path)
         if not audio_type:
             raise AudioFileTypeError(audio_type)
@@ -96,6 +98,9 @@ class Shuffle:
     def get_tracks_by_checksum(self):
 
         pass
+
+    def add_track(self, path_in_ipod):
+    # if file not in
 
 
 # ipod = Shuffle('/run/media/IPOD1')
@@ -107,3 +112,34 @@ class Shuffle:
 # ipod.add_voice(text='bye bye', lang='en-gb', default=track)
 # pl.set_voice(text='bye bye', lang='en-gb')
 #
+
+
+def get_random_name():
+    return ''.join(random.sample(string.ascii_uppercase, 6))
+
+
+def get_ipodlike_random_name():
+    """
+    :return: F0[1-3]/XXXX.[mp3|m4a|m4b|...]
+    """
+
+
+class AudioDB(Storage):
+    def __init__(self, shuffle, log_path, storage_dir):
+        super().__init__(log_path, storage_dir, random_name_fun=get_random_name)
+
+        self._shuffle = shuffle
+
+        self.storage_dir = storage_dir
+
+    def add(self, src, checksum=None):
+        if not audio.get_type(src):
+            raise TypeError('The type of this file is not supported.')
+        checksum = checksum or get_checksum(src)
+
+        try:
+            super().add(src, checksum)
+        except FileAlreadyInError:
+            pass
+
+        return self.get_path_in_ipod(checksum)

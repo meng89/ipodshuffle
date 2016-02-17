@@ -6,6 +6,7 @@ import random
 import string
 
 from ipodshuffle.device.device import Shuffle as ShuffleDB
+from ipodshuffle.device.device import Track as TrackDB
 from ipodshuffle.device.device import MASTER, NORMAL, PODCAST, AUDIOBOOK
 
 from ipodshuffle.filedb.filedb import VoiceOverDB
@@ -111,12 +112,20 @@ class Shuffle:
     def add_audio(self, src, checksum=None):
         self.audiodb.add(src, checksum)
 
+    def get_audio_path(self, checksum):
+
+
     def get_tracks_by_checksum(self):
         pass
 
     def make_track(self, path_in_ipod=None, checksum=None):
         if bool(path_in_ipod) == bool(checksum):
             raise Exception
+
+    @staticmethod
+    def check_audio(path):
+        if not audio.get_type(path):
+            raise TypeError('The type of this file is not supported.')
 
 
 class Playlists(List):
@@ -125,13 +134,28 @@ class Playlists(List):
         self._shuffle = shuffle
 
 
-    def add(self, pl_type):
-        if pl_type in ()
+    def add_normal(self, pl_type):
+        pass
+
+    def add
+
 
 
 class Track:
-    def __init__(self, _trackdb):
-        self._db = _trackdb
+    def __init__(self, trackdb=None, path_in_ipod=None):
+        if trackdb:
+            self._db = trackdb
+        elif path_in_ipod:
+            self._db = TrackDB('/' + path_in_ipod)
+
+    def voice_text(self):
+        pass
+
+    def voice_lang(self):
+        pass
+
+    def path_in_ipod(self):
+        pass
 
 
 
@@ -143,7 +167,12 @@ class _Playlist(List):
 
         self.title=None
         self.title_lang=None
+        self.tracks = []
 
+    def add_track(self, path_in_ipod):
+        self.tracks = Track(path_in_ipod=path_in_ipod)
+
+    def
 
 class NormalPL(_Playlist):
     def __init__(self, shuffle, pldb):
@@ -153,9 +182,7 @@ class PodcastPL(_Playlist):
     pass
 
 class AudioBook(_Playlist):
-
-
-
+    pass
 
 
 def get_random_name():

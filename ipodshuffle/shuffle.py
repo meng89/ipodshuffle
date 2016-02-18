@@ -5,7 +5,7 @@ import os
 import random
 import string
 
-from hooky import List, Hook
+# from hooky import List, Hook
 
 from ipodshuffle.device.device import Shuffle as ShuffleDB
 from ipodshuffle.device.device import Track as TrackDB
@@ -64,17 +64,16 @@ class Shuffle:
 
         self.__dict__['playlists'] = Playlists(shuffle=self)
 
+        pl_map = {MASTER: Master, NORMAL: Normal, PODCAST:Podcast, AUDIOBOOK: Audiobook}
         for playlistdb in self.db.playlists:
-
-            _playlist = _Playlist(playlistdb)
-
-            for trackdb_index in playlistdb.indexes_of_tracks:
-                _playlist.append(Track(self.db.tracks[trackdb_index]))
-
-            self.__dict__['playlists'].appent(_playlist)
+            pl = pl_map[playlistdb.type](playlistdb, [self.db.tracks[i].copy() for i in playlistdb.indexes_of_tracks])
+            self.__dict__['playlists'].appent(pl)
 
 
     def write_devicedb(self):
+        new_shuffledb = ShuffleDB()
+
+
         itunessd_chunk, itunesstats_chunk = self.db.get_chunks()
 
         if self._itunessd_chunk != itunessd_chunk:
@@ -139,22 +138,19 @@ class Playlists(List):
     def add_normal(self, pl_type):
         pass
 
-    def add
+    def add(self):
+        pass
 
 
-
-class Track:
-    def __init__(self, shuffle, trackdb=None, path_in_ipod=None):
-        self._shuffle = shuffle
-        if trackdb:
-            self._db = trackdb
-        elif path_in_ipod:
-            self._db = TrackDB('/' + path_in_ipod)
+class _Voice:
+    def __init__(self, db, voicedb):
+        self._db = db
+        self._voicedb = voicedb
 
     @property
     def voice(self):
         dbid = self._db.dbid
-        text, lang = self._shuffle.tracks_voicedb.get_text_lang(dbid + '.wav')
+        text, lang = self._voicedb.get_text_lang(dbid + '.wav')
         return text, lang
 
     @voice.setter
@@ -164,8 +160,20 @@ class Track:
             return
 
         text, lang = value
-        dbid = self._shuffle.tracks_voicedb.get_dbid(text, lang)
+        dbid = self._voicedb.get_dbid(text, lang)
         self._db.dbid = dbid
+
+
+class Track(_Voice):
+    def __init__(self, shuffle, trackdb=None, path_in_ipod=None):
+
+        self._shuffle = shuffle
+
+        if not trackdb:
+            trackdb = TrackDB('/' + path_in_ipod)
+
+        super().__init__(trackdb, self._shuffle.tracks_voicedb)
+
 
     @property
     def path_in_ipod(self):
@@ -173,29 +181,31 @@ class Track:
 
 
 
-class _Playlist(List):
+class _Playlist(_Voice):
     def __init__(self, shuffle, pldb):
-        super().__init__()
+        self._shuffle = shuffle
+        super().__init__(pldb, self._shuffle.playlists_voicedb)
 
         self._shuffle=shuffle
 
-        self.voice_text=None
-        self.voice_lang=None
         self.tracks = []
 
     def add_track(self, path_in_ipod):
         self.tracks = Track(path_in_ipod=path_in_ipod)
 
-    def
+class Master(_Playlist):
+    pass
 
-class NormalPL(_Playlist):
+class Normal(_Playlist):
     def __init__(self, shuffle, pldb):
         super().__init__(shuffle, pldb)
 
-class PodcastPL(_Playlist):
+    def add_track(self, path_in_ipod):
+
+class Podcast(_Playlist):
     pass
 
-class AudioBook(_Playlist):
+class Audiobook(_Playlist):
     pass
 
 

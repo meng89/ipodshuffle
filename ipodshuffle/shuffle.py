@@ -29,7 +29,7 @@ class AudioFileTypeError(Exception):
 
 
 class Shuffle:
-    def __init__(self, base):
+    def __init__(self, base, tts_fun=None):
         self.base = os.path.realpath(os.path.normpath(base))
 
         self._ctrl = 'iPod_Control'
@@ -144,20 +144,32 @@ class Playlists(List):
 
 
 class Track:
-    def __init__(self, trackdb=None, path_in_ipod=None):
+    def __init__(self, shuffle, trackdb=None, path_in_ipod=None):
+        self._shuffle = shuffle
         if trackdb:
             self._db = trackdb
         elif path_in_ipod:
             self._db = TrackDB('/' + path_in_ipod)
 
-    def voice_text(self):
-        pass
+    @property
+    def voice(self):
+        dbid = self._db.dbid
+        text, lang = self._shuffle.tracks_voicedb.get_text_lang(dbid + '.wav')
+        return text, lang
 
-    def voice_lang(self):
-        pass
+    @voice.setter
+    def voice(self, value):
+        if value is None:
+            self._db.dbid='0000000000000000'
+            return
 
+        text, lang = value
+        dbid = self._shuffle.tracks_voicedb.get_dbid(text, lang)
+        self._db.dbid = dbid
+
+    @property
     def path_in_ipod(self):
-        pass
+        return self._db.filename[0:]
 
 
 
@@ -167,8 +179,8 @@ class _Playlist(List):
 
         self._shuffle=shuffle
 
-        self.title=None
-        self.title_lang=None
+        self.voice_text=None
+        self.voice_lang=None
         self.tracks = []
 
     def add_track(self, path_in_ipod):

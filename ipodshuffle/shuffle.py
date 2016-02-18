@@ -5,6 +5,8 @@ import os
 import random
 import string
 
+from hooky import List, Hook
+
 from ipodshuffle.device.device import Shuffle as ShuffleDB
 from ipodshuffle.device.device import Track as TrackDB
 from ipodshuffle.device.device import MASTER, NORMAL, PODCAST, AUDIOBOOK

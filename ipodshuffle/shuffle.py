@@ -46,7 +46,10 @@ class Shuffle:
             if os.path.exists(self._itunesstats_path):
                 self._itunesstats_chunk = open(self._itunesstats_path, 'rb').read()
 
-        self.db = ShuffleDB(self._itunessd_chunk, self._itunesstats_chunk)
+        shuffledb = ShuffleDB(self._itunessd_chunk, self._itunesstats_chunk)
+
+        self.enable_voiceover = shuffledb.enable_voiceover
+        self.max_volume = shuffledb.max_volume
 
         self.__dict__['audiodb'] = AudioDB(self,
                                            os.path.join(self.base, self._ctrl, 'audio_log.json'),
@@ -65,16 +68,28 @@ class Shuffle:
         self.__dict__['playlists'] = Playlists(shuffle=self)
 
         pl_map = {MASTER: Master, NORMAL: Normal, PODCAST:Podcast, AUDIOBOOK: Audiobook}
-        for playlistdb in self.db.playlists:
-            pl = pl_map[playlistdb.type](playlistdb, [self.db.tracks[i].copy() for i in playlistdb.indexes_of_tracks])
+        for playlistdb in shuffledb.playlists:
+            pl = pl_map[playlistdb.type](playlistdb, [shuffledb.tracks[i].copy() for i in playlistdb.indexes_of_tracks])
             self.__dict__['playlists'].appent(pl)
 
 
     def write_devicedb(self):
-        new_shuffledb = ShuffleDB()
+        shuffledb = ShuffleDB()
+
+        shuffledb.enable_voiceover = self.enable_voiceover
+        shuffledb.max_volume = self.max_volume
+
+        for _pl in self.playlists:
+            shuffledb.playlists.append(_pl.lldb)
+
+            for track in _pl.tracks:
+                if track.lldb not in shuffledb.tracks:
+                    shuffledb.tracks.append(track.lldb)
+
+                _pl.lldb.indexes_of_tracks.append(shuffledb.tracks.index(track.lldb))
 
 
-        itunessd_chunk, itunesstats_chunk = self.db.get_chunks()
+        itunessd_chunk, itunesstats_chunk = shuffledb.get_chunks()
 
         if self._itunessd_chunk != itunessd_chunk:
             os.makedirs(os.path.split(self._itunessd_path)[0], exist_ok=True)
@@ -96,6 +111,10 @@ class Shuffle:
         return path
 
     @property
+    def playlists(self):
+        return self.__dict__['playlists']
+
+    @property
     def audiodb(self):
         return self.__dict__['audiodb']
 
@@ -114,7 +133,7 @@ class Shuffle:
         self.audiodb.add(src, checksum)
 
     def get_audio_path(self, checksum):
-
+        pass
 
     def get_tracks_by_checksum(self):
         pass
@@ -129,39 +148,26 @@ class Shuffle:
             raise TypeError('The type of this file is not supported.')
 
 
-class Playlists(List):
-    def __init__(self, shuffle):
-        super().__init__()
-        self._shuffle = shuffle
-
-
-    def add_normal(self, pl_type):
-        pass
-
-    def add(self):
-        pass
-
-
 class _Voice:
-    def __init__(self, db, voicedb):
-        self._db = db
+    def __init__(self, lldb, voicedb):
+        self.lldb = lldb
         self._voicedb = voicedb
 
     @property
     def voice(self):
-        dbid = self._db.dbid
+        dbid = self.lldb.dbid
         text, lang = self._voicedb.get_text_lang(dbid + '.wav')
         return text, lang
 
     @voice.setter
     def voice(self, value):
         if value is None:
-            self._db.dbid='0000000000000000'
+            self.lldb.dbid= '0000000000000000'
             return
 
         text, lang = value
         dbid = self._voicedb.get_dbid(text, lang)
-        self._db.dbid = dbid
+        self.lldb.dbid = dbid
 
 
 class Track(_Voice):
@@ -174,40 +180,61 @@ class Track(_Voice):
 
         super().__init__(trackdb, self._shuffle.tracks_voicedb)
 
-
     @property
     def path_in_ipod(self):
-        return self._db.filename[0:]
+        return self.lldb.filename[0:]
+
+###################################################################################
+###################################################################################
 
 
+class Playlists(List):
+    def __init__(self, shuffle):
+        super().__init__()
+        self._shuffle = shuffle
+
+
+###################################################################################
 
 class _Playlist(_Voice):
     def __init__(self, shuffle, pldb):
         self._shuffle = shuffle
         super().__init__(pldb, self._shuffle.playlists_voicedb)
 
-        self._shuffle=shuffle
+        self._shuffle = shuffle
 
         self.tracks = []
 
     def add_track(self, path_in_ipod):
-        self.tracks = Track(path_in_ipod=path_in_ipod)
+        self.tracks.append(Track(self._shuffle, path_in_ipod=path_in_ipod))
+
 
 class Master(_Playlist):
-    pass
+    def __init__(self, shuffle, pldb):
+        super().__init__(shuffle, pldb)
+        self.lldb.type = MASTER
+
 
 class Normal(_Playlist):
     def __init__(self, shuffle, pldb):
         super().__init__(shuffle, pldb)
+        self.lldb.type = NORMAL
 
-    def add_track(self, path_in_ipod):
 
 class Podcast(_Playlist):
-    pass
+    def __init__(self, shuffle, pldb):
+        super().__init__(shuffle, pldb)
+        self.lldb.type = PODCAST
+
 
 class Audiobook(_Playlist):
-    pass
+    def __init__(self, shuffle, pldb):
+        super().__init__(shuffle, pldb)
+        self.lldb.type = AUDIOBOOK
 
+
+####################################################################################
+####################################################################################
 
 def get_random_name():
     return ''.join(random.sample(string.ascii_uppercase, 6))

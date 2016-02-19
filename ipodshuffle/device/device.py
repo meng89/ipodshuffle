@@ -368,13 +368,10 @@ class Playlist:
 
         self._dic = dic or {}
 
-        indexes_of_tracks = indexes_of_tracks or []
-
-        if self._dic:
-            self.__dict__['indexes_of_tracks'] = indexes_of_tracks
-        else:
-            self.__dict__['indexes_of_tracks'] = []
+        if not self._dic:
             self.dbid = '0000000000000000'
+
+        self.__dict__['indexes_of_tracks'] = indexes_of_tracks or []
 
     @property
     def type(self):
@@ -396,10 +393,6 @@ class Playlist:
     @property
     def indexes_of_tracks(self):
         return self.__dict__['indexes_of_tracks']
-
-    @indexes_of_tracks.setter
-    def indexes_of_tracks(self, value):
-        self.__dict__['indexes_of_tracks'] = value
 
     def get_dic_indexes(self):
         return self._dic, self.indexes_of_tracks

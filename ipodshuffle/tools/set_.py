@@ -5,15 +5,15 @@ description = "Set enable_voiceover and max_volume"
 
 
 def set_(base, enable_voiceover=None, max_volume=None):
-    player = Shuffle(base)
+    ipod = Shuffle(base)
 
     if enable_voiceover is not None:
-        player.db.enable_voiceover = enable_voiceover
+        ipod.enable_voiceover = enable_voiceover
 
     if max_volume is not None:
-        player.db.max_volume = max_volume
+        ipod.max_volume = max_volume
 
-    player.write_devicedb()
+    ipod.write()
 
 fun = set_
 

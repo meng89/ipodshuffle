@@ -173,7 +173,7 @@ def wrapper_tts(_fun, **kwargs):
     return wrapper
 
 
-def voice_things(ipod_voicedb, local_voicedb, ttsengine, langs=None, **kwargs):
+def voice_things(local_voicedb, ttsengine, langs=None, **kwargs):
 
     tts_engine = ENGINE_MAP[ttsengine]
 
@@ -187,9 +187,9 @@ def voice_things(ipod_voicedb, local_voicedb, ttsengine, langs=None, **kwargs):
 
     lang_map = {}
 
-    for lang in langs:
-        _langid_code = tts_engine.lang_to_langid_code(lang)
-        lang_map[_langid_code] = lang
+    for _lang in langs:
+        _langid_code = tts_engine.lang_to_langid_code(_lang)
+        lang_map[_langid_code] = _lang
 
     languages_to_set = [lang_id_code for lang_id_code in lang_map.keys()]
 
@@ -197,8 +197,7 @@ def voice_things(ipod_voicedb, local_voicedb, ttsengine, langs=None, **kwargs):
 
     tts = wrapper_tts(tts_engine.tts, **kwargs)
 
-    def get_or_make_dbid(text):
-
+    def classify_tts_lang(text):
         langid_code = langid.classify(text)[0]
 
         if 'zh' in languages_to_set:
@@ -206,37 +205,34 @@ def voice_things(ipod_voicedb, local_voicedb, ttsengine, langs=None, **kwargs):
 
         tts_lang = lang_map[langid_code]
 
-        dbid = ipod_voicedb.get_dbid(text, tts_lang)
-        if not dbid:  # The voice not in ipod tracks/playlists db
-            print('\nvoice: {}, {} :'.format(repr(tts_lang), repr(text)))
-            print('  not in dir Tracks/Playlists. ', end='')
-            local_voice_path = local_voicedb.get_path(text, tts_lang)
+        return tts_lang
 
-            if not local_voice_path:  # The voice not in local
-                print('not in local. ', end='')
-                print('try tts ... ', end='')
-                voice_data = tts(text, tts_lang)
-                print('done!')
+    def local_voice_path(text, lang):
+        tts_lang = lang
+        voice_path = local_voicedb.get_path(text, tts_lang)
 
-                tmp_file = tempfile.NamedTemporaryFile(delete=False)
-                tmp_file_name = tmp_file.name
-                tmp_file.close()
+        if not local_voice_path:  # The voice not in local
+            print('not in local. ', end='')
+            print('try tts ... ', end='')
+            voice_data = tts(text, tts_lang)
+            print('done!')
 
-                with open(tmp_file_name, 'wb') as f:
-                    f.write(voice_data)
+            tmp_file = tempfile.NamedTemporaryFile(delete=False)
+            tmp_file_name = tmp_file.name
+            tmp_file.close()
 
-                local_voicedb.add(tmp_file_name, text, tts_lang)
+            with open(tmp_file_name, 'wb') as f:
+                f.write(voice_data)
 
-                os.remove(tmp_file_name)
+            local_voicedb.add(tmp_file_name, text, tts_lang)
 
-                local_voice_path = local_voicedb.get_path(text, tts_lang)
+            os.remove(tmp_file_name)
 
-            ipod_voicedb.add(local_voice_path, text, tts_lang)
-            dbid = ipod_voicedb.get_dbid(text, tts_lang)
+            voice_path = local_voicedb.get_path(text, tts_lang)
 
-        return dbid
+        return voice_path
 
-    return get_or_make_dbid
+    return classify_tts_lang, local_voice_path
 
 
 description = "Sync tracks and playlists to player"
@@ -248,17 +244,22 @@ def sync(src, base, **tts_kwargs):
     src = os.path.realpath(src)
     base = os.path.realpath(base)
 
-    player = Shuffle(base)
+    ipod = Shuffle(base)
+    if ipod.enable_voiceover:
+        local_voicedb = LocalVoiceDB(os.path.join(CACHE_DIR, 'voices_log.json'), os.path.join(CACHE_DIR, 'voices'))
+        local_voicedb.clean()
+        classify_tts_lang_fun, local_voice_path_fun = voice_things(local_voicedb, **tts_kwargs)
 
-    player.audiodb.clean()
+        ipod.voice_path_fun = local_voice_path_fun
 
-    player.tracks_voicedb.clean()
-    player.playlists_voicedb.clean()
+    ipod.audiodb.clean()
+
+    ipod.tracks_voicedb.clean()
+    ipod.playlists_voicedb.clean()
     # player.tracks_voicedb.remove_not_in_use()
     # player.playlists_voicedb.remove_not_in_use()
 
-    player.db.playlists.clear()
-    player.db.tracks.clear()
+    ipod.playlists.clear()
 
     local_filelog = LocalFileLog(os.path.join(CACHE_DIR, 'local_file_log.json'))
 
@@ -285,17 +286,6 @@ def sync(src, base, **tts_kwargs):
         master = master_and_normals[0]
         normals = master_and_normals[1:]
 
-    track_get_or_make_dbid = None
-    playlist_get_or_make_dbid = None
-
-    if player.db.enable_voiceover:
-
-        local_voicedb = LocalVoiceDB(os.path.join(CACHE_DIR, 'voices_log.json'), os.path.join(CACHE_DIR, 'voices'))
-        local_voicedb.clean()
-
-        track_get_or_make_dbid = voice_things(player.tracks_voicedb, local_voicedb, **tts_kwargs)
-        playlist_get_or_make_dbid = voice_things(player.playlists_voicedb, local_voicedb, **tts_kwargs)
-
     def add_files_to_pl(pl, files, get_track_voice_title=None):
         for file in files:
             checksum = local_filelog.get_checksum(file)
@@ -303,47 +293,39 @@ def sync(src, base, **tts_kwargs):
                 local_filelog.log_it(file)
                 checksum = local_filelog.get_checksum(file)
 
-            path_in_ipod = player.audiodb.add(file, checksum)
+            path_in_ipod = ipod.audiodb.get_filename(checksum)
+            if not path_in_ipod:
+                ipod.audiodb.add(file, checksum)
+                path_in_ipod = ipod.audiodb.get_filename(checksum)
 
-            track = None
-            for _track in player.db.tracks:
-                if _track.path_in_ipod == path_in_ipod:
-                    track = _track
+            track = pl.add_track(path_in_ipod)
 
-            if not track:
-                track = player.db.tracks.add(path_in_ipod)
-
-            pl.Tracks_indexes.append(track)
-
-            if player.db.enable_voiceover:
+            if ipod.enable_voiceover:
                 text = get_track_voice_title(file)
-                try:
-                    track.dbid = track_get_or_make_dbid(text)
-                except GetTTSError:
-                    print('get track voice failed, ignored.')
+                lang = classify_tts_lang_fun(text)
+
+                track.voice = text, lang
+                # print('get track voice failed, ignored.')
 
     def add_playlists(title_and_files, pl_type, text_fun):
         for title, files in title_and_files:
-            pl = player.db.playlists.add()
-            pl.type = pl_type
+            pl = ipod.playlists.add(pl_type)
 
-            if player.db.enable_voiceover:
-                try:
-                    pl.dbid = playlist_get_or_make_dbid(title)
-                except GetTTSError:
-                    print('get playlist voice failed, ignored.')
+            if ipod.enable_voiceover:
+                lang = classify_tts_lang_fun(title)
+                pl.voice = title, lang
+                # print('get playlist voice failed, ignored.')
 
             add_files_to_pl(pl, files, text_fun)
 
-    master_pl = player.db.playlists.add()
-    master_pl.type = MASTER
+    master_pl = ipod.playlists.add(pl_type=MASTER)
     add_files_to_pl(master_pl, master[1], title_artist_or_filename)
 
     add_playlists(normals, NORMAL, title_artist_or_filename)
     add_playlists(podcasts, PODCAST, title_artist_or_filename)
     add_playlists(audiobooks, AUDIOBOOK, filename)
 
-    player.write_devicedb()
+    ipod.write()
 
 fun = sync
 

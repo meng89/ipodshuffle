@@ -5,6 +5,7 @@ from collections import UserList as List
 
 from .itunessd import MASTER, NORMAL, PODCAST, AUDIOBOOK
 
+
 """
 Class Shuffle, Playlists, playlist, Tracks, Track, is more like wrapper of iTunesSD and iTunesStats,
 should use AudioDB and VoiceDB to store audio and tts voice files.
@@ -28,6 +29,8 @@ class Shuffle:
                 header_dic, tracks_dics, playlists_dics_and_indexes = itunessd.itunessd_to_dics(itunessd_chunk)
                 tracks_play_count_dics = itunesstats.itunesstats_to_dics(itunesstats_chunk)
 
+                self._dic = header_dic
+
                 self.__dict__['tracks'] = Tracks(tracks_dics, tracks_play_count_dics)
                 self.__dict__['playlists'] = Playlists(playlists_dics_and_indexes)
 
@@ -35,8 +38,8 @@ class Shuffle:
             self.enable_voiceover = False
             self.max_volume = 0
 
-            self.__dict__['tracks'] = Tracks(self)
-            self.__dict__['playlists'] = Playlists(self)
+            self.__dict__['tracks'] = Tracks()
+            self.__dict__['playlists'] = Playlists()
 
     def get_chunks(self):
 
@@ -137,7 +140,7 @@ class Track:
             self.start_at_pos_ms = 0
             self.stop_at_pos_ms = 0
             self.volume_gain = 0
-            self._dic['filename'] = '/' + path_in_ipod
+            self._dic['filename'] = path_in_ipod
             self.dont_skip_on_shuffle = 0
             self.remember_playing_pos = 0
             self.part_of_uninterruptable_album = 0
@@ -336,6 +339,15 @@ class Track:
     @time_of_last_skip.setter
     def time_of_last_skip(self, value):
         self._count_dic['time_of_last_skip'] = value
+
+    ########################################################
+    ########################################################
+
+    def __eq__(self, other):
+        if isinstance(other, self.__class__) and self.get_dics() == other.get_dics():
+            return True
+        else:
+            return False
 
     ########################################################
     ########################################################

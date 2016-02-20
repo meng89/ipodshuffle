@@ -1,5 +1,6 @@
 
-from ipodshuffle import Shuffle
+from ipodshuffle import Shuffle, PL_MAP, Master, Normal, Podcast, Audiobook
+
 from ipodshuffle.audio import AUDIO_MAP
 
 
@@ -20,44 +21,40 @@ def help_():
 
 def show(base):
 
-    player = Shuffle(base)
+    ipod = Shuffle(base)
 
     print(L1)
-    print('enable_voiceover: ', player.db.enable_voiceover)
-    print('max_volumex: ', player.db.max_volume)
-    print('number of tracks: ', len(player.db.tracks))
-    print('number of playlists: ', len(player.db.playlists))
+    print('enable_voiceover: ', ipod.enable_voiceover)
+    print('max_volumex: ', ipod.max_volume)
+    # print('number of tracks: ', len(ipod.tracks))
+    print('number of playlists: ', len(ipod.playlists))
     print(L1)
     print()
 
     print('Tracks:')
     print(L1)
-    for track in player.db.tracks:
-        print('INDEX: ', player.db.tracks.index(track))
-        print('type: ', AUDIO_MAP[track.type])
-        print('filename: ', track.filename)
-        text, lang = player.db.tracks_voicedb.get_text_lang(track.dbid + '.wav')
-        print('dbid: {}, lang: {}, text: {}.'.format(track.dbid, repr(lang), repr(text)))
+    # for track in ipod.tracks:
+    #    print('INDEX: ', ipod.tracks.index(track))
+    #    print('type: ', AUDIO_MAP[track.type])
+    #    print('filename: ', track.filename)
+    #    print('dbid: ', track.dbid)
 
-        if track != player.db.tracks[-1]:
-            print(L2)
+    #    if track != ipod.tracks[-1]:
+    #        print(L2)
     print(L1)
 
     print()
 
     print('Playlists:')
     print(L1)
-    for pl in player.db.playlists:
-        print('type: ', PL_MAP[pl.type])
-        if pl.type != MASTER:
-            text, lang = player.db.playlists_voicedb.get_text_lang(pl.dbid + '.wav')
-            print('dbid: {} (lang: {}, text: {})'.format(pl.dbid, repr(lang), repr(text)))
-        else:
-            print()
-            # print('<TEXT AND LANG WAS DEFINED IN MESSAGES>')
-        print('number of tracks: ', len(pl.Tracks_indexes))
-        print('index of tracks: ', [player.db.tracks.index(track) for track in pl.Tracks_indexes])
-        if pl != player.db.playlists[-1]:
+    for pl in ipod.playlists:
+        print('type: ', type(pl))
+        print('number of tracks: ', len(pl.tracks))
+        if not isinstance(pl, Master):
+            text, lang = pl.voice
+            print('voice: ', lang, text)
+        # print('index of tracks: ', [ipod.tracks.index(track) for track in pl.Tracks_indexes])
+        if pl != ipod.playlists[-1]:
             print(L2)
     print(L1)
 

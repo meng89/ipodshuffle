@@ -49,7 +49,8 @@ class VoiceDB:
             if _text == text and _lang == lang:
                 filename = _filename
                 break
-
+        # print(self._Store._storage_dir, self._Store._log_path)
+        # print('here', lang, filename, text)
         return filename
 
     def get_filenames(self):
@@ -106,10 +107,11 @@ class VoiceOverDB(VoiceDB):
         filename = self.get_filename(text, lang)
         if filename:
             dbid = os.path.splitext(filename)[0]
+
         return dbid
 
-    def get_text_lang(self, filename):
-        extra = self._Store.get_extra(filename)
+    def get_text_lang(self, dbid):
+        extra = self._Store.get_extra(dbid + '.wav')
         text, lang = extra['text'], extra['lang']
         return text, lang
 

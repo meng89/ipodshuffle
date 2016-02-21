@@ -1,5 +1,6 @@
 import os
 import tempfile
+import sys
 
 from mutagen.easyid3 import EasyID3
 from mutagen.id3 import ID3NoHeaderError
@@ -15,9 +16,12 @@ from ipodshuffle.filedb.localdb import LocalVoiceDB, LocalFileLog
 
 import ipodshuffle.utils
 
+from . import str2list
 
 from .tts import ENGINE_MAP
-from .tts.error import GetTTSError
+from .tts import sovx, voicerss
+
+# from .tts.error import GetTTSError
 
 from .char_detect import fix_zh
 
@@ -165,37 +169,29 @@ def get_audiobooks(dire):
     return titles_files
 
 
-def wrapper_tts(_fun, **kwargs):
+def voice_things(local_voicedb, args):
 
-    def wrapper(text, lang):
-        return _fun(text, lang, **kwargs)
+    tts_engine = ENGINE_MAP[args.engine]
 
-    return wrapper
-
-
-def voice_things(local_voicedb, ttsengine, langs=None, **kwargs):
-
-    tts_engine = ENGINE_MAP[ttsengine]
+    langs = args.langs
 
     if langs:
         if not isinstance(langs, list):
             langs = [langs]
     else:
-        langs = tts_engine.langs
+        langs = tts_engine.legal_langs
 
     # user langs to langid langs to set, langid langs to user langs to get voice
 
     lang_map = {}
-
     for _lang in langs:
-        _langid_code = tts_engine.lang_to_langid_code(_lang)
-        lang_map[_langid_code] = _lang
+        lang_map[_lang[:2]] = _lang
 
     languages_to_set = [lang_id_code for lang_id_code in lang_map.keys()]
 
     langid.set_languages(languages_to_set)
 
-    tts = wrapper_tts(tts_engine.tts, **kwargs)
+    tts_func = tts_engine.get_tts_func(args)
 
     def classify_tts_lang(text):
         langid_code = langid.classify(text)[0]
@@ -209,12 +205,12 @@ def voice_things(local_voicedb, ttsengine, langs=None, **kwargs):
 
     def local_voice_path(text, lang):
         tts_lang = lang
+        print(repr(lang), repr(text))
         voice_path = local_voicedb.get_path(text, tts_lang)
-
-        if not local_voice_path:  # The voice not in local
-            print('not in local. ', end='')
-            print('try tts ... ', end='')
-            voice_data = tts(text, tts_lang)
+        if not voice_path:  # The voice not in local
+            print('   not in local. ', end='')
+            print('try TTS engine {} ... '.format(args.engine), end='', flush=True)
+            voice_data = tts_func(text, tts_lang)
             print('done!')
 
             tmp_file = tempfile.NamedTemporaryFile(delete=False)
@@ -235,22 +231,19 @@ def voice_things(local_voicedb, ttsengine, langs=None, **kwargs):
     return classify_tts_lang, local_voice_path
 
 
-description = "Sync tracks and playlists to player"
-
-
-def sync(src, base, **tts_kwargs):
+def sync(args):
     # src=None, ipod=None, [tts_engine=None, [langs=None, tts_key=None, ... ]]
 
-    src = os.path.realpath(src)
-    base = os.path.realpath(base)
+    src = os.path.realpath(args.src)
+    base = os.path.realpath(args.base)
 
     ipod = Shuffle(base)
     if ipod.enable_voiceover:
         local_voicedb = LocalVoiceDB(os.path.join(CACHE_DIR, 'voices_log.json'), os.path.join(CACHE_DIR, 'voices'))
         local_voicedb.clean()
-        classify_tts_lang_fun, local_voice_path_fun = voice_things(local_voicedb, **tts_kwargs)
+        classify_tts_lang_func, local_voice_path_func = voice_things(local_voicedb, args)
 
-        ipod.voice_path_fun = local_voice_path_fun
+        ipod.voice_path_func = local_voice_path_func
 
     ipod.audiodb.clean()
 
@@ -302,7 +295,7 @@ def sync(src, base, **tts_kwargs):
 
             if ipod.enable_voiceover:
                 text = get_track_voice_title(file)
-                lang = classify_tts_lang_fun(text)
+                lang = classify_tts_lang_func(text)
 
                 track.voice = text, lang
                 # print('get track voice failed, ignored.')
@@ -312,7 +305,7 @@ def sync(src, base, **tts_kwargs):
             pl = ipod.playlists.add(pl_type)
 
             if ipod.enable_voiceover:
-                lang = classify_tts_lang_fun(title)
+                lang = classify_tts_lang_func(title)
                 pl.voice = title, lang
                 # print('get playlist voice failed, ignored.')
 
@@ -327,14 +320,18 @@ def sync(src, base, **tts_kwargs):
 
     ipod.write()
 
-fun = sync
 
+def register(parser):
+    parser_sync = parser.add_parser('sync', help='sync to ipod')
+    parser_sync.add_argument('-b', '--base', help='ipod base', metavar='<path>', required=True)
+    parser_sync.add_argument('-s', '--src', help='source path', metavar='<path>', required=True)
+    parser_sync.add_argument('-l', '--langs', help='langs', type=str2list, metavar='lang1,lang2...')
+    subparsers = parser_sync.add_subparsers(title='engines', dest='engine')
 
-def get_help_strings(indet=None):
-    indet = indet or 0
-    indet_s = ' ' * indet
-    s = ''
-    s += indet_s + 'usage:  src=<path> base=<path> ttsengine=<enging> langs=lang1,lang2... ' \
-                   '<arg1>=value1 ... \n'
-    s += ''
-    return s
+    # sovx.register(subparsers)
+    # voicerss.register(subparsers)
+
+    for module in ENGINE_MAP.values():
+        module.register(subparsers)
+
+    parser_sync.set_defaults(func=sync)

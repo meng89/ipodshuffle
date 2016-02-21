@@ -19,9 +19,9 @@ def help_():
     print()
 
 
-def show(base):
+def show(args):
 
-    ipod = Shuffle(base)
+    ipod = Shuffle(args.base)
 
     print(L1)
     print('enable_voiceover: ', ipod.enable_voiceover)
@@ -58,10 +58,11 @@ def show(base):
             print(L2)
     print(L1)
 
-fun = show
 
+def register(parser):
 
-def get_help_strings(indet=None):
-    indet = indet or 0
-    s = ' ' * indet + 'usage:  base=<path>\n'
-    return s
+    parser_show = parser.add_parser('show', help='show ipod informations')
+
+    parser_show.add_argument('-b', '--base', help='ipod base', metavar='<path>', required=True)
+
+    parser_show.set_defaults(func=show)

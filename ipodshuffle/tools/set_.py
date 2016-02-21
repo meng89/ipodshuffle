@@ -1,26 +1,30 @@
 from ipodshuffle.shuffle import Shuffle
 
+from ipodshuffle.tools import str2bool
 
 description = "Set enable_voiceover and max_volume"
 
 
-def set_(base, enable_voiceover=None, max_volume=None):
-    ipod = Shuffle(base)
+def set_(args):
+    ipod = Shuffle(args.base)
 
-    if enable_voiceover is not None:
-        ipod.enable_voiceover = enable_voiceover
+    if args.voiceover is not None:
+        ipod.enable_voiceover = args.voiceover
 
-    if max_volume is not None:
-        ipod.max_volume = max_volume
+    if args.max_volume is not None:
+        ipod.max_volume = args.max_volume
 
     ipod.write()
 
-fun = set_
 
+def register(parser):
 
-def get_help_strings(indet=None):
-    indet = indet or 0
+    parser_set = parser.add_parser('set', help='set max_volume/enable_voiceover')
 
-    s = ' ' * indet + 'usage:  base=<path> enable_voiceover=[true|false] max_volume=[0-17]\n'
+    parser_set.add_argument('-b', '--base', help='ipod base', metavar='<path>', required=True)
 
-    return s
+    parser_set.add_argument('-v', '--voiceover', type=str2bool, help='enable/disable voiceover')
+
+    parser_set.add_argument('-m', '--max_volume', type=int, help='max volume, 0 is do not limit', metavar='<int>')
+
+    parser_set.set_defaults(func=set_)

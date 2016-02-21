@@ -4,32 +4,39 @@ import urllib.parse
 from .error import LangCodeError, GetTTSError
 
 
-def tts(text, lang, key, c=None, f=None):
-    if not is_available(lang):
-        raise LangCodeError(lang)
+def get_tts_func(args):
+    key = args.key
+    format_ = args.format or '22khz_16bit_mono'
 
-    c = c or 'WAV'
-    f = f or '22khz_16bit_mono'
+    def tts(text, lang):
+        if lang not in legal_langs:
+            raise LangCodeError(lang)
 
-    url = 'http://api.voicerss.org/?'
+        tts_lang = lang
 
-    parameters = {'src': text, 'hl': lang, 'key': key, 'c': c, 'f': f}
+        c = 'WAV'
 
-    req = urllib.request.Request(url, urllib.parse.urlencode(parameters).encode('ascii'))
+        url = 'http://api.voicerss.org/?'
 
-    response = urllib.request.urlopen(req)
+        parameters = {'src': text, 'hl': tts_lang, 'key': key, 'c': c, 'f': format_}
 
-    content_length = None
-    for k, v in response.getheaders():
-        if k == 'Content-Length':
-            content_length = int(v)
+        req = urllib.request.Request(url, urllib.parse.urlencode(parameters).encode('ascii'))
 
-    if content_length < 10000:
-        raise GetTTSError(response.read().decode())
+        response = urllib.request.urlopen(req)
 
-    return response.read()
+        content_length = None
+        for k, v in response.getheaders():
+            if k == 'Content-Length':
+                content_length = int(v)
 
-langs = [
+        if content_length < 10000:
+            raise GetTTSError(response.read().decode())
+
+        return response.read()
+
+    return tts
+
+my_langs = [
     'ca-es',  # 'Catalan'],
     'zh-cn',  # 'Chinese (China)'],
     'zh-hk',  # 'Chinese (Hong Kong)'],
@@ -59,25 +66,13 @@ langs = [
 ]
 
 
-def is_available(lang):
-    return lang.lower() in [l.lower() for l in langs]
+legal_langs = my_langs
 
 
-def lang_to_langid_code(lang):
-    langid_code = None
-    for l in langs:
-        if l.lower() == lang.lower():
-            langid_code = l.split('-')[0]
-            break
-    return langid_code
+def register(parser):
+    parser_voicerss = parser.add_parser('voicerss', help='An http TTS engine')
 
+    parser_voicerss.add_argument('-k', '--key', help='API key, visit to get: http://www.voicerss.org/',
+                                 metavar='<string>')
 
-def to_langs(langid_code):
-    _langs = []
-
-    for lang in [lang[0] for lang in langs]:
-        code = lang.split('-')[0]
-        if code.lower() == langid_code:
-            _langs.append(lang)
-
-    return _langs
+    parser_voicerss.add_argument('-f', '--format', help='audio format')

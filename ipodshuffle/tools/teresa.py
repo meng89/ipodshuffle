@@ -1,78 +1,24 @@
 #!/usr/bin/env python3
 
-import sys
-
-from collections import OrderedDict
+import argparse
 
 from ipodshuffle.tools import show, set_, sync
 
 
-modules = OrderedDict()
-
-for _name, _module in (['show', show], ['set', set_], ['sync', sync]):
-    modules[_name] = _module
-
-
-class ArgumentsError(Exception):
-    pass
-
-
-def help_():
-    # script_name = format(sys.argv[0])
-    script_name = 'teresa'
-    s = 'usage: {} fun=<fun> <arg1>=<value1> <arg2>=<value2> ... \n'.format(script_name) + \
-        '  or : {} help\n'.format(script_name) + \
-        '\n'
-
-    s += 'All funs are:\n'
-    for name, module in modules.items():
-        s += '\n'
-        s += '   {:<7}description:  {}\n'.format(name, module.description)
-        s += module.get_help_strings(indet=10) or '\n'
-
-    print(s, end='')
-
-
 def main():
-    kwargs = parse_arg()
+    parser = argparse.ArgumentParser()
 
-    if 'help' in kwargs.keys() and kwargs['help']:
-        help_()
+    subparsers = parser.add_subparsers(title='Commands')
 
-    elif 'fun' in kwargs.keys():
-        name = kwargs.pop('fun')
-        modules[name].fun(**kwargs)
+    set_.register(subparsers)
 
-    else:
-        help_()
+    show.register(subparsers)
 
+    sync.register(subparsers)
 
-def parse_arg():
-    kwargs = {}
+    args = parser.parse_args()
 
-    for _one in sys.argv[1:]:
-
-        if '=' not in _one:
-            kwargs[_one] = True
-            continue
-
-        k, v = _one.split('=')
-
-        if ',' in v:
-            value = v.split(',')
-        elif v.lower() == 'true':
-            value = True
-        elif v.lower() == 'false':
-            value = False
-        elif v.isdigit():
-            value = int(v)
-        else:
-            value = v
-
-        kwargs[k] = value
-
-    return kwargs
-
+    args.func(args)
 
 if __name__ == '__main__':
     main()

@@ -36,7 +36,7 @@ class AudioFileTypeError(Exception):
 class Shuffle:
     def __init__(self, base, voice_path_fun=None):
         self.base = os.path.realpath(os.path.normpath(base))
-        self.voice_path_fun = voice_path_fun
+        self.voice_path_func = voice_path_fun
 
         self._ctrl = 'iPod_Control'
 
@@ -183,9 +183,9 @@ class _Voice:
 
         dbid = self._voicedb.get_dbid(text, lang)
 
-        if not dbid and bool(self._shuffle.voice_path_fun):
+        if not dbid and bool(self._shuffle.voice_path_func):
 
-            self._voicedb.add(self._shuffle.voice_path_fun(text, lang), text, lang)
+            self._voicedb.add(self._shuffle.voice_path_func(text, lang), text, lang)
 
             dbid = self._voicedb.get_dbid(text, lang)
 

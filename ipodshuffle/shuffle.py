@@ -343,5 +343,3 @@ class AudioDB(Storage):
             super().add(src, checksum)
         except FileAlreadyInError:
             pass
-
-        # return self.get_path_in_ipod(checksum)

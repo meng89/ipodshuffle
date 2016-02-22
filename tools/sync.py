@@ -1,25 +1,22 @@
 import os
 import tempfile
-import sys
 
 from mutagen.easyid3 import EasyID3
 from mutagen.id3 import ID3NoHeaderError
 
 import langid
 
+from ipodshuffle import Shuffle, MASTER, NORMAL, PODCAST, AUDIOBOOK
 
 from ipodshuffle.audio import get_type as get_audio_type
 
-from ipodshuffle import Shuffle, MASTER, NORMAL, PODCAST, AUDIOBOOK
-
-from ipodshuffle.filedb.localdb import LocalVoiceDB, LocalFileLog
+from ipodshuffle.storage.local import LocalVoiceDB, LocalFileLog
 
 import ipodshuffle.utils
 
 from . import str2list
 
 from .tts import ENGINE_MAP
-from .tts import sovx, voicerss
 
 # from .tts.error import GetTTSError
 

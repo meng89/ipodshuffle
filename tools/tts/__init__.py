@@ -1,8 +1,7 @@
 from collections import OrderedDict
 
-from . import voicerss
 from . import sovx
-
+from . import voicerss
 
 ENGINE_MAP = OrderedDict(
     {

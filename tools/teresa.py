@@ -2,7 +2,9 @@
 
 import argparse
 
-from ipodshuffle.tools import show, set_, sync
+from ipodshuffle.tools import set_, sync
+
+from tools import show
 
 
 def main():

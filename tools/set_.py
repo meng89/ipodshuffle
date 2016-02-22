@@ -1,6 +1,6 @@
 from ipodshuffle.shuffle import Shuffle
 
-from ipodshuffle.tools import str2bool
+from tools import str2bool
 
 description = "Set enable_voiceover and max_volume"
 

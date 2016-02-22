@@ -79,7 +79,7 @@ class Shuffle:
 
 
 class Tracks(List):
-    """ this should be device.tracks not device.playaylist.tracks
+    """ this should be db.tracks not db.playaylist.tracks
     """
     def __init__(self, tracks_dics=None, tracks_play_count_dics=None):
         super().__init__()

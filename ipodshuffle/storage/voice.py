@@ -111,8 +111,12 @@ class VoiceOverDB(VoiceDB):
         return dbid
 
     def get_text_lang(self, dbid):
-        extra = self._Store.get_extra(dbid + '.wav')
-        text, lang = extra['text'], extra['lang']
+        text = None
+        lang = None
+        filename = dbid + '.wav'
+        if filename in self.get_filenames():
+            extra = self._Store.get_extra(dbid + '.wav')
+            text, lang = extra['text'], extra['lang']
         return text, lang
 
 

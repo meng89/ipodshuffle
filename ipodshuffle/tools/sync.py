@@ -313,7 +313,7 @@ def sync(args):
 
             add_files_to_pl(pl, files, text_fun)
 
-    master_pl = ipod.playlists.add(pl_type=MASTER)
+    master_pl = ipod.playlists.append_one(pl_type=MASTER)
     add_files_to_pl(master_pl, master[1], title_artist_or_filename)
 
     add_playlists(normals, NORMAL, title_artist_or_filename)
@@ -337,7 +337,7 @@ def register(parser):
     parser_sync.add_argument('-b', dest='base', help='ipod base path', metavar='<PATH>', required=True)
     parser_sync.add_argument('-s', dest='src', help='source path', metavar='<PATH>', required=True)
     parser_sync.add_argument('-l', dest='langs',
-                             help='comma-separated set of target language codes\n(e.g en-gb,zh-cn)',
+                             help='comma-separated set of target language codes (e.g en-gb,zh-cn)',
                              type=str2list, metavar='LANG1,LANG2...')
     parser_sync.add_argument('-e', dest='engine', choices=ENGINE_MAP.keys(), metavar='ENGINE',
                              help='TTS engine, one of ' + ', '.join(ENGINE_MAP.keys()))

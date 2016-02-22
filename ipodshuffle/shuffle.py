@@ -169,7 +169,6 @@ class _Voice:
     @property
     def voice(self):
         dbid = self.lldb.dbid
-        print(dbid)
         text, lang = self._voicedb.get_text_lang(dbid)
         return text, lang
 

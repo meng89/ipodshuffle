@@ -26,21 +26,12 @@ def show(args):
     print(L1)
     print('enable_voiceover: ', ipod.enable_voiceover)
     print('max_volumex: ', ipod.max_volume)
-    # print('number of tracks: ', len(ipod.tracks))
     print('number of playlists: ', len(ipod.playlists))
     print(L1)
     print()
 
     print('Tracks:')
     print(L1)
-    # for track in ipod.tracks:
-    #    print('INDEX: ', ipod.tracks.index(track))
-    #    print('type: ', AUDIO_MAP[track.type])
-    #    print('filename: ', track.filename)
-    #    print('dbid: ', track.dbid)
-
-    #    if track != ipod.tracks[-1]:
-    #        print(L2)
     print(L1)
 
     print()
@@ -51,9 +42,11 @@ def show(args):
         print('type: ', type(pl))
         print('number of tracks: ', len(pl.tracks))
         if not isinstance(pl, Master):
-            text, lang = pl.voice
-            print('voice: ', lang, text)
-        # print('index of tracks: ', [ipod.tracks.index(track) for track in pl.Tracks_indexes])
+            try:
+                text, lang = pl.voice
+                print('voice: ', lang, text)
+            except KeyError:
+                raise KeyError
         if pl != ipod.playlists[-1]:
             print(L2)
     print(L1)

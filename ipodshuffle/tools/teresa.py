@@ -4,14 +4,24 @@ import argparse
 
 from ipodshuffle.tools import show, set_, sync
 
+import ipodshuffle.version
+from . import version as self_version
+
 
 def main():
     parser = argparse.ArgumentParser(
         formatter_class=argparse.RawTextHelpFormatter,
-        epilog="Try '%(prog)s <command> --help' for more help!"
+        # usage='%(prog)s <command> [options]',
+        epilog="Try '%(prog)s <command> -h' for command help!"
     )
 
-    subparsers = parser.add_subparsers(title='Commands')
+    parser.add_argument('-v', '--version', action='version',
+                        version='%(prog)s {} (use ipodshuffle {})'.format(
+                            self_version.__version__,
+                            ipodshuffle.version.__version__))
+
+    subparsers = parser.add_subparsers(title='Commands',  metavar='<command>')
+    # subparsers = parser.add_subparsers()
 
     set_.register(subparsers)
 

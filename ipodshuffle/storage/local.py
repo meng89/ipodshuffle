@@ -2,7 +2,7 @@ import os
 import uuid
 
 from .log import JsonLog, get_checksum
-from .filedb import VoiceDB
+from .voice import VoiceDB
 
 
 def get_uuid1_hex():

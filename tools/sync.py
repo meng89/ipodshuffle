@@ -288,7 +288,7 @@ def sync(args):
                 ipod.audiodb.add(file, checksum)
                 path_in_ipod = ipod.audiodb.get_filename(checksum)
 
-            track = pl.add_track(path_in_ipod)
+            track = pl.tracks.append_one(path_in_ipod)
 
             if ipod.enable_voiceover:
                 text = get_track_voice_title(file)
@@ -299,7 +299,7 @@ def sync(args):
 
     def add_playlists(title_and_files, pl_type, text_fun):
         for title, files in title_and_files:
-            pl = ipod.playlists.add(pl_type)
+            pl = ipod.playlists.append_one(pl_type)
 
             if ipod.enable_voiceover:
                 lang = classify_tts_lang_func(title)

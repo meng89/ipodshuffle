@@ -7,8 +7,7 @@ from .itunessd import MASTER, NORMAL, PODCAST, AUDIOBOOK
 
 
 """
-Class Shuffle, Playlists, playlist, Tracks, Track, is more like wrapper of iTunesSD and iTunesStats,
-should use AudioDB and VoiceDB to store audio and tts voice files.
+Class Shuffle, Playlists, playlist, Tracks, Track, is more like wrapper of iTunesSD and iTunesStats
 """
 
 PL_MAP = {
@@ -31,15 +30,15 @@ class Shuffle:
 
                 self._dic = header_dic
 
-                self.__dict__['tracks'] = Tracks(tracks_dics, tracks_play_count_dics)
-                self.__dict__['playlists'] = Playlists(playlists_dics_and_indexes)
+                self.__dict__['tracks'] = _Tracks(tracks_dics, tracks_play_count_dics)
+                self.__dict__['playlists'] = _Playlists(playlists_dics_and_indexes)
 
         else:
             self.enable_voiceover = False
             self.max_volume = 0
 
-            self.__dict__['tracks'] = Tracks()
-            self.__dict__['playlists'] = Playlists()
+            self.__dict__['tracks'] = _Tracks()
+            self.__dict__['playlists'] = _Playlists()
 
     def get_chunks(self):
 
@@ -78,7 +77,7 @@ class Shuffle:
         return self.__dict__['playlists']
 
 
-class Tracks(List):
+class _Tracks(List):
     """ this should be db.tracks not db.playaylist.tracks
     """
     def __init__(self, tracks_dics=None, tracks_play_count_dics=None):
@@ -95,14 +94,6 @@ class Tracks(List):
 
         for dic, count_dic in tracks_with_play_count_dics_zip:
             self.append(Track(dic=dic, count_dic=count_dic))
-
-    # def add(self, path_in_ipod):
-    #    # if path_in_ipod not in self._shuffle.sounds:
-    #    #    raise Exception
-
-    #    track = Track(self._shuffle, path_in_ipod)
-    #    self.append(track)
-    #    return track
 
     def tracks_dics_and_tracks_play_count_dics(self):
 
@@ -356,7 +347,7 @@ class Track:
         return self._dic, self._count_dic
 
 
-class Playlists(List):
+class _Playlists(List):
     def __init__(self, lphs_dics_indexes=None):
         super().__init__()
 
@@ -375,8 +366,6 @@ class Playlists(List):
 class Playlist:
     def __init__(self, dic=None, indexes_of_tracks=None):
         super().__init__()
-
-        self.__dict__['tracks'] = []
 
         self._dic = dic or {}
 

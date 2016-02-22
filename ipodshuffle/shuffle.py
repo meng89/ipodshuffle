@@ -1,5 +1,5 @@
 """
-Shuffle for scritps writer,
+Shuffle for scripts
 """
 import os
 import random
@@ -9,21 +9,21 @@ import copy
 
 from abc import abstractmethod
 
-from ipodshuffle.device.device import Shuffle as ShuffleDB
-from ipodshuffle.device.device import Playlist as PlaylistDB
-from ipodshuffle.device.device import Track as TrackDB
-from ipodshuffle.device.device import MASTER, NORMAL, PODCAST, AUDIOBOOK
+from ipodshuffle.db import Shuffle as ShuffleDB
+from ipodshuffle.db import Playlist as PlaylistDB
+from ipodshuffle.db import Track as TrackDB
+from ipodshuffle.db import MASTER, NORMAL, PODCAST, AUDIOBOOK
 
-from ipodshuffle.filedb.filedb import VoiceOverDB
+from ipodshuffle.storage.voice import VoiceOverDB
 
-from ipodshuffle.filedb.log import Storage
+from ipodshuffle.storage.log import Storage
 
 from ipodshuffle.utils import get_checksum
 
 from ipodshuffle import audio
 
 
-from ipodshuffle.filedb.log import FileAlreadyInError
+from ipodshuffle.storage.log import FileAlreadyInError
 
 from collections import UserList as List
 # from hooky import List, Hook
@@ -34,9 +34,9 @@ class AudioFileTypeError(Exception):
 
 
 class Shuffle:
-    def __init__(self, base, voice_path_fun=None):
+    def __init__(self, base, voice_path_func=None):
         self.base = os.path.realpath(os.path.normpath(base))
-        self.voice_path_func = voice_path_fun
+        self.voice_path_func = voice_path_func
 
         self._ctrl = 'iPod_Control'
 
@@ -219,12 +219,33 @@ class Playlists(List):
         super().__init__()
         self._shuffle = shuffle
 
-    def add(self, pl_type=None):
+    def append_one(self, pl_type=None):
         pldb = PlaylistDB()
         pl = pl_type_class_map[pl_type](self._shuffle, pldb)
         self.append(pl)
         return pl
 
+
+class Tracks(List):
+    """
+    for Playlist
+    """
+    def __init__(self, shuffle):
+        super().__init__()
+        self._shuffle = shuffle
+
+    def append_one(self, path_in_ipod=None, checksum=None):
+        if bool(path_in_ipod) == bool(checksum):
+            raise Exception
+
+        if not path_in_ipod:
+            path_in_ipod = self._shuffle.get_audio_path(checksum)
+
+        track = Track(self._shuffle, path_in_ipod=path_in_ipod)
+
+        self.append(track)
+
+        return track
 ###################################################################################
 
 
@@ -238,20 +259,11 @@ class Playlist(_Voice):
 
         self._shuffle = shuffle
 
-        self.tracks = []
+        self.__dict__['tracks'] = Tracks(self._shuffle)
 
-    def add_track(self, path_in_ipod=None, checksum=None):
-        if bool(path_in_ipod) == bool(checksum):
-            raise Exception
-
-        if not path_in_ipod:
-            path_in_ipod = self._shuffle.get_audio_path(checksum)
-
-        track = Track(self._shuffle, path_in_ipod=path_in_ipod)
-
-        self.tracks.append(track)
-
-        return track
+    @property
+    def tracks(self):
+        return self.__dict__['tracks']
 
     @abstractmethod
     def trackdbs(self):

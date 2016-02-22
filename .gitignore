@@ -9,5 +9,6 @@ dist/
 build
 dist
 temp
-
 test.py
+
+docs/_build/

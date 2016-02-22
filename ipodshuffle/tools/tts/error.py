@@ -1,4 +1,4 @@
-class GetTTSError(Exception):
+class GetVoiceDataError(Exception):
     pass
 
 

@@ -1,7 +1,7 @@
 import os
 import tempfile
 
-from .error import LangCodeError, GetTTSError
+from .error import LangCodeError, GetVoiceDataError
 
 
 def tts(text, lang):
@@ -23,7 +23,7 @@ def tts(text, lang):
     data = f.read()
 
     if len(data) < 10000:
-        raise GetTTSError
+        raise GetVoiceDataError
 
     os.remove(tmp_file_name)
 
@@ -46,5 +46,5 @@ def get_tts_func(args):
     return tts
 
 
-def register(parser):
-    parser.add_parser('sovx', help='sovx TTS engine')
+def add_arg(parser):
+    pass

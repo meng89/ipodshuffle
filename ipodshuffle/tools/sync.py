@@ -18,7 +18,7 @@ from . import str2list
 
 from .tts import ENGINE_MAP
 
-# from .tts.error import GetTTSError
+from .tts.error import GetVoiceDataError
 
 from .char_detect import fix_zh
 
@@ -276,6 +276,12 @@ def sync(args):
         master = master_and_normals[0]
         normals = master_and_normals[1:]
 
+    def set_voice(obj, text, lang):
+        try:
+            obj.voice = text, lang
+        except GetVoiceDataError as e:
+            print(e, ' ignored.')
+
     def add_files_to_pl(pl, files, get_track_voice_title=None):
         for file in files:
             checksum = local_filelog.get_checksum(file)
@@ -294,8 +300,7 @@ def sync(args):
                 text = get_track_voice_title(file)
                 lang = classify_tts_lang_func(text)
 
-                track.voice = text, lang
-                # print('get track voice failed, ignored.')
+                set_voice(track, text, lang)
 
     def add_playlists(title_and_files, pl_type, text_fun):
         for title, files in title_and_files:
@@ -303,8 +308,8 @@ def sync(args):
 
             if ipod.enable_voiceover:
                 lang = classify_tts_lang_func(title)
-                pl.voice = title, lang
-                # print('get playlist voice failed, ignored.')
+
+                set_voice(pl, title, lang)
 
             add_files_to_pl(pl, files, text_fun)
 
@@ -319,16 +324,25 @@ def sync(args):
 
 
 def register(parser):
-    parser_sync = parser.add_parser('sync', help='sync to ipod')
-    parser_sync.add_argument('-b', '--base', help='ipod base', metavar='<path>', required=True)
-    parser_sync.add_argument('-s', '--src', help='source path', metavar='<path>', required=True)
-    parser_sync.add_argument('-l', '--langs', help='langs', type=str2list, metavar='lang1,lang2...')
-    subparsers = parser_sync.add_subparsers(title='engines', dest='engine')
+    import argparse
+    parser_sync = parser.add_parser('sync', help='sync to ipod',
+                                    formatter_class=argparse.RawTextHelpFormatter,
+                                    epilog='Two examples of use:\n'
+                                           '  %(prog)s -b /media/ipod_base -s /media/ipod_src -l en-gb '
+                                           '-e sovx\n'
+                                           '  %(prog)s -b /media/ipod_base -s /media/ipod_src -l en-gb,zh-cn,ja-jp '
+                                           '-e voicerss -k d279f919f7384d3bafa516caad0eae56'
+                                    )
 
-    # sovx.register(subparsers)
-    # voicerss.register(subparsers)
+    parser_sync.add_argument('-b', dest='base', help='ipod base path', metavar='<PATH>', required=True)
+    parser_sync.add_argument('-s', dest='src', help='source path', metavar='<PATH>', required=True)
+    parser_sync.add_argument('-l', dest='langs',
+                             help='comma-separated set of target language codes\n(e.g en-gb,zh-cn)',
+                             type=str2list, metavar='LANG1,LANG2...')
+    parser_sync.add_argument('-e', dest='engine', choices=ENGINE_MAP.keys(), metavar='ENGINE',
+                             help='TTS engine, one of ' + ', '.join(ENGINE_MAP.keys()))
 
     for module in ENGINE_MAP.values():
-        module.register(subparsers)
+        module.add_arg(parser_sync)
 
     parser_sync.set_defaults(func=sync)

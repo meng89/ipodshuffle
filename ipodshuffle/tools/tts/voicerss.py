@@ -1,12 +1,16 @@
 import urllib.request
 import urllib.parse
 
-from .error import LangCodeError, GetTTSError
+import argparse
+
+from .error import LangCodeError, GetVoiceDataError
+
+
+default_format = '22khz_16bit_mono'
 
 
 def get_tts_func(args):
     key = args.key
-    format_ = args.format or '22khz_16bit_mono'
 
     def tts(text, lang):
         if lang not in legal_langs:
@@ -18,7 +22,7 @@ def get_tts_func(args):
 
         url = 'http://api.voicerss.org/?'
 
-        parameters = {'src': text, 'hl': tts_lang, 'key': key, 'c': c, 'f': format_}
+        parameters = {'src': text, 'hl': tts_lang, 'key': key, 'c': c, 'f': args.format or default_format}
 
         req = urllib.request.Request(url, urllib.parse.urlencode(parameters).encode('ascii'))
 
@@ -30,7 +34,7 @@ def get_tts_func(args):
                 content_length = int(v)
 
         if content_length < 10000:
-            raise GetTTSError(response.read().decode())
+            raise GetVoiceDataError(response.read().decode())
 
         return response.read()
 
@@ -69,10 +73,19 @@ my_langs = [
 legal_langs = my_langs
 
 
-def register(parser):
-    parser_voicerss = parser.add_parser('voicerss', help='An http TTS engine')
+def add_arg1(parser):
 
-    parser_voicerss.add_argument('-k', '--key', help='API key, visit to get: http://www.voicerss.org/',
-                                 metavar='<string>')
+    parser.add_argument('-k', '--key', help='API key(for voicerss), visit to get: http://www.voicerss.org/',
+                        metavar='<string>')
 
-    parser_voicerss.add_argument('-f', '--format', help='audio format')
+    parser.add_argument('-f', '--format', help='audio format(for voicerss), default format is: ' + repr(default_format))
+
+
+def add_arg2(parser):
+    g = parser.add_argument_group(title='voicerss engine options')
+
+    g.add_argument('-k', dest='key', help='API key string, get a key from http://www.voicerss.org/')
+
+    g.add_argument('-f', dest='format',  help='audio format, default format is ' + default_format)
+
+add_arg = add_arg2

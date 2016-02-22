@@ -2,13 +2,14 @@
 
 import argparse
 
-from ipodshuffle.tools import set_, sync
-
-from tools import show
+from ipodshuffle.tools import show, set_, sync
 
 
 def main():
-    parser = argparse.ArgumentParser()
+    parser = argparse.ArgumentParser(
+        formatter_class=argparse.RawTextHelpFormatter,
+        epilog="Try '%(prog)s <command> --help' for more help!"
+    )
 
     subparsers = parser.add_subparsers(title='Commands')
 

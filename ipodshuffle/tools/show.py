@@ -60,9 +60,14 @@ def show(args):
 
 
 def register(parser):
+    import argparse
 
-    parser_show = parser.add_parser('show', help='show ipod informations')
+    parser_show = parser.add_parser('show', help='show ipod informations',
+                                    formatter_class=argparse.RawTextHelpFormatter,
+                                    epilog='Example of use:\n'
+                                           '  %(prog)s -b /media/ipod_base'
+                                    )
 
-    parser_show.add_argument('-b', '--base', help='ipod base', metavar='<path>', required=True)
+    parser_show.add_argument('-b', dest='base', help='ipod base path', metavar='<path>', required=True)
 
     parser_show.set_defaults(func=show)

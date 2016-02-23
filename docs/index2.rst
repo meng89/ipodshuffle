@@ -18,14 +18,19 @@ It have a module called 'ipodshuffle', and a CLI tool called 'teresa' supports V
 Module API
 ==========
 
+ipodshuffle
+^^^^^^^^^^^
+
+
+
 ipodshuffle.db
 ^^^^^^^^^^^^^^
 
-ipodshuffle.
 
 
-CLI tool usage
-==============
+
+CLI tool
+========
 
 
 Contact

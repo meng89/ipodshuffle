@@ -246,8 +246,6 @@ def sync(args):
 
     ipod.tracks_voicedb.clean()
     ipod.playlists_voicedb.clean()
-    # player.tracks_voicedb.remove_not_in_use()
-    # player.playlists_voicedb.remove_not_in_use()
 
     ipod.playlists.clear()
 
@@ -282,7 +280,7 @@ def sync(args):
         except GetVoiceDataError as e:
             print(e, ' ignored.')
 
-    def add_files_to_pl(pl, files, get_track_voice_title=None):
+    def add_files_to_playlist(pl, files, get_track_voice_title=None):
         for file in files:
             checksum = local_filelog.get_checksum(file)
             if not checksum:
@@ -311,10 +309,10 @@ def sync(args):
 
                 set_voice(pl, title, lang)
 
-            add_files_to_pl(pl, files, text_fun)
+            add_files_to_playlist(pl, files, text_fun)
 
     master_pl = ipod.playlists.append_one(pl_type=MASTER)
-    add_files_to_pl(master_pl, master[1], title_artist_or_filename)
+    add_files_to_playlist(master_pl, master[1], title_artist_or_filename)
 
     add_playlists(normals, NORMAL, title_artist_or_filename)
     add_playlists(podcasts, PODCAST, title_artist_or_filename)

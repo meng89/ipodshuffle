@@ -257,7 +257,6 @@ def decode(dic, table):
         elif cow['type'] == 'dbid':
             new_value = dbid_from_bytes(chunk)
         else:
-            # raise TypeError
             new_value = chunk
 
         new_dic[key] = new_value

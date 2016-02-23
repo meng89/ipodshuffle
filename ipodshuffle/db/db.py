@@ -1,21 +1,10 @@
-
-from . import itunessd, itunesstats
-
 from collections import UserList as List
 
-from .itunessd import MASTER, NORMAL, PODCAST, AUDIOBOOK
-
+from . import itunessd, itunesstats
 
 """
 Class Shuffle, Playlists, playlist, Tracks, Track, is more like wrapper of iTunesSD and iTunesStats
 """
-
-PL_MAP = {
-    MASTER: 'MASTER',
-    NORMAL: 'NORMAL',
-    PODCAST: 'PODCAST',
-    AUDIOBOOK: 'AUDIOBOOK'
-}
 
 
 class Shuffle:
@@ -146,16 +135,6 @@ class Track:
             self.artist_id = 0
         else:
             raise Exception
-
-    # @property
-    # def fullpath(self):
-    #    return self._shuffle.base + self.filename
-
-    # @property
-    # def path_in_ipod(self):
-    #    return self.filename[1:]
-    ###################################################
-    ###################################################
 
     @property
     def start_at_pos_ms(self):
@@ -335,7 +314,7 @@ class Track:
     ########################################################
 
     def __eq__(self, other):
-        if isinstance(other, self.__class__) and self.get_dics() == other.get_dics():
+        if isinstance(other, self.__class__) and self.get_dics()[0] == other.get_dics()[0]:
             return True
         else:
             return False

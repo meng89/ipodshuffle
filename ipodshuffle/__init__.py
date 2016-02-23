@@ -1,3 +1,3 @@
 from .shuffle import Shuffle, Master, Normal, Podcast, Audiobook
 
-from ipodshuffle.db import PL_MAP, MASTER, NORMAL, PODCAST, AUDIOBOOK
+from ipodshuffle.db import MASTER, NORMAL, PODCAST, AUDIOBOOK

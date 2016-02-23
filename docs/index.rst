@@ -1,22 +1,37 @@
-.. ipodshuffle documentation master file, created by
-   sphinx-quickstart on Mon Feb 22 15:35:24 2016.
-   You can adapt this file completely to your liking, but it should at least
-   contain the root `toctree` directive.
+=========================
+ipodshuffle Documentation
+=========================
 
-Welcome to ipodshuffle's documentation!
-=======================================
+.. note::
 
-Contents:
+    This documentation is still incomplete and it's recommended to read the
+    `source <https://github.com/meng89/ipodshuffle/tree/master/ipodshuffle>`__
+    for the full details.
 
-.. toctree::
-   :maxdepth: 2
+What is ipodshuffle?
+--------------------
+
+ipodshuffle is a Python Project to handle iPod Shuffle.
+
+It have a module called 'ipodshuffle', and a CLI tool called 'teresa' supports VoiceOver(TTS).
+
+Module API
+==========
+
+ipodshuffle
+^^^^^^^^^^^
+
+.. literalinclude:: ipodshuffle_example.py
+
+ipodshuffle.db
+^^^^^^^^^^^^^^
 
 
 
-Indices and tables
-==================
 
-* :ref:`genindex`
-* :ref:`modindex`
-* :ref:`search`
+CLI tool
+========
 
+
+Contact
+-------

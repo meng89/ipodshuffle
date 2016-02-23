@@ -1,22 +1,9 @@
 
-from ipodshuffle import Shuffle, PL_MAP, Master, Normal, Podcast, Audiobook
-
-from ipodshuffle.audio import AUDIO_MAP
+from ipodshuffle import Shuffle, Master, Normal, Podcast, Audiobook
 
 
 L1 = '=' * 80
 L2 = '-' * 50
-
-
-description = "Show player's information"
-
-
-def help_():
-    print()
-    print('usage: ', end='')
-    print('base=<path_to_ipod>')
-    print('Only show. No control.')
-    print()
 
 
 def show(args):

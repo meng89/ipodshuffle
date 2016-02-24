@@ -51,3 +51,6 @@ texinfo_documents = [
    author, 'ipodshuffle', 'One line description of project.',
    'Miscellaneous'),
 ]
+
+autoclass_content = 'both'
+autodoc_member_order = 'bysource'

@@ -1,5 +1,5 @@
 
-from ipodshuffle import Shuffle, Master, Normal, Podcast, Audiobook
+from ipodshuffle import Shuffle, MASTER
 
 
 L1 = '=' * 80
@@ -28,7 +28,7 @@ def show(args):
     for pl in ipod.playlists:
         print('type: ', type(pl))
         print('number of tracks: ', len(pl.tracks))
-        if not isinstance(pl, Master):
+        if pl.type != MASTER:
             try:
                 text, lang = pl.voice
                 print('voice: ', lang, text)

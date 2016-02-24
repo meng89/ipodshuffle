@@ -35,15 +35,11 @@ class AudioFileTypeError(Exception):
 
 
 class Shuffle:
-    def __init__(self, base, voice_path_func=None):
-        """laksjkfjslafjsaljflskaf
-
-        :param base:
-        :param voice_path_func:
-        :return:
+    def __init__(self, base):
+        """
+        :param base: iPod base path
         """
         self.base = os.path.realpath(os.path.normpath(base))
-        self.voice_path_func = voice_path_func
 
         self._ctrl = 'iPod_Control'
 
@@ -92,7 +88,7 @@ class Shuffle:
     def write(self):
         shuffledb = ShuffleDB()
 
-        shuffledb.enable_voiceover = self.voiceover
+        shuffledb.enable_voiceover = self.enable_voiceover
         shuffledb.max_volume = self.max_volume
 
         for playlist in self.playlists:
@@ -104,7 +100,6 @@ class Shuffle:
             shuffledb.playlists.append(pldb)
 
             for trdb in playlist.trackdbs():
-                print('here', trdb.dbid)
                 if not [_trackdb for _trackdb in shuffledb.tracks if _trackdb == trdb]:
                     shuffledb.tracks.append(trdb)
 
@@ -125,36 +120,50 @@ class Shuffle:
             self._itunesstats_chunk = itunesstats_chunk
 
     @property
-    def voiceover(self):
+    def enable_voiceover(self):
         """
-        boolean, enable or disable VoiceOver
+        boolean. enable or disable VoiceOver
         """
-        return self.__dict__['voiceover']
+        return self.__dict__['enable_voiceover']
 
-    @voiceover.setter
-    def voiceover(self, value):
+    @enable_voiceover.setter
+    def enable_voiceover(self, value):
         if value in (True, False):
-            self.__dict__['voiceover'] = value
+            self.__dict__['enable_voiceover'] = value
         else:
             raise TypeError('Must be a Boolean')
 
     @property
+    def voice_path_func(self):
+        """
+        callable object or None. if enable_voiceover == True, when set x.voice, will call it if it's Not None
+        """
+        return self.__dict__.setdefault('voice_path_func', None)
+
+    @voice_path_func.setter
+    def voice_path_func(self, value):
+        if callable(value) or value is None:
+            self.__dict__['voice_path_func'] = value
+        else:
+            raise ValueError('Must be a callable object or None')
+
+    @property
     def max_volume(self):
         """
-        integer, 0: no limit, 3-20 to limit volume
+        integer. 0 do not limit, 3-20 is legal value to limit volume
         """
         return self.__dict__['max_volume']
 
     @max_volume.setter
     def max_volume(self, value):
-        if value in (True, False):
+        if value == 0 or 3 <= value <= 20:
             self.__dict__['max_volume'] = value
         else:
-            raise TypeError('Must be a Boolean')
+            raise ValueError('0, or 3 to 20')
 
     @property
     def playlists(self):
-        """ list like, store all playlists
+        """ list-like object, store all playlists
         """
         return self.__dict__['playlists']
 
@@ -197,11 +206,11 @@ class Shuffle:
         return pl
 
     @staticmethod
-    def check_audio(path):
+    def _check_audio(path):
         if not audio.get_type(path):
             raise TypeError('The type of this file is not supported.')
 
-    def path_in_ipod(self, path):
+    def _path_in_ipod(self, path):
         realpath = os.path.realpath(path)
         path = None
         if realpath[0:len(self.base)] == self.base:
@@ -220,7 +229,7 @@ class _Voice:
 
     @property
     def voice(self):
-        """tuple contain text and lang code
+        """tuple. contain text and lang code
         """
         dbid = self.lldb.dbid
         text, lang = self._voicedb.get_text_lang(dbid)
@@ -236,7 +245,7 @@ class _Voice:
 
         dbid = self._voicedb.get_dbid(text, lang)
 
-        if not dbid and bool(self._shuffle.voice_path_func):
+        if dbid is None and self._shuffle.voice_path_func is not None:
 
             self._voicedb.add(self._shuffle.voice_path_func(text=text, lang=lang), text=text, lang=lang)
 
@@ -317,10 +326,16 @@ class Playlist(_Voice):
 
     @property
     def type(self):
+        """
+        MASTER, NORMAL, PODCAST or AUDIOBOOK. Can not change
+        """
         return self.__dict__['type']
 
     @property
     def tracks(self):
+        """
+        list-like, store all tracks of this playlist
+        """
         return self.__dict__['tracks']
 
     def trackdbs(self):

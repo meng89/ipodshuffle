@@ -8,8 +8,8 @@ description = "Set enable_voiceover and max_volume"
 def set_(args):
     ipod = Shuffle(args.base)
 
-    if args.voiceover is not None:
-        ipod.enable_voiceover = args.voiceover
+    if args.enable_voiceover is not None:
+        ipod.enable_voiceover = args.enable_voiceover
 
     if args.max_volume is not None:
         ipod.max_volume = args.max_volume

@@ -20,7 +20,7 @@ from .tts import ENGINE_MAP
 
 from .tts.error import GetVoiceDataError
 
-from .char_detect import fix_zh
+from .fix_zh import fix_zh
 
 
 CACHE_DIR = os.path.join(os.path.expanduser('~'), '.cache/ipodshuffle')
@@ -168,17 +168,15 @@ def get_audiobooks(dire):
 
 def voice_things(local_voicedb, args):
 
-    tts_engine = ENGINE_MAP[args.engine]
+    langs = args.langs or []
 
-    langs = args.langs
+    tts_func = None
+    if args.engine:
+        tts_engine = ENGINE_MAP[args.engine]
+        tts_func = tts_engine.get_tts_func(args)
 
-    if langs:
-        if not isinstance(langs, list):
-            langs = [langs]
-    else:
-        langs = tts_engine.legal_langs
-
-    # user langs to langid langs to set, langid langs to user langs to get voice
+        if not langs:
+            langs = tts_engine.legal_langs
 
     lang_map = {}
     for _lang in langs:
@@ -187,8 +185,6 @@ def voice_things(local_voicedb, args):
     languages_to_set = [lang_id_code for lang_id_code in lang_map.keys()]
 
     langid.set_languages(languages_to_set)
-
-    tts_func = tts_engine.get_tts_func(args)
 
     def classify_tts_lang(text):
         langid_code = langid.classify(text)[0]
@@ -204,8 +200,9 @@ def voice_things(local_voicedb, args):
         tts_lang = lang
         print(repr(lang), repr(text))
         voice_path = local_voicedb.get_path(text, tts_lang)
-        if not voice_path:  # The voice not in local
+        if not voice_path and callable(tts_func):  # The voice not in local
             print('   not in local. ', end='')
+
             print('try TTS engine {} ... '.format(args.engine), end='', flush=True)
             voice_data = tts_func(text, tts_lang)
             print('done!')
@@ -229,7 +226,6 @@ def voice_things(local_voicedb, args):
 
 
 def sync(args):
-    # src=None, ipod=None, [tts_engine=None, [langs=None, tts_key=None, ... ]]
 
     src = os.path.realpath(args.src)
     base = os.path.realpath(args.base)
@@ -292,7 +288,8 @@ def sync(args):
                 ipod.audiodb.add(file, checksum)
                 path_in_ipod = ipod.audiodb.get_filename(checksum)
 
-            track = pl.tracks.append_one(path_in_ipod)
+            track = ipod.create_track(path_in_ipod)
+            pl.tracks.append(track)
 
             if ipod.enable_voiceover:
                 text = get_track_voice_title(file)
@@ -302,7 +299,11 @@ def sync(args):
 
     def add_playlists(title_and_files, pl_type, text_fun):
         for title, files in title_and_files:
-            pl = ipod.playlists.append_one(pl_type)
+
+            pl = ipod.create_playlist(pl_type)
+            ipod.playlists.append(pl)
+
+            # pl = ipod.playlists.append_one(pl_type)
 
             if ipod.enable_voiceover:
                 lang = classify_tts_lang_func(title)

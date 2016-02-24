@@ -1,8 +1,8 @@
 .. toctree::
     :titlesonly:
 
-    api
-    api_example
+    Modules <modules>
+    Tools  <tools>
 
 =========================
 ipodshuffle Documentation
@@ -17,7 +17,7 @@ ipodshuffle Documentation
 What is ipodshuffle?
 ********************
 
-ipodshuffle is a Python Project to handle iPod Shuffle.
+ipodshuffle is a Python Project to manage iPod Shuffle.
 
 It have a module called 'ipodshuffle', and a CLI tool called 'teresa' supports VoiceOver(TTS).
 

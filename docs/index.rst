@@ -1,8 +1,8 @@
 .. toctree::
     :titlesonly:
 
-    Modules <modules>
-    Tools  <tools>
+    modules/index
+    tools/index
 
 =========================
 ipodshuffle Documentation

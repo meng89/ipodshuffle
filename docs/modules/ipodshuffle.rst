@@ -13,5 +13,6 @@ ipodshuffle
 .. autoclass:: Track
     :members: voice
 
-.. autoclass:: AudioDB
-    :members:
+.. autoclass:: ipodshuffle.shuffle.AudioDB
+    :members: add, get_filename
+

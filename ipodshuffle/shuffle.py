@@ -1,6 +1,4 @@
-"""
-Shuffle for scripts
-"""
+
 import os
 import random
 import string
@@ -18,16 +16,11 @@ from ipodshuffle.db import Playlist as PlaylistDB
 from ipodshuffle.db import Track as TrackDB
 from ipodshuffle.db import MASTER, NORMAL, PODCAST, AUDIOBOOK
 
-from ipodshuffle.storage.voice import VoiceOverDB
+from ipodshuffle.storage.voice import VoiceDB
 
 from ipodshuffle.storage.log import Storage
 
-from ipodshuffle.utils import get_checksum
-
 from ipodshuffle import audio
-
-
-from ipodshuffle.storage.log import FileAlreadyInError
 
 
 class AudioFileTypeError(Exception):
@@ -64,12 +57,12 @@ class Shuffle:
                                            os.path.join(self.base, self._ctrl, 'audio_log.json'),
                                            self.base)
 
-        self.__dict__['tracks_voicedb'] = \
+        self.__dict__['tracks_voiceoverdb'] = \
             VoiceOverDB(log_path=os.path.join(self.base, self._ctrl, 'tracks_voices_log.json'),
                         stored_dir=os.path.join(self.base, self._ctrl, 'Speakable', 'Tracks'),
                         )
 
-        self.__dict__['playlists_voicedb'] = \
+        self.__dict__['playlists_voiceoverdb'] = \
             VoiceOverDB(log_path=os.path.join(self.base, self._ctrl, 'playlists_voices_log.json'),
                         stored_dir=os.path.join(self.base, self._ctrl, 'Speakable', 'Playlists'),
                         )
@@ -85,7 +78,7 @@ class Shuffle:
 
             self.__dict__['playlists'].append(pl)
 
-    def write(self):
+    def write_db(self):
         shuffledb = ShuffleDB()
 
         shuffledb.enable_voiceover = self.enable_voiceover
@@ -136,7 +129,7 @@ class Shuffle:
     @property
     def voice_path_func(self):
         """
-        callable object or None. if enable_voiceover == True, when set x.voice, will call it if it's Not None
+        callable object or None. when set x.voice, will call it if it's Not None and enable_voiceover is True
         """
         return self.__dict__.setdefault('voice_path_func', None)
 
@@ -169,15 +162,20 @@ class Shuffle:
 
     @property
     def audiodb(self):
+        """
+        store audio. if you don't want to copy file to ipod, you can use this
+
+        is a of :class:`ipodshuffle.shuffle.AudioDB`
+        """
         return self.__dict__['audiodb']
 
     @property
-    def tracks_voicedb(self):
-        return self.__dict__['tracks_voicedb']
+    def tracks_voiceoverdb(self):
+        return self.__dict__['tracks_voiceoverdb']
 
     @property
-    def playlists_voicedb(self):
-        return self.__dict__['playlists_voicedb']
+    def playlists_voiceoverdb(self):
+        return self.__dict__['playlists_voiceoverdb']
 
     def create_track(self, path_in_ipod=None, checksum=None):
         """
@@ -222,17 +220,17 @@ class Shuffle:
 
 class _Voice:
     @abstractmethod
-    def __init__(self, shuffle=None, lldb=None, voicedb=None):
+    def __init__(self, shuffle=None, lldb=None, voiceoverdb=None):
         self._shuffle = shuffle
         self.lldb = lldb
-        self._voicedb = voicedb
+        self._voiceoverdb = voiceoverdb
 
     @property
     def voice(self):
         """tuple. contain text and lang code
         """
         dbid = self.lldb.dbid
-        text, lang = self._voicedb.get_text_lang(dbid)
+        text, lang = self._voiceoverdb.get_text_lang(dbid)
         return text, lang
 
     @voice.setter
@@ -243,13 +241,13 @@ class _Voice:
 
         text, lang = value
 
-        dbid = self._voicedb.get_dbid(text, lang)
+        dbid = self._voiceoverdb.get_dbid(text, lang)
 
         if dbid is None and self._shuffle.voice_path_func is not None:
 
-            self._voicedb.add(self._shuffle.voice_path_func(text=text, lang=lang), text=text, lang=lang)
+            self._voiceoverdb.add(self._shuffle.voice_path_func(text=text, lang=lang), text=text, lang=lang)
 
-            dbid = self._voicedb.get_dbid(text, lang)
+            dbid = self._voiceoverdb.get_dbid(text, lang)
 
         self.lldb.dbid = dbid
 
@@ -258,7 +256,6 @@ class _Voice:
 
 class Track(_Voice):
     def __init__(self, shuffle, path_in_ipod=None, trackdb=None):
-        # super().__init__()
 
         self._shuffle = shuffle
 
@@ -267,7 +264,7 @@ class Track(_Voice):
 
             trackdb.type = audio.get_type(os.path.join(self._shuffle.base, path_in_ipod))
 
-        super().__init__(shuffle, trackdb, self._shuffle.tracks_voicedb)
+        super().__init__(shuffle, trackdb, self._shuffle.tracks_voiceoverdb)
 
     @property
     def path_in_ipod(self):
@@ -317,7 +314,7 @@ class Playlist(_Voice):
         else:
             playlist_type = playlistdb.type
 
-        super().__init__(shuffle, playlistdb, self._shuffle.playlists_voicedb)
+        super().__init__(shuffle, playlistdb, self._shuffle.playlists_voiceoverdb)
 
         self._shuffle = shuffle
         self.__dict__['type'] = playlist_type
@@ -390,12 +387,81 @@ class AudioDB(Storage):
 
         self.storage_dir = storage_dir
 
-    def add(self, src, checksum=None):
+    def add(self, src):
+        """ store an audio file to storage dir
+
+        :param src: audio file path
+        :return: checksum value
+        """
         if not audio.get_type(src):
             raise TypeError('The type of this file is not supported.')
-        checksum = checksum or get_checksum(src)
 
-        try:
-            super().add(src, checksum)
-        except FileAlreadyInError:
-            pass
+        super().add(src)
+
+
+def make_dbid1():
+    return ''.join(random.sample('ABCDEF' + string.digits, 16))
+
+
+def make_dbid2():
+    dbid_string = ''
+    for x in random.sample(range(0, 255), 8):
+        s = hex(x)[2:]
+        if len(s) == 1:
+            s = '0' + s
+        dbid_string += s.upper()
+    return dbid_string
+
+make_dbid = make_dbid2
+
+
+def make_dbid_name():
+    return make_dbid() + '.wav'
+
+
+class VoiceOverDB(VoiceDB):
+    def __init__(self, log_path, stored_dir, users=None):
+        super().__init__(log_path, stored_dir, random_name_fun=make_dbid_name)
+
+        self._storage_dir = stored_dir
+        self._users = users
+
+    def remove_not_in_use(self):
+        files_to_remove = []
+
+        for filename in os.listdir(self._storage_dir):
+            dbid, ext = os.path.splitext(filename)
+
+            if filename not in self.get_filenames() and dbid not in [user.dbid for user in self._users]:
+                files_to_remove.append(self.realpath(filename))
+
+        for path in files_to_remove:
+            if os.path.isfile(path):
+                os.remove(path)
+            else:
+                os.removedirs(path)
+
+    def get_dbid(self, text, lang):
+        dbid = None
+        filename = self.get_filename(text, lang)
+        if filename:
+            dbid = os.path.splitext(filename)[0]
+
+        return dbid
+
+    def get_text_lang(self, dbid):
+        text = None
+        lang = None
+        filename = dbid + '.wav'
+        if filename in self.get_filenames():
+            extra = self._Store.get_extra(dbid + '.wav')
+            text, lang = extra['text'], extra['lang']
+        return text, lang
+
+
+class SystemVoice:
+    pass
+
+
+class MassagesVoice:
+    pass

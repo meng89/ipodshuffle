@@ -240,8 +240,8 @@ def sync(args):
 
     ipod.audiodb.clean()
 
-    ipod.tracks_voicedb.clean()
-    ipod.playlists_voicedb.clean()
+    ipod.tracks_voiceoverdb.clean()
+    ipod.playlists_voiceoverdb.clean()
 
     ipod.playlists.clear()
 
@@ -285,7 +285,7 @@ def sync(args):
 
             path_in_ipod = ipod.audiodb.get_filename(checksum)
             if not path_in_ipod:
-                ipod.audiodb.add(file, checksum)
+                ipod.audiodb.add(file)
                 path_in_ipod = ipod.audiodb.get_filename(checksum)
 
             track = ipod.create_track(path_in_ipod)
@@ -303,11 +303,9 @@ def sync(args):
             pl = ipod.create_playlist(pl_type)
             ipod.playlists.append(pl)
 
-            # pl = ipod.playlists.append_one(pl_type)
-
             if ipod.enable_voiceover:
-                lang = classify_tts_lang_func(title)
 
+                lang = classify_tts_lang_func(title)
                 set_voice(pl, title, lang)
 
             add_files_to_playlist(pl, files, text_fun)
@@ -319,7 +317,7 @@ def sync(args):
     add_playlists(podcasts, PODCAST, title_artist_or_filename)
     add_playlists(audiobooks, AUDIOBOOK, filename)
 
-    ipod.write()
+    ipod.write_db()
 
 
 def register(parser):

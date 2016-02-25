@@ -1,5 +1,4 @@
 .. toctree::
-    :titlesonly:
 
     modules/index
     tools/index

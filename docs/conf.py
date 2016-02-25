@@ -8,6 +8,7 @@ sys.path.insert(0, os.path.abspath(os.path.join(dir_, "..")))
 intersphinx_mapping = {'python': ('https://docs.python.org/3', None)}
 
 import ipodshuffle
+import ipodshuffle.shuffle
 
 extensions = ['sphinx.ext.autodoc']
 

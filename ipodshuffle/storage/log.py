@@ -126,36 +126,46 @@ class Storage(JsonLog):
 
     # ------------------------------------------------------------------------------
 
+    def add(self, src):
+        """
+        :param src: file path
+        :return: checksum value
+        """
+
+        checksum = get_checksum(src)
+
+        filename = self.get_filename(checksum)
+
+        if not filename:
+
+            new_name = self._get_new_name()
+            new_realpath = self._storage_dir + '/' + new_name
+
+            os.makedirs(os.path.split(new_realpath)[0], exist_ok=True)
+
+            shutil.copyfile(src, new_realpath)
+
+            self._log[new_name] = {
+                'checksum': checksum,
+                'mtime': os.path.getmtime(new_realpath),
+                'size': os.path.getsize(new_realpath)
+            }
+
+            self.write_log()
+
+        return checksum
+
     def get_filename(self, checksum):
+        """
+        :param checksum: checksum
+        :return: filename no storage base part
+        """
         filename = None
         for _filename, metadata in self._log.items():
             if metadata['checksum'] == checksum:
                 filename = _filename
                 break
         return filename
-
-    def add(self, src, checksum=None):
-
-        checksum = checksum or get_checksum(src)
-
-        filename = self.get_filename(checksum)
-        if filename:
-            raise FileAlreadyInError('file: {}'.format(filename))
-
-        new_name = self._get_new_name()
-        new_realpath = self._storage_dir + '/' + new_name
-
-        os.makedirs(os.path.split(new_realpath)[0], exist_ok=True)
-
-        shutil.copyfile(src, new_realpath)
-
-        self._log[new_name] = {
-            'checksum': checksum,
-            'mtime': os.path.getmtime(new_realpath),
-            'size': os.path.getsize(new_realpath)
-        }
-
-        self.write_log()
 
     # ------------------------------------------------------------------------------
 

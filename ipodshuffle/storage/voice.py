@@ -1,12 +1,8 @@
-import os
-import random
-import string
-
 from ipodshuffle.utils import get_checksum
 
 from ipodshuffle import audio
 
-from .log import Storage, FileAlreadyInError
+from .log import Storage
 
 
 class VoiceDB:
@@ -28,11 +24,7 @@ class VoiceDB:
         if filename:
             raise Exception
 
-        try:
-            self._Store.add(src, checksum)
-
-        except FileAlreadyInError:
-            pass
+        self._Store.add(src)
 
         filename = self._Store.get_filename(checksum)
         extra = {
@@ -58,71 +50,3 @@ class VoiceDB:
 
     def realpath(self, filename):
         return self._Store.realpath(filename)
-
-
-def make_dbid1():
-    return ''.join(random.sample('ABCDEF' + string.digits, 16))
-
-
-def make_dbid2():
-    dbid_string = ''
-    for x in random.sample(range(0, 255), 8):
-        s = hex(x)[2:]
-        if len(s) == 1:
-            s = '0' + s
-        dbid_string += s.upper()
-    return dbid_string
-
-make_dbid = make_dbid2
-
-
-def make_dbid_name():
-    return make_dbid() + '.wav'
-
-
-class VoiceOverDB(VoiceDB):
-    def __init__(self, log_path, stored_dir, users=None):
-        super().__init__(log_path, stored_dir, random_name_fun=make_dbid_name)
-
-        self._storage_dir = stored_dir
-        self._users = users
-
-    def remove_not_in_use(self):
-        files_to_remove = []
-
-        for filename in os.listdir(self._storage_dir):
-            dbid, ext = os.path.splitext(filename)
-
-            if filename not in self.get_filenames() and dbid not in [user.dbid for user in self._users]:
-                files_to_remove.append(self.realpath(filename))
-
-        for path in files_to_remove:
-            if os.path.isfile(path):
-                os.remove(path)
-            else:
-                os.removedirs(path)
-
-    def get_dbid(self, text, lang):
-        dbid = None
-        filename = self.get_filename(text, lang)
-        if filename:
-            dbid = os.path.splitext(filename)[0]
-
-        return dbid
-
-    def get_text_lang(self, dbid):
-        text = None
-        lang = None
-        filename = dbid + '.wav'
-        if filename in self.get_filenames():
-            extra = self._Store.get_extra(dbid + '.wav')
-            text, lang = extra['text'], extra['lang']
-        return text, lang
-
-
-class SystemVoice:
-    pass
-
-
-class MassagesVoice:
-    pass

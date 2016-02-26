@@ -187,7 +187,7 @@ class Shuffle:
             raise Exception
 
         if not path_in_ipod:
-            path_in_ipod = self.audiodb.get_filename(checksum)
+            path_in_ipod = self.audiodb.get_voice(checksum)
 
         track = Track(self, path_in_ipod=path_in_ipod)
 
@@ -245,7 +245,7 @@ class _Voice:
 
         if dbid is None and self._shuffle.voice_path_func is not None:
 
-            self._voiceoverdb.add(self._shuffle.voice_path_func(text=text, lang=lang), text=text, lang=lang)
+            self._voiceoverdb.add_voice(self._shuffle.voice_path_func(text=text, lang=lang), text=text, lang=lang)
 
             dbid = self._voiceoverdb.get_dbid(text, lang)
 
@@ -443,7 +443,7 @@ class VoiceOverDB(VoiceDB):
 
     def get_dbid(self, text, lang):
         dbid = None
-        filename = self.get_filename(text, lang)
+        filename = self.get_voice(text, lang)
         if filename:
             dbid = os.path.splitext(filename)[0]
 
@@ -454,7 +454,7 @@ class VoiceOverDB(VoiceDB):
         lang = None
         filename = dbid + '.wav'
         if filename in self.get_filenames():
-            extra = self._Store.get_extra(dbid + '.wav')
+            extra = self.get_extra(dbid + '.wav')
             text, lang = extra['text'], extra['lang']
         return text, lang
 

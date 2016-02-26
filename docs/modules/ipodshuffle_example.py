@@ -50,8 +50,8 @@ normal_playlist.tracks.append(track1)
 
 
 # use AudioDB copy file to ipod
-track2_checksum = ipod.audiodb.add('/media/data/music/Bob Dylan/Bob Dylan - Mr. Tambourine Man.mp3')
-track2_pathinipod = ipod.audiodb.get_filename(track2_checksum)
+track2_checksum = ipod.audiodb.add_voice('/media/data/music/Bob Dylan/Bob Dylan - Mr. Tambourine Man.mp3')
+track2_pathinipod = ipod.audiodb.get_voice(track2_checksum)
 track2 = ipod.create_track(path_in_ipod=track2_pathinipod)
 track2.voice = 'Mr. Tambourine Man', 'en-US'
 normal_playlist.tracks.append(track2)
@@ -67,8 +67,8 @@ track4.voice = 'Mr. Tambourine Man, Bob Dylan'
 master_playlist.tracks.append(track4)
 
 
-track5_checksum = ipod.audiodb.add('/media/data/music/Goo Goo Dolls - Name.mp3')
-track5_pathinipod = ipod.audiodb.get_filename(track5_checksum)
+track5_checksum = ipod.audiodb.add_voice('/media/data/music/Goo Goo Dolls - Name.mp3')
+track5_pathinipod = ipod.audiodb.get_voice(track5_checksum)
 track5 = ipod.create_track(path_in_ipod=track5_pathinipod)
 track5.voice = 'Name, Goo Goo Dolls', 'en-US'
 master_playlist.tracks.append(track5)

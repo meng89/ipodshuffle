@@ -58,7 +58,7 @@ class LocalVoiceDB(VoiceDB):
 
     def get_path(self, text, lang):
         realpath = None
-        filename = self.get_filename(text, lang)
+        filename = self.get_voice(text, lang)
         if filename:
             realpath = self.realpath(filename)
         return realpath

@@ -214,7 +214,7 @@ def voice_things(local_voicedb, args):
             with open(tmp_file_name, 'wb') as f:
                 f.write(voice_data)
 
-            local_voicedb.add(tmp_file_name, text, tts_lang)
+            local_voicedb.add_voice(tmp_file_name, text, tts_lang)
 
             os.remove(tmp_file_name)
 
@@ -283,10 +283,10 @@ def sync(args):
                 local_filelog.log_it(file)
                 checksum = local_filelog.get_checksum(file)
 
-            path_in_ipod = ipod.audiodb.get_filename(checksum)
+            path_in_ipod = ipod.audiodb.get_voice(checksum)
             if not path_in_ipod:
-                ipod.audiodb.add(file)
-                path_in_ipod = ipod.audiodb.get_filename(checksum)
+                ipod.audiodb.add_voice(file)
+                path_in_ipod = ipod.audiodb.get_voice(checksum)
 
             track = ipod.create_track(path_in_ipod)
             pl.tracks.append(track)

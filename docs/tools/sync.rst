@@ -1,9 +1,11 @@
 sync
 ====
 
+.. program-output:: python3 -m ipodshuffle.tools.teresa sync --help
+   :cwd: ../../
 
+structure of source, see
 
-src path
---------
+.. toctree::
 
-.. literalinclude:: src_path_structure
+    src_folder_structure

@@ -11,6 +11,7 @@ import ipodshuffle
 import ipodshuffle.shuffle
 
 extensions = ['sphinx.ext.autodoc']
+extensions += ['sphinxcontrib.programoutput']
 
 templates_path = ['_templates']
 

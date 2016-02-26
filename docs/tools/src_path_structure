@@ -1,0 +1,81 @@
+in "music", all folders is a normal playlist: folder_a, folder_b, folder_x, folder_1, folder_2 and folder_y.
+father folder playlist is also caontain child folder playlist tracks
+master playlist contain all tracks of all normal playlists
+
+in "podcasts" and "audiobooks", notice the IGNORED folder and audio in the map following:
+
+source
+   |-- music
+   |      |-- folder_a
+   |      |      |-- 1.mp3
+   |      |      +-- 2.mp3
+   |      |
+   |      |-- folder_b
+   |      |      |-- folder_x
+   |      |      |      |-- folder_1
+   |      |      |      |      |-- 1.mp3
+   |      |      |      |      +-- 2.mp3
+   |      |      |      |
+   |      |      |      +-- folder_2
+   |      |      |             |-- 1.mp3
+   |      |      |             +-- 2.mp3
+   |      |      |
+   |      |      +-- folder_y
+   |      |             |-- 1.mp3
+   |      |             +-- 2.mp3
+   |      |
+   |      |-- 1.mp3
+   |      +-- 2.mp3
+   |
+   |-- podcasts
+   |      |-- 6 Minute English
+   |      |      |-- p03fgnf9.mp3
+   |      |      |-- p03g4kll.mp3
+   |      |      |-- p03gtsz8.mp3
+   |      |      +-- p03hj7dq.mp3
+   |      |
+   |      |-- The English We Speak
+   |      |      |-- p03gmjw3.mp3
+   |      |      |-- p03hb15j.mp3
+   |      |      +-- p03j16wv.mp3
+   |      |
+   |      |-- Luk's ENGLISH Podcast
+   |      |      |-- FOLDER_IN_THIS_LEVEL_WILL_BE_IGNORED
+   |      |      |      +-- THIS_AUDIO_WILL_BE_IGNORED.mp3
+   |      |      |
+   |      |      |-- 326-catching-up-with-oli-future-predictions-part-2.mp3
+   |      |      |-- 327-the-lep-photo-competition-please-check-out-the-photos-and-vote.mp3
+   |      |      +-- 328-cooking-with-luke-verbs-and-expressions-in-the-kitchen.mp3
+   |      |
+   |      |
+   |      +-- AUDIO_IN_THIS_LEVEL_WILL_BE_IGNORED.mp3
+   |
+   |
+   +-- audiobooks
+          |-- 01.Love Or Money
+          |      |-- 01.mp3
+          |      |-- 02.mp3
+          |      |-- 03.mp3
+          |      |-- 04.mp3
+          |      |-- 05.mp3
+          |      |-- 06.mp3
+          |      +-- 07.mp3
+          |
+          |
+          |-- 02.Mary Queen Of Scots
+          |      |-- FOLDER_IN_THIS_LEVEL_WILL_BE_IGNORED
+          |      |      +-- THIS_AUDIO_WILL_BE_IGNORED.mp3
+          |      |
+          |      |-- 01.Fotheringhay.mp3
+          |      |-- 02.France.mp3
+          |      |-- 03.Darnley and Riccio.mp3
+          |      |-- 04.The death of David Riccio.mp3
+          |      |-- 05.My son is born.mp3
+          |      |-- 06.Kirk O'Field.mp3
+          |      |-- 07.Bothwell.mp3
+          |      |-- 08.England.mp3
+          |      +-- 09.A Death.mp3
+          |
+          |-- a book in single audio.mp3
+          +-- another book in single audio.mp3
+

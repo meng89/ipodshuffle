@@ -5,7 +5,7 @@ from .log import JsonLog, get_checksum
 from .voice import VoiceDB
 
 
-def get_uuid1_hex():
+def uuid1_hex():
     return uuid.uuid1().hex
 
 
@@ -54,7 +54,7 @@ class LocalFileLog(JsonLog):
 
 class LocalVoiceDB(VoiceDB):
     def __init__(self, log_path, stored_dir):
-        super().__init__(log_path, stored_dir, random_name_fun=get_uuid1_hex)
+        super().__init__(log_path, stored_dir, random_name_fun=uuid1_hex)
 
     def get_path(self, text, lang):
         realpath = None

@@ -1,16 +1,19 @@
 .. _Tools:
 
 Tools
-=====
+#####
 
-The command is "teresa",
+The command is "teresa"
 
-test
+.. program-output:: tools/teresa --help
+
+see commands docmant:
 
 .. toctree::
 
+    set
     sync
-
+    show
 
 
 

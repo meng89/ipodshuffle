@@ -1,8 +1,9 @@
+.. _Tools:
+
 Tools
 =====
 
-Intro
------
+The command is "teresa",
 
 test
 

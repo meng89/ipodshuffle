@@ -1,8 +1,7 @@
 sync
 ====
 
-.. program-output:: python3 -m ipodshuffle.tools.teresa sync --help
-   :cwd: ../../
+.. program-output:: tools/teresa sync --help
 
 structure of source, see
 

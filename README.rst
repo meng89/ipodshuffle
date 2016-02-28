@@ -13,7 +13,7 @@ Dependencies:
 
 Python 3
 
-`mutagen <https://bitbucket.org/lazka/mutagen>`_>=1.27
+`mutagen <https://bitbucket.org/lazka/mutagen>`_ >= 1.27
 
 `langid <https://github.com/saffsd/langid.py>`_
 
@@ -35,6 +35,8 @@ PyPi
 
     pip3 install ipodshuffle
 
-Docs
-====
+if you use svox engine, try install svox package in the distribution
+
+Usage & Modules API
+===================
 see http://ipodshuffle.readthedocs.org/ 

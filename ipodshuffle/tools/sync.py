@@ -23,7 +23,7 @@ from .tts.error import GetVoiceDataError
 from .fix_zh import fix_zh
 
 
-CACHE_DIR = os.path.join(os.path.expanduser('~'), '.cache/ipodshuffle')
+CACHE_DIR = os.path.join(os.path.expanduser('~'), '.cache/teresa')
 os.makedirs(CACHE_DIR, exist_ok=True)
 
 

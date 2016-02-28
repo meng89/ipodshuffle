@@ -1,7 +1,7 @@
 sync
 ====
 
-.. program-output:: tools/teresa sync --help
+.. program-output:: ../teresa sync --help
 
 
 TTS engines
@@ -12,7 +12,7 @@ but not work perfectly, It is suggested that you use "-l lang1,lang2…" to spec
 
 For now, have two TTS engine wrapper:
 
-sovx
+svox
 ^^^^
 
 CLI command is "pico2wave", make sure you have already installed it.

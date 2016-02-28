@@ -1,4 +1,4 @@
 show
 ====
 
-.. program-output:: tools/teresa show --help
+.. program-output:: ../teresa show --help

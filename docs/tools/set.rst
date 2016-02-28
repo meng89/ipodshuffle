@@ -2,4 +2,4 @@
 set
 ===
 
-.. program-output:: tools/teresa set --help
+.. program-output:: ../teresa set --help

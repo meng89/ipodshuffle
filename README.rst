@@ -35,7 +35,7 @@ PyPi
 
     pip3 install ipodshuffle
 
-if you use svox engine, try install svox package in the distribution
+If you use svox engine, try install svox package in the distribution
 
 Usage & Modules API
 ===================

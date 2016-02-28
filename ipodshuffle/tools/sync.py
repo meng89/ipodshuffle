@@ -325,12 +325,12 @@ def register(parser):
     parser_sync = parser.add_parser('sync', help='sync to ipod',
                                     formatter_class=argparse.RawTextHelpFormatter,
                                     epilog='Legal lang codes of engines:\n' +
-                                           '\n'.join(['  {}: {}'.format(k, ', '.join(sorted(v.legal_langs)))
+                                           '\n'.join(['  {}: {}'.format(k, ','.join(sorted(v.legal_langs)))
                                                       for k, v in ENGINE_MAP.items()]) + '\n'
                                            '\n'
                                            'Two examples of use:\n'
                                            '  %(prog)s -b /media/ipod_base -s /media/ipod_src -l en-gb '
-                                           '-e sovx\n'
+                                           '-e svox\n'
                                            '  %(prog)s -b /media/ipod_base -s /media/ipod_src -l en-gb,zh-cn,ja-jp '
                                            '-e voicerss -k d279f919f7384d3bafa516caad0eae56'
                                     )

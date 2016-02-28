@@ -6,18 +6,21 @@ from mutagen.id3 import ID3NoHeaderError
 
 import langid
 
-from ipodshuffle.audio import get_type as get_audio_type
-
 from ipodshuffle import Shuffle, MASTER, NORMAL, PODCAST, AUDIOBOOK
 
-from ipodshuffle.localdb import LocalVoiceDB, LocalFileLog
+from ipodshuffle.audio import get_type as get_audio_type
+
+from ipodshuffle.storage.local import LocalVoiceDB, LocalFileLog
 
 import ipodshuffle.utils
 
-from .tts import ENGINE_MAP
-from .tts.error import GetTTSError
+from . import str2list
 
-from .char_detect import fix_zh
+from .tts import ENGINE_MAP
+
+from .tts.error import GetVoiceDataError
+
+from .fix_zh import fix_zh
 
 
 CACHE_DIR = os.path.join(os.path.expanduser('~'), '.cache/ipodshuffle')
@@ -28,7 +31,7 @@ def filename(path):
     return os.path.splitext(os.path.split(path)[1])[0]
 
 
-def beautify_for_tts(text):
+def beautify_text(text):
     new_text = None
     if '-' in text:
         new_text = text.replace('-', ',')
@@ -71,7 +74,7 @@ def title_artist_or_filename(path):
 
             text += ' ' + artist
     else:
-        text = beautify_for_tts(filename(path))
+        text = beautify_text(filename(path))
 
     return text
 
@@ -163,40 +166,27 @@ def get_audiobooks(dire):
     return titles_files
 
 
-def wrapper_tts(_fun, **kwargs):
+def voice_things(local_voicedb, args):
 
-    def wrapper(text, lang):
-        return _fun(text, lang, **kwargs)
+    langs = args.langs or []
 
-    return wrapper
+    tts_func = None
+    if args.engine:
+        tts_engine = ENGINE_MAP[args.engine]
+        tts_func = tts_engine.get_tts_func(args)
 
-
-def voice_things(ipod_voicedb, local_voicedb, ttsengine, langs=None, **kwargs):
-
-    tts_engine = ENGINE_MAP[ttsengine]
-
-    if langs:
-        if not isinstance(langs, list):
-            langs = [langs]
-    else:
-        langs = tts_engine.langs
-
-    # user langs to langid langs to set, langid langs to user langs to get voice
+        if not langs:
+            langs = tts_engine.legal_langs
 
     lang_map = {}
-
-    for lang in langs:
-        _langid_code = tts_engine.lang_to_langid_code(lang)
-        lang_map[_langid_code] = lang
+    for _lang in langs:
+        lang_map[_lang[:2]] = _lang
 
     languages_to_set = [lang_id_code for lang_id_code in lang_map.keys()]
 
     langid.set_languages(languages_to_set)
 
-    tts = wrapper_tts(tts_engine.tts, **kwargs)
-
-    def get_or_make_dbid(text):
-
+    def classify_tts_lang(text):
         langid_code = langid.classify(text)[0]
 
         if 'zh' in languages_to_set:
@@ -204,59 +194,56 @@ def voice_things(ipod_voicedb, local_voicedb, ttsengine, langs=None, **kwargs):
 
         tts_lang = lang_map[langid_code]
 
-        dbid = ipod_voicedb.get_dbid(text, tts_lang)
-        if not dbid:  # The voice not in ipod tracks/playlists db
-            print('\nvoice: {}, {} :'.format(repr(tts_lang), repr(text)))
-            print('  not in dir Tracks/Playlists. ', end='')
-            local_voice_path = local_voicedb.get_path(text, tts_lang)
+        return tts_lang
 
-            if not local_voice_path:  # The voice not in local
-                print('not in local. ', end='')
-                print('try tts ... ', end='')
-                voice_data = tts(text, tts_lang)
-                print('done!')
+    def local_voice_path(text, lang):
+        tts_lang = lang
+        print(repr(lang), repr(text))
+        voice_path = local_voicedb.get_path(text, tts_lang)
+        if not voice_path and callable(tts_func):  # The voice not in local
+            print('   not in local. ', end='')
 
-                tmp_file = tempfile.NamedTemporaryFile(delete=False)
-                tmp_file_name = tmp_file.name
-                tmp_file.close()
+            print('try TTS engine {} ... '.format(args.engine), end='', flush=True)
+            voice_data = tts_func(text, tts_lang)
+            print('done!')
 
-                with open(tmp_file_name, 'wb') as f:
-                    f.write(voice_data)
+            tmp_file = tempfile.NamedTemporaryFile(delete=False)
+            tmp_file_name = tmp_file.name
+            tmp_file.close()
 
-                local_voicedb.add(tmp_file_name, text, tts_lang)
+            with open(tmp_file_name, 'wb') as f:
+                f.write(voice_data)
 
-                os.remove(tmp_file_name)
+            local_voicedb.add_voice(tmp_file_name, text, tts_lang)
 
-                local_voice_path = local_voicedb.get_path(text, tts_lang)
+            os.remove(tmp_file_name)
 
-            ipod_voicedb.add(local_voice_path, text, tts_lang)
-            dbid = ipod_voicedb.get_dbid(text, tts_lang)
+            voice_path = local_voicedb.get_path(text, tts_lang)
 
-        return dbid
+        return voice_path
 
-    return get_or_make_dbid
+    return classify_tts_lang, local_voice_path
 
 
-description = "Sync tracks and playlists to player"
+def sync(args):
 
+    src = os.path.realpath(args.src)
+    base = os.path.realpath(args.base)
 
-def sync(src, base, **tts_kwargs):
-    # src=None, ipod=None, [tts_engine=None, [langs=None, tts_key=None, ... ]]
+    ipod = Shuffle(base)
+    if ipod.enable_voiceover:
+        local_voicedb = LocalVoiceDB(os.path.join(CACHE_DIR, 'voices_log.json'), os.path.join(CACHE_DIR, 'voices'))
+        local_voicedb.clean()
+        classify_tts_lang_func, local_voice_path_func = voice_things(local_voicedb, args)
 
-    src = os.path.realpath(src)
-    base = os.path.realpath(base)
+        ipod.voice_path_func = local_voice_path_func
 
-    player = Shuffle(base)
+    ipod.audiodb.clean()
 
-    player.audiodb.clean()
+    ipod.tracks_voiceoverdb.clean()
+    ipod.playlists_voiceoverdb.clean()
 
-    player.tracks_voicedb.clean()
-    player.playlists_voicedb.clean()
-    # player.tracks_voicedb.remove_not_in_use()
-    # player.playlists_voicedb.remove_not_in_use()
-
-    player.playlists.clear()
-    player.tracks.clear()
+    ipod.playlists.clear()
 
     local_filelog = LocalFileLog(os.path.join(CACHE_DIR, 'local_file_log.json'))
 
@@ -283,74 +270,80 @@ def sync(src, base, **tts_kwargs):
         master = master_and_normals[0]
         normals = master_and_normals[1:]
 
-    track_get_or_make_dbid = None
-    playlist_get_or_make_dbid = None
+    def set_voice(obj, text, lang):
+        try:
+            obj.voice = text, lang
+        except GetVoiceDataError as e:
+            print(e, ' ignored.')
 
-    if player.enable_voiceover:
-
-        local_voicedb = LocalVoiceDB(os.path.join(CACHE_DIR, 'voices_log.json'), os.path.join(CACHE_DIR, 'voices'))
-        local_voicedb.clean()
-
-        track_get_or_make_dbid = voice_things(player.tracks_voicedb, local_voicedb, **tts_kwargs)
-        playlist_get_or_make_dbid = voice_things(player.playlists_voicedb, local_voicedb, **tts_kwargs)
-
-    def add_files_to_pl(pl, files, get_track_voice_title=None):
+    def add_files_to_playlist(pl, files, get_track_voice_title=None):
         for file in files:
             checksum = local_filelog.get_checksum(file)
             if not checksum:
                 local_filelog.log_it(file)
                 checksum = local_filelog.get_checksum(file)
 
-            path_in_ipod = player.audiodb.add(file, checksum)
+            path_in_ipod = ipod.audiodb.get_filename(checksum)
+            if not path_in_ipod:
+                ipod.audiodb.add(file)
+                path_in_ipod = ipod.audiodb.get_filename(checksum)
 
-            track = None
-            for _track in player.tracks:
-                if _track.path_in_ipod == path_in_ipod:
-                    track = _track
-
-            if not track:
-                track = player.tracks.add(path_in_ipod)
-
+            track = ipod.create_track(path_in_ipod)
             pl.tracks.append(track)
 
-            if player.enable_voiceover:
+            if ipod.enable_voiceover:
                 text = get_track_voice_title(file)
-                try:
-                    track.dbid = track_get_or_make_dbid(text)
-                except GetTTSError:
-                    print('get track voice failed, ignored.')
+                lang = classify_tts_lang_func(text)
+
+                set_voice(track, text, lang)
 
     def add_playlists(title_and_files, pl_type, text_fun):
         for title, files in title_and_files:
-            pl = player.playlists.add()
-            pl.type = pl_type
 
-            if player.enable_voiceover:
-                try:
-                    pl.dbid = playlist_get_or_make_dbid(title)
-                except GetTTSError:
-                    print('get playlist voice failed, ignored.')
+            pl = ipod.create_playlist(pl_type)
+            ipod.playlists.append(pl)
 
-            add_files_to_pl(pl, files, text_fun)
+            if ipod.enable_voiceover:
 
-    master_pl = player.playlists.add()
-    master_pl.type = MASTER
-    add_files_to_pl(master_pl, master[1], title_artist_or_filename)
+                lang = classify_tts_lang_func(title)
+                set_voice(pl, title, lang)
+
+            add_files_to_playlist(pl, files, text_fun)
+
+    master_pl = ipod.playlists.append_one(pl_type=MASTER)
+    add_files_to_playlist(master_pl, master[1], title_artist_or_filename)
 
     add_playlists(normals, NORMAL, title_artist_or_filename)
     add_playlists(podcasts, PODCAST, title_artist_or_filename)
     add_playlists(audiobooks, AUDIOBOOK, filename)
 
-    player.write()
-
-fun = sync
+    ipod.write_db()
 
 
-def get_help_strings(indet=None):
-    indet = indet or 0
-    indet_s = ' ' * indet
-    s = ''
-    s += indet_s + 'usage:  src=<path> base=<path> ttsengine=<enging> langs=lang1,lang2... ' \
-                   '<arg1>=value1 ... \n'
-    s += ''
-    return s
+def register(parser):
+    import argparse
+    parser_sync = parser.add_parser('sync', help='sync to ipod',
+                                    formatter_class=argparse.RawTextHelpFormatter,
+                                    epilog='Legal lang codes of engines:\n' +
+                                           '\n'.join(['  {}: {}'.format(k, ', '.join(sorted(v.legal_langs)))
+                                                      for k, v in ENGINE_MAP.items()]) + '\n'
+                                           '\n'
+                                           'Two examples of use:\n'
+                                           '  %(prog)s -b /media/ipod_base -s /media/ipod_src -l en-gb '
+                                           '-e sovx\n'
+                                           '  %(prog)s -b /media/ipod_base -s /media/ipod_src -l en-gb,zh-cn,ja-jp '
+                                           '-e voicerss -k d279f919f7384d3bafa516caad0eae56'
+                                    )
+
+    parser_sync.add_argument('-b', dest='base', help='ipod base path', metavar='<PATH>', required=True)
+    parser_sync.add_argument('-s', dest='src', help='source path', metavar='<PATH>', required=True)
+    parser_sync.add_argument('-l', dest='langs',
+                             help='comma-separated set of target language codes (e.g en-gb,zh-cn)',
+                             type=str2list, metavar='LANG1,LANG2...')
+    parser_sync.add_argument('-e', dest='engine', choices=ENGINE_MAP.keys(), metavar='ENGINE',
+                             help='TTS engine, one of ' + ', '.join(ENGINE_MAP.keys()))
+
+    for module in ENGINE_MAP.values():
+        module.add_arg(parser_sync)
+
+    parser_sync.set_defaults(func=sync)

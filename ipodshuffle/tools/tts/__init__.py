@@ -1,8 +1,11 @@
-from . import voicerss
+from collections import OrderedDict
+
 from . import sovx
+from . import voicerss
 
-
-ENGINE_MAP = {
-    'voicerss': voicerss,
-    'sovx': sovx
-}
+ENGINE_MAP = OrderedDict(
+    {
+        'voicerss': voicerss,
+        'sovx': sovx
+    }
+)

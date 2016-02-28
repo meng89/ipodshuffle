@@ -1,70 +1,53 @@
 
-from ipodshuffle import Shuffle, PL_MAP, MASTER
-from ipodshuffle.audio import AUDIO_MAP
+from ipodshuffle import Shuffle, MASTER
 
 
 L1 = '=' * 80
 L2 = '-' * 50
 
 
-description = "Show player's information"
+def show(args):
 
-
-def help_():
-    print()
-    print('usage: ', end='')
-    print('base=<path_to_ipod>')
-    print('Only show. No control.')
-    print()
-
-
-def show(base):
-
-    player = Shuffle(base)
+    ipod = Shuffle(args.base)
 
     print(L1)
-    print('enable_voiceover: ', player.enable_voiceover)
-    print('max_volumex: ', player.max_volume)
-    print('number of tracks: ', len(player.tracks))
-    print('number of playlists: ', len(player.playlists))
+    print('enable_voiceover: ', ipod.enable_voiceover)
+    print('max_volumex: ', ipod.max_volume)
+    print('number of playlists: ', len(ipod.playlists))
     print(L1)
     print()
 
     print('Tracks:')
     print(L1)
-    for track in player.tracks:
-        print('INDEX: ', player.tracks.index(track))
-        print('type: ', AUDIO_MAP[track.type])
-        print('filename: ', track.filename)
-        text, lang = player.tracks_voicedb.get_text_lang(track.dbid + '.wav')
-        print('dbid: {}, lang: {}, text: {}.'.format(track.dbid, repr(lang), repr(text)))
-
-        if track != player.tracks[-1]:
-            print(L2)
     print(L1)
 
     print()
 
     print('Playlists:')
     print(L1)
-    for pl in player.playlists:
-        print('type: ', PL_MAP[pl.type])
-        if pl.type != MASTER:
-            text, lang = player.playlists_voicedb.get_text_lang(pl.dbid + '.wav')
-            print('dbid: {} (lang: {}, text: {})'.format(pl.dbid, repr(lang), repr(text)))
-        else:
-            print()
-            # print('<TEXT AND LANG WAS DEFINED IN MESSAGES>')
+    for pl in ipod.playlists:
+        print('type: ', type(pl))
         print('number of tracks: ', len(pl.tracks))
-        print('index of tracks: ', [player.tracks.index(track) for track in pl.tracks])
-        if pl != player.playlists[-1]:
+        if pl.type != MASTER:
+            try:
+                text, lang = pl.voice
+                print('voice: ', lang, text)
+            except KeyError:
+                raise KeyError
+        if pl != ipod.playlists[-1]:
             print(L2)
     print(L1)
 
-fun = show
 
+def register(parser):
+    import argparse
 
-def get_help_strings(indet=None):
-    indet = indet or 0
-    s = ' ' * indet + 'usage:  base=<path>\n'
-    return s
+    parser_show = parser.add_parser('show', help='show ipod informations',
+                                    formatter_class=argparse.RawTextHelpFormatter,
+                                    epilog='Example of use:\n'
+                                           '  %(prog)s -b /media/ipod_base'
+                                    )
+
+    parser_show.add_argument('-b', dest='base', help='ipod base path', metavar='<path>', required=True)
+
+    parser_show.set_defaults(func=show)

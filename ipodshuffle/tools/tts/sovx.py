@@ -1,18 +1,21 @@
 import os
 import tempfile
 
-from .error import LangCodeError, GetTTSError
+from .error import LangCodeError, GetVoiceDataError
 
 
 def tts(text, lang):
-    if not is_available(lang):
+
+    if lang not in legal_langs:
         raise LangCodeError(lang)
+
+    tts_lang = lang[:3] + lang[3:].upper()
 
     tmp_file = tempfile.NamedTemporaryFile(delete=False)
     tmp_file_name = tmp_file.name + '.wav'
     tmp_file.close()
 
-    cmd = 'pico2wave --wave={} --lang={} {}'.format(tmp_file_name, lang, repr(text))
+    cmd = 'pico2wave --wave={} --lang={} {}'.format(tmp_file_name, tts_lang, repr(text))
     # print('\n\n', cmd, '\n')
     os.system(cmd)
 
@@ -20,13 +23,13 @@ def tts(text, lang):
     data = f.read()
 
     if len(data) < 10000:
-        raise GetTTSError
+        raise GetVoiceDataError
 
     os.remove(tmp_file_name)
 
     return data
 
-langs = [
+my_langs = [
     'en-US',
     'en-GB',
     'de-DE',
@@ -36,14 +39,12 @@ langs = [
 ]
 
 
-def is_available(lang):
-    return lang.lower() in [l.lower() for l in langs]
+legal_langs = [l.lower() for l in my_langs]
 
 
-def lang_to_langid_code(lang):
-    langid_code = None
-    for l in langs:
-        if l == lang:
-            langid_code = l.split('-')[0]
-            break
-    return langid_code
+def get_tts_func(args):
+    return tts
+
+
+def add_arg(parser):
+    pass

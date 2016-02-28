@@ -56,10 +56,11 @@ track_table = (
 
     # seems not work on 4gen, I don't know if work on 3gen
     {'name': 'bookmark',                       'size': 4,   'type': 'unknown'},
-
+    # itunes: normal: true, podcast/audiobook: false,
     {'name': 'dont_skip_on_shuffle',           'size': 1,   'type': 'bool',   'is_custom': True},
-    # save where?
+    # itunes: normal: false, podcast/audiobook: true,
     {'name': 'remember_playing_pos',           'size': 1,   'type': 'bool',   'is_custom': True},
+    # all pl: false
     {'name': 'part_of_uninterruptable_album',  'size': 1,   'type': 'bool',   'is_custom': True},
     {'name': 'unknown_1',                      'size': 1,   'type': 'unknown'},
 
@@ -256,7 +257,6 @@ def decode(dic, table):
         elif cow['type'] == 'dbid':
             new_value = dbid_from_bytes(chunk)
         else:
-            # raise TypeError
             new_value = chunk
 
         new_dic[key] = new_value
@@ -314,7 +314,7 @@ def dic_to_chunk(dic, table, do_check_header_id=True):
     return join(_dic, table)
 
 ###########################################################################
-####################################
+###########################################################################
 
 
 def get_custom_fields(table):
@@ -418,8 +418,8 @@ def get_offsets_chunk(length_before_offsets, chunks):
 def dics_to_itunessd(header_dic, tracks_dics, playlists_dics_and_indexes):
     """
     :param header_dic: dic of header_table
-    :param tracks_dics: list of all track_table
-    :param playlists_dics_and_indexes: list of all playlists and all their track's indexs
+    :param tracks_dics: list of all track_table's dics
+    :param playlists_dics_and_indexes: list of all playlists and all their track's indexes
     :return: the whole iTunesSD bytes data
     """
     ############################################

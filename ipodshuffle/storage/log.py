@@ -3,8 +3,7 @@ import os
 import shutil
 import uuid
 
-from . import audio
-from .utils import get_checksum
+from ipodshuffle.utils import get_checksum
 
 
 class FileNotInLogError(Exception):
@@ -64,7 +63,7 @@ class Storage(JsonLog):
 
         os.makedirs(self._storage_dir, exist_ok=True)
 
-        self._get_random_name = random_name_fun or uuid.uuid1
+        self._get_random_name = random_name_fun or uuid.uuid1().hex
 
     def realpath(self, filename):
         return os.path.join(self._storage_dir, filename)
@@ -127,34 +126,45 @@ class Storage(JsonLog):
 
     # ------------------------------------------------------------------------------
 
+    def add(self, src):
+        """
+        :param src: file path
+        :return: checksum value
+        """
+
+        checksum = get_checksum(src)
+
+        filename = self.get_filename(checksum)
+
+        if not filename:
+
+            new_name = self._get_new_name()
+            new_realpath = self._storage_dir + '/' + new_name
+
+            os.makedirs(os.path.split(new_realpath)[0], exist_ok=True)
+
+            shutil.copyfile(src, new_realpath)
+
+            self._log[new_name] = {
+                'checksum': checksum,
+                'mtime': os.path.getmtime(new_realpath),
+                'size': os.path.getsize(new_realpath)
+            }
+
+            self.write_log()
+        return checksum
+
     def get_filename(self, checksum):
+        """
+        :param checksum: checksum
+        :return: filename no storage base part
+        """
         filename = None
         for _filename, metadata in self._log.items():
             if metadata['checksum'] == checksum:
                 filename = _filename
                 break
         return filename
-
-    def add(self, src, checksum=None):
-
-        checksum = checksum or get_checksum(src)
-
-        filename = self.get_filename(checksum)
-        if filename:
-            raise FileAlreadyInError('file: {}'.format(filename))
-
-        new_name = self._get_new_name()
-        new_realpath = self._storage_dir + '/' + new_name
-
-        shutil.copyfile(src, new_realpath)
-
-        self._log[new_name] = {
-            'checksum': checksum,
-            'mtime': os.path.getmtime(new_realpath),
-            'size': os.path.getsize(new_realpath)
-        }
-
-        self.write_log()
 
     # ------------------------------------------------------------------------------
 
@@ -175,56 +185,3 @@ class Storage(JsonLog):
         self._log[filename]['extra'] = extra
 
         self.write_log()
-
-########################################################################################################################
-########################################################################################################################
-
-
-class VoiceDB:
-    def __init__(self, log_path, storage_dir, random_name_fun):
-        self._Store = Storage(log_path, storage_dir, random_name_fun)
-
-    def clean(self):
-        self._Store.clean()
-
-    def add(self, src, text, lang, checksum=None):
-
-        checksum = checksum or get_checksum(src)
-
-        if not audio.get_type(src) == audio.WAV:
-            raise TypeError
-
-        filename = self.get_filename(text, lang)
-
-        if filename:
-            raise Exception
-
-        try:
-            self._Store.add(src, checksum)
-
-        except FileAlreadyInError:
-            pass
-
-        filename = self._Store.get_filename(checksum)
-        extra = {
-            'text': text,
-            'lang': lang
-        }
-        self._Store.set_extra(filename, extra)
-
-    def get_filename(self, text, lang):
-        filename = None
-        for _filename in self.get_filenames():
-            _extra = self._Store.get_extra(_filename)
-            _text, _lang = _extra.setdefault('text', None), _extra.setdefault('lang', None)
-            if _text == text and _lang == lang:
-                filename = _filename
-                break
-
-        return filename
-
-    def get_filenames(self):
-        return self._Store.get_filenames()
-
-    def realpath(self, filename):
-        return self._Store.realpath(filename)

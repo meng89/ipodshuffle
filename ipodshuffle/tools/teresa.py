@@ -1,78 +1,37 @@
 #!/usr/bin/env python3
 
-import sys
-
-from collections import OrderedDict
+import argparse
 
 from ipodshuffle.tools import show, set_, sync
 
-
-modules = OrderedDict()
-
-for _name, _module in (['show', show], ['set', set_], ['sync', sync]):
-    modules[_name] = _module
-
-
-class ArgumentsError(Exception):
-    pass
-
-
-def help_():
-    # script_name = format(sys.argv[0])
-    script_name = 'teresa'
-    s = 'usage: {} fun=<fun> <arg1>=<value1> <arg2>=<value2> ... \n'.format(script_name) + \
-        '  or : {} help\n'.format(script_name) + \
-        '\n'
-
-    s += 'All funs are:\n'
-    for name, module in modules.items():
-        s += '\n'
-        s += '   {:<7}description:  {}\n'.format(name, module.description)
-        s += module.get_help_strings(indet=10) or '\n'
-
-    print(s, end='')
+import ipodshuffle.version
+from . import version as self_version
 
 
 def main():
-    kwargs = parse_arg()
+    parser = argparse.ArgumentParser(
+        formatter_class=argparse.RawTextHelpFormatter,
+        # usage='%(prog)s <command> [options]',
+        epilog="Try '%(prog)s <command> -h' for command help!"
+    )
 
-    if 'help' in kwargs.keys() and kwargs['help']:
-        help_()
+    parser.add_argument('-v', '--version', action='version',
+                        version='%(prog)s {} (use ipodshuffle {})'.format(
+                            self_version.__version__,
+                            ipodshuffle.version.__version__))
 
-    elif 'fun' in kwargs.keys():
-        name = kwargs.pop('fun')
-        modules[name].fun(**kwargs)
+    subparsers = parser.add_subparsers(title='Commands',  metavar='<command>')
+    # subparsers = parser.add_subparsers()
 
-    else:
-        help_()
+    set_.register(subparsers)
 
+    show.register(subparsers)
 
-def parse_arg():
-    kwargs = {}
+    sync.register(subparsers)
 
-    for _one in sys.argv[1:]:
+    args = parser.parse_args()
 
-        if '=' not in _one:
-            kwargs[_one] = True
-            continue
-
-        k, v = _one.split('=')
-
-        if ',' in v:
-            value = v.split(',')
-        elif v.lower() == 'true':
-            value = True
-        elif v.lower() == 'false':
-            value = False
-        elif v.isdigit():
-            value = int(v)
-        else:
-            value = v
-
-        kwargs[k] = value
-
-    return kwargs
-
+    args.func(args)
 
 if __name__ == '__main__':
     main()

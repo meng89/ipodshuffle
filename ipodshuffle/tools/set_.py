@@ -27,10 +27,10 @@ def register(parser):
 
     parser_set.add_argument('-b', dest='base', help='ipod base path', metavar='<path>', required=True)
 
-    parser_set.add_argument('-v', dest='voiceover', metavar='BOOL', type=str2bool,
+    parser_set.add_argument('-v', dest='voiceover', metavar='<bool>', type=str2bool,
                             help='enable or disable voiceover, true for enable, false for disable')
 
-    parser_set.add_argument('-m', dest='max_volume', metavar='<NUM>', type=int,
+    parser_set.add_argument('-m', dest='max_volume', metavar='<int>', type=int,
                             help='max volume, 0 is do not limit')
 
     parser_set.set_defaults(func=set_)

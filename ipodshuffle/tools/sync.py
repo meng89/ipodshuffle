@@ -335,12 +335,12 @@ def register(parser):
                                            '-e voicerss -k d279f919f7384d3bafa516caad0eae56'
                                     )
 
-    parser_sync.add_argument('-b', dest='base', help='ipod base path', metavar='<PATH>', required=True)
-    parser_sync.add_argument('-s', dest='src', help='source path', metavar='<PATH>', required=True)
+    parser_sync.add_argument('-b', dest='base', help='ipod base path', metavar='<path>', required=True)
+    parser_sync.add_argument('-s', dest='src', help='source path', metavar='<path>', required=True)
     parser_sync.add_argument('-l', dest='langs',
                              help='comma-separated set of target language codes (e.g en-gb,zh-cn)',
                              type=str2list, metavar='LANG1,LANG2...')
-    parser_sync.add_argument('-e', dest='engine', choices=ENGINE_MAP.keys(), metavar='ENGINE',
+    parser_sync.add_argument('-e', dest='engine', choices=ENGINE_MAP.keys(), metavar='<engine>',
                              help='TTS engine, one of ' + ', '.join(ENGINE_MAP.keys()))
 
     for module in ENGINE_MAP.values():

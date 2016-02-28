@@ -35,7 +35,7 @@ PyPi
 
     pip3 install ipodshuffle
 
-If you use svox engine, try install svox package in your Linux distribution
+If you want ot use svox TTS engine, install svox package on your Linux System
 
 Usage & Modules API
 ===================

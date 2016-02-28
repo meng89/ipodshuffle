@@ -17,7 +17,7 @@ Python 3
 
 `langid <https://github.com/saffsd/langid.py>`_
 
-`svox(PicoSpeaker) <http://picospeaker.tk/readme.php>`_
+svox (if you use this tts engine)
 
 Installation
 ============
@@ -35,8 +35,15 @@ PyPi
 
     pip3 install ipodshuffle
 
-If you use svox engine, try install svox package in the distribution
+If you use svox engine, try install svox package in your Linux distribution
 
 Usage & Modules API
 ===================
+
 see http://ipodshuffle.readthedocs.org/ 
+
+
+note
+====
+
+This program not compatible with iTunes.

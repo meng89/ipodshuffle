@@ -8,7 +8,7 @@ TTS engines
 -----------
 
 Program use `langid <https://github.com/saffsd/langid.py>`_ to identify title text langguage of track and playlist,
-but not work perfectly, It is suggested that you use "langs=lang1,lang2…" to specify languages range.
+but not work perfectly, It is suggested that you use "-l lang1,lang2…" to specify languages range.
 
 For now, have two TTS engine wrapper:
 

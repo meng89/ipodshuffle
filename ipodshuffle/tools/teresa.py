@@ -31,6 +31,9 @@ def main():
 
     args = parser.parse_args()
 
+    if not hasattr(args, 'func'):
+        exit(parser.print_help())
+
     args.func(args)
 
 if __name__ == '__main__':

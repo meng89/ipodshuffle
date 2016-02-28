@@ -7,7 +7,7 @@ The command is "teresa"
 
 .. program-output:: ../teresa --help
 
-see commands docmant:
+see commands documents:
 
 .. toctree::
 

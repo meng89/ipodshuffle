@@ -57,3 +57,20 @@ texinfo_documents = [
 
 autoclass_content = 'both'
 autodoc_member_order = 'bysource'
+
+latex_elements = {
+# The paper size ('letterpaper' or 'a4paper').
+#'papersize': 'letterpaper',
+
+# The font size ('10pt', '11pt' or '12pt').
+#'pointsize': '10pt',
+
+# Additional stuff for the LaTeX preamble.
+#'preamble': '',
+'preamble': '''
+\\hypersetup{unicode=true}
+\\usepackage{CJKutf8}
+\\begin{CJK}{UTF8}{gbsn}
+\\AtEndDocument{\\end{CJK}}
+'''
+}

@@ -21,7 +21,7 @@ def register(parser):
     import argparse
     parser_set = parser.add_parser('set', help='set voiceover enable or disable, set max volume',
                                    formatter_class=argparse.RawTextHelpFormatter,
-                                   epilog='Two examples of use:\n'
+                                   epilog='Example of use:\n'
                                           '  %(prog)s -b /media/ipod_base -v true -m 15'
                                    )
 

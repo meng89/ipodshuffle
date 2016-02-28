@@ -9,6 +9,7 @@ intersphinx_mapping = {'python': ('https://docs.python.org/3', None)}
 
 import ipodshuffle
 import ipodshuffle.shuffle
+import ipodshuffle.version
 
 extensions = ['sphinx.ext.autodoc']
 extensions += ['sphinxcontrib.programoutput']
@@ -24,8 +25,8 @@ copyright = u'2016, Chen Meng'
 author = u'Chen Meng'
 
 
-version = '0.0.1'
-release = '0.0.1'
+version = ipodshuffle.version.__version__
+release = ipodshuffle.version.__version__
 
 language = None
 

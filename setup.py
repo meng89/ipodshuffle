@@ -1,16 +1,21 @@
 from setuptools import setup, find_packages
 import os
 
+import ipodshuffle.version
+
+__version__ = ipodshuffle.version.__version__
+
 NAME = "ipodshuffle"
 
-VERSION = '0.2.4'
+VERSION = __version__
 
-DESCRIPTION = 'A Python library and CLI tools for iPod shuffle 4th generation with VoiceOver(TTS) support'
+DESCRIPTION = 'modules and tools for iPod shuffle 4th generation'
 
 LONG_DESCRIPTION = ''
 if os.path.exists('long_description.rst'):
     LONG_DESCRIPTION = open('long_description.rst').read()
-
+elif os.path.exists('README.rst'):
+    LONG_DESCRIPTION = ''.join(open('README.rst').readlines()[3:9])
 
 URL = 'https://github.com/meng89/{}'.format(NAME)
 

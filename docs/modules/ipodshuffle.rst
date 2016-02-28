@@ -16,3 +16,7 @@ ipodshuffle
 .. autoclass:: ipodshuffle.shuffle.AudioDB
     :members: add, get_filename
 
+
+.. toctree::
+
+    ipodshuffle_example

@@ -1,5 +1,5 @@
-ipodshuffle example
-===================
+example
+-------
 
 .. literalinclude:: ipodshuffle_example.py
     :language: python

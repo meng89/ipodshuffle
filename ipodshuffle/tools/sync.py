@@ -283,10 +283,10 @@ def sync(args):
                 local_filelog.log_it(file)
                 checksum = local_filelog.get_checksum(file)
 
-            path_in_ipod = ipod.audiodb.get_voice(checksum)
+            path_in_ipod = ipod.audiodb.get_filename(checksum)
             if not path_in_ipod:
-                ipod.audiodb.add_voice(file)
-                path_in_ipod = ipod.audiodb.get_voice(checksum)
+                ipod.audiodb.add(file)
+                path_in_ipod = ipod.audiodb.get_filename(checksum)
 
             track = ipod.create_track(path_in_ipod)
             pl.tracks.append(track)
@@ -324,7 +324,11 @@ def register(parser):
     import argparse
     parser_sync = parser.add_parser('sync', help='sync to ipod',
                                     formatter_class=argparse.RawTextHelpFormatter,
-                                    epilog='Two examples of use:\n'
+                                    epilog='Legal lang codes of engines:\n' +
+                                           '\n'.join(['  {}: {}'.format(k, ', '.join(sorted(v.legal_langs)))
+                                                      for k, v in ENGINE_MAP.items()]) + '\n'
+                                           '\n'
+                                           'Two examples of use:\n'
                                            '  %(prog)s -b /media/ipod_base -s /media/ipod_src -l en-gb '
                                            '-e sovx\n'
                                            '  %(prog)s -b /media/ipod_base -s /media/ipod_src -l en-gb,zh-cn,ja-jp '

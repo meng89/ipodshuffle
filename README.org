@@ -22,7 +22,7 @@ project [[https://github.com/nims11/IPod-Shuffle-4g][IPod-Shuffle-4g]] inspire m
 
 **** PyPi
    #+BEGIN_SRC
-   pip install ipodshuffle
+   pip3 install ipodshuffle
    #+END_SRC
 
 

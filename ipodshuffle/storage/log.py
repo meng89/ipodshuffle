@@ -152,7 +152,6 @@ class Storage(JsonLog):
             }
 
             self.write_log()
-
         return checksum
 
     def get_filename(self, checksum):

@@ -19,8 +19,6 @@ What is ipodshuffle?
 
 ipodshuffle is a Python Project to manage iPod Shuffle.
 
-You can use :ref:`modules<Modules>` to write your tools
+You can use :ref:`modules<Modules>` to write your tools.
 
 Or use existing command-line :ref:`tools<Tools>` to sync audio files.
-With voicerss TTS engine support,
-it can speak lot of languages naturally, include Chinese, Japanese and Korean.

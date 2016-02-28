@@ -165,7 +165,7 @@ class Shuffle:
         """
         store audio. if you don't want to copy file to ipod, you can use this
 
-        is a of :class:`ipodshuffle.shuffle.AudioDB`
+        is an instance of :class:`ipodshuffle.shuffle.AudioDB`
         """
         return self.__dict__['audiodb']
 
@@ -396,7 +396,7 @@ class AudioDB(Storage):
         if not audio.get_type(src):
             raise TypeError('The type of this file is not supported.')
 
-        super().add(src)
+        return super().add(src)
 
 
 def make_dbid1():

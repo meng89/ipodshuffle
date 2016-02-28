@@ -1,3 +1,4 @@
+#!/usr/bin/env python3
 import shutil
 import os
 import tempfile
@@ -17,6 +18,7 @@ def voice_path_func(text, lang):
     os.system(cmd)
 
     return tmp_file_name
+
 
 base = '/media/data/ipod_base_doc_text'
 
@@ -50,8 +52,8 @@ normal_playlist.tracks.append(track1)
 
 
 # use AudioDB copy file to ipod
-track2_checksum = ipod.audiodb.add_voice('/media/data/music/Bob Dylan/Bob Dylan - Mr. Tambourine Man.mp3')
-track2_pathinipod = ipod.audiodb.get_voice(track2_checksum)
+track2_checksum = ipod.audiodb.add('/media/data/music/Bob Dylan/Bob Dylan - Mr. Tambourine Man.mp3')
+track2_pathinipod = ipod.audiodb.get_filename(track2_checksum)
 track2 = ipod.create_track(path_in_ipod=track2_pathinipod)
 track2.voice = 'Mr. Tambourine Man', 'en-US'
 normal_playlist.tracks.append(track2)
@@ -59,16 +61,16 @@ normal_playlist.tracks.append(track2)
 
 # tracks can use same file, and you can set different voices for tracks
 track3 = ipod.create_track(path_in_ipod=track1_pathinipod)
-track3.voice = 'Farewell, Bob Dylan'
+track3.voice = 'Farewell, Bob Dylan', 'en-US'
 master_playlist.tracks.append(track3)
 
 track4 = ipod.create_track(path_in_ipod=track2_pathinipod)
-track4.voice = 'Mr. Tambourine Man, Bob Dylan'
+track4.voice = 'Mr. Tambourine Man, Bob Dylan', 'en-US'
 master_playlist.tracks.append(track4)
 
 
-track5_checksum = ipod.audiodb.add_voice('/media/data/music/Goo Goo Dolls - Name.mp3')
-track5_pathinipod = ipod.audiodb.get_voice(track5_checksum)
+track5_checksum = ipod.audiodb.add('/media/data/music/Goo Goo Dolls - Name.mp3')
+track5_pathinipod = ipod.audiodb.get_filename(track5_checksum)
 track5 = ipod.create_track(path_in_ipod=track5_pathinipod)
 track5.voice = 'Name, Goo Goo Dolls', 'en-US'
 master_playlist.tracks.append(track5)

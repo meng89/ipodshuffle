@@ -7,7 +7,7 @@ from ipodshuffle import Shuffle
 from ipodshuffle import MASTER, NORMAL, PODCAST, AUDIOBOOK
 
 
-# for VoiceOver, make sure you have already installed sovx TTS softwave
+# for VoiceOver, make sure you have already installed svox TTS softwave
 def voice_path_func(text, lang):
     tmp_file = tempfile.NamedTemporaryFile(delete=False)
     tmp_file_name = tmp_file.name + '.wav'

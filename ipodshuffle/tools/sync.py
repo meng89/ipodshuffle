@@ -339,7 +339,7 @@ def register(parser):
     parser_sync.add_argument('-s', dest='src', help='source path', metavar='<path>', required=True)
     parser_sync.add_argument('-l', dest='langs',
                              help='comma-separated set of target language codes (e.g en-gb,zh-cn)',
-                             type=str2list, metavar='LANG1,LANG2...')
+                             type=str2list, metavar='<lang1>,<lang2>...')
     parser_sync.add_argument('-e', dest='engine', choices=ENGINE_MAP.keys(), metavar='<engine>',
                              help='TTS engine, one of ' + ', '.join(ENGINE_MAP.keys()))
 

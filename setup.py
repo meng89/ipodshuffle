@@ -37,6 +37,11 @@ setup(name=NAME,
       url=URL,
       classifiers=CLASSIFIERS,
       packages=find_packages(),
+      message_extractors={
+          'ipodshuffle/tools': [
+              ('**.py', 'python', None),
+          ]
+      },
       install_requires=[
           'langid>=1.1.5',
           'mutagen>=1.27'

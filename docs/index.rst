@@ -1,12 +1,6 @@
-.. toctree::
-    :maxdepth: 2
-
-    modules/index
-    tools/index
-
-=========================
-ipodshuffle Documentation
-=========================
+==================================
+ipodshuffle & teresa Documentation
+==================================
 
 .. note::
 
@@ -21,4 +15,17 @@ ipodshuffle is a Python Project to manage iPod Shuffle.
 
 You can use :ref:`modules<Modules>` to write your tools.
 
-Or use existing command-line :ref:`tools<Tools>` to sync audio files.
+
+.. toctree::
+    :maxdepth: 2
+
+    modules/index
+
+
+Or use existing command-line :ref:`teresa<teresa>` to sync audio files.
+
+
+.. toctree::
+    :maxdepth: 2
+
+    teresa/index

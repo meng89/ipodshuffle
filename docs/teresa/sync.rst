@@ -26,8 +26,8 @@ For now, dayily request is free for 350 times, but need to register on the websi
 website: http://www.voicerss.org
 
 
-source folder structure
------------------------
+source path folder structure
+----------------------------
 
 all folders and audio files can be symbolic(soft) links.
 

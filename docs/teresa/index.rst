@@ -1,9 +1,9 @@
-.. _Tools:
+.. _teresa:
 
-Tools
-#####
+teresa
+######
 
-The command is "teresa"
+The command is called "teresa"
 
 .. program-output:: ../teresa --help
 
@@ -14,9 +14,3 @@ see commands documents:
     set
     sync
     show
-
-
-
-
-
-

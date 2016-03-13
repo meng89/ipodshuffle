@@ -1,11 +1,13 @@
+<!--
 Title: teresa 0.3.6
 Date: 2016-02-28  
-Modified: 2016-02-28
+Modified: 2016-03-13
 Category: Python
 Tags: ipod, TTS
 Slug: teresa
 Authors: Chen Meng
-Summary: 在 Linux 下同步你的 iPod Shuffle 并开启中文语音播报支持
+Summary: 在 Linux 下同步你的 iPod Shuffle 并开启中文语音播报支持 
+-->
 
 Linux 下有很多工具可以同步 iPod, 但是多数都不支持播报播放列表名和音频标题。唯一支持 TTS 的 IPod-Shuffle-4g 也不支持中文。
 
@@ -20,7 +22,7 @@ ipodshuffle 是个 Python 项目，主要用于管理 iPod Shuffle 4。
 然后安装 dev-python/ipodshuffle 
 
 ### 其他 Linux 发行版
-最简单的方式是先安装 pip3， Debian/Ubuntu/Fedora 里的包名可能是 python3-pip，Archlinux 里可能是 python-pip
+最简单的方式是先安装 pip3， Debian/Ubuntu/Fedora 里的包名可能是 python3-pip， Archlinux 里可能是 python-pip
 
 然后再通过 pip3 安装 ipodshuffle：
 > pip3 install ipodshuffle
@@ -36,12 +38,15 @@ ipodshuffle 是个 Python 项目，主要用于管理 iPod Shuffle 4。
 
 **-b** ipod 的挂载路径;
 
-**-s** 源目录，是有[**特定目录结构**](http://ipodshuffle.readthedocs.org/en/latest/tools/sync.html#source-folder-structure)的路径， 路径下面的所有文件夹和文件都可为软链接；
+**-s** 源目录，是有[**特定目录结构**](http://ipodshuffle.readthedocs.org/en/latest/tools/sync.html#source-folder-structure)
+的路径， 路径下面的所有文件夹和文件都可为软链接；
 
 **-l** 指定所用到的语言代码(因为程序自动识别文本语言效果并不完美)，用逗号分割，没有空格。查看引擎支持的语言代码：
 > teresa sync --help
 
 **-e** 指定 TTS 引擎， 例子中的 voicerss 是一个 http TTS 引擎， 后面的一大串字符是使用这个 TTS 引擎而需要在此网站注册后获得的 API key，链接： [http://www.voicerss.org/](http://www.voicerss.org/)， 免费注册，每日 350 次免费 TTS 拉取请求。(这是能找到的唯一一个基本免费又好用的 TTS 网站)
+
+**-k** 指定 TTS API 密钥字符串，当前只有 voicerss 引擎需要
 
 teresa sync 会在 ~/.cache/teresa/ 里保存语音音频文件，下次使用到同样的文本和语言的语音文件就会直接从缓存中提供。
 

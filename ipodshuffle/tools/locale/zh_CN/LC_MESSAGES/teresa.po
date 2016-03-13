@@ -1,0 +1,110 @@
+# Chinese (Simplified, China) translations for ipodshuffle.
+# Copyright (C) 2016 ORGANIZATION
+# This file is distributed under the same license as the ipodshuffle
+# project.
+# FIRST AUTHOR <EMAIL@ADDRESS>, 2016.
+#
+msgid ""
+msgstr ""
+"Project-Id-Version: ipodshuffle 0.3.6\n"
+"Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
+"POT-Creation-Date: 2016-03-13 22:58+0800\n"
+"PO-Revision-Date: 2016-03-13 23:01+0800\n"
+"Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
+"Language: zh_Hans_CN\n"
+"Language-Team: zh_Hans_CN <LL@li.org>\n"
+"Plural-Forms: nplurals=2; plural=(n != 1)\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=utf-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Generated-By: Babel 2.1.1\n"
+
+#: ipodshuffle/tools/set_.py:28
+msgid "set voiceover enable or disable, set max volume"
+msgstr "开关 voiceover，调整最大音量"
+
+#: ipodshuffle/tools/set_.py:31 ipodshuffle/tools/show.py:69
+msgid "Example of use:"
+msgstr "用法举例:"
+
+#: ipodshuffle/tools/set_.py:44
+msgid "enable or disable voiceover, true for enable, false for disable"
+msgstr "开关 voiceover，true 是开，false 是关"
+
+#: ipodshuffle/tools/set_.py:47
+msgid "max volume, 0 is do not limit"
+msgstr "最大音量, 0 是不限制"
+
+#: ipodshuffle/tools/show.py:66
+msgid "show ipod low level DB"
+msgstr "显示低级别数据"
+
+#: ipodshuffle/tools/sync.py:328
+msgid "sync to ipod"
+msgstr "同步音频到 iPod"
+
+#: ipodshuffle/tools/sync.py:331
+msgid "Legal lang codes of engines:"
+msgstr "可用语言代码:"
+
+#: ipodshuffle/tools/sync.py:336
+msgid "Two examples of use:"
+msgstr "两例用法:"
+
+#: ipodshuffle/tools/sync.py:342
+msgid "Source path folder structure see: {}"
+msgstr "源路径目录结构见: {}"
+
+#: ipodshuffle/tools/sync.py:354
+msgid "source path"
+msgstr "源路径"
+
+#: ipodshuffle/tools/sync.py:357
+msgid "comma-separated set of target language codes, e.g en-gb,zh-cn"
+msgstr "半角逗号分割的语言代码, 例如 en-gb,zh-cn"
+
+#: ipodshuffle/tools/sync.py:360
+msgid "TTS engine, "
+msgstr "TTS 引擎, "
+
+#: ipodshuffle/tools/sync.py:360
+msgid " or "
+msgstr " 或 "
+
+#: ipodshuffle/tools/teresa.py:22
+msgid "optional arguments"
+msgstr "选项参数"
+
+#: ipodshuffle/tools/teresa.py:26
+msgid "ipod base path"
+msgstr "iPod 挂载路径"
+
+#: ipodshuffle/tools/teresa.py:30
+msgid "show this help message and exit"
+msgstr "显示此帮助信息后退出"
+
+#: ipodshuffle/tools/teresa.py:38
+#, python-format
+msgid "Try '%(prog)s <command> -h' for command help."
+msgstr "运行 '%(prog)s <命令> -h' 可获取命令的帮助信息"
+
+#: ipodshuffle/tools/teresa.py:45
+msgid "show program's version number and exit"
+msgstr "显示程序版本号后退出"
+
+#: ipodshuffle/tools/teresa.py:51
+msgid "commands"
+msgstr "所有命令"
+
+#: ipodshuffle/tools/tts/voicerss.py:77
+msgid "voicerss engine options"
+msgstr "voicerss 引擎选项"
+
+#: ipodshuffle/tools/tts/voicerss.py:80
+msgid "API key string, get a key from {}"
+msgstr "API 密钥字符串, 从这个链接获取: {}"
+
+#: ipodshuffle/tools/tts/voicerss.py:83
+msgid "audio format, default format is {}"
+msgstr "音频格式, 缺省值是 {}"
+

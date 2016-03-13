@@ -74,9 +74,11 @@ legal_langs = my_langs
 
 
 def add_arg(parser):
-    g = parser.add_argument_group(title='voicerss engine options')
+    g = parser.add_argument_group(title=_('voicerss engine options'))
 
-    g.add_argument('-k', dest='key', metavar='<key>', help='API key string, get a key from http://www.voicerss.org/')
+    g.add_argument('-k', dest='key', metavar='<key>',
+                   help=_('API key string, get a key from {}').format('http://www.voicerss.org/'))
 
-    g.add_argument('-f', dest='format', metavar='<format>', help='audio format, default format is ' + default_format)
+    g.add_argument('-f', dest='format', metavar='<format>',
+                   help=_('audio format, default format is {}').format(default_format))
 

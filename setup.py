@@ -1,8 +1,12 @@
 from setuptools import setup, find_packages
 import os
-import Babel
+
+from babel.messages.frontend import compile_catalog, extract_messages, init_catalog, update_catalog
+
+from distutils.command.build import build as _build
 
 import ipodshuffle.version
+
 
 __version__ = ipodshuffle.version.__version__
 
@@ -28,6 +32,15 @@ CLASSIFIERS = [
     'Topic :: Software Development :: Libraries :: Python Modules',
 ]
 
+
+class Build(_build):
+    sub_commands = [('compile_catalog', None)] + _build.sub_commands
+
+
+def get_data_files():
+    pass
+
+
 setup(name=NAME,
       version=VERSION,
       description=DESCRIPTION,
@@ -50,13 +63,22 @@ setup(name=NAME,
       ],
       entry_points={
           'console_scripts': [
-              'teresa=ipodshuffle.tools.teresa:main',
+              'teresa=teresa.__main__:main',
           ],
       },
+
       cmdclass={
-        'compile_catalog': babel.compile_catalog,
-        'extract_messages': babel.extract_messages,
-        'init_catalog': babel.init_catalog,
-        'update_catalog': babel.update_catalog,
-      }
+          'compile_catalog': compile_catalog,
+          'extract_messages': extract_messages,
+          'init_catalog': init_catalog,
+          'update_catalog': update_catalog,
+
+          'build': Build
+      },
+      data_files=[
+          ('share/locale/zh_CN/LC_MESSAGES', [
+                  'teresa/locale/zh_CN/LC_MESSAGES/teresa.mo',
+                  ]
+           )
+      ]
       )

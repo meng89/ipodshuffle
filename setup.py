@@ -42,19 +42,16 @@ class BuildPy(_build_py):
     sub_commands = [('compile_catalog', None)] + _build_py.sub_commands
 
 
-def get_local_data_files():
-    locale_files = []
+locale_files = []
+dirname = os.path.join(os.path.dirname(__file__), 'teresa')
+for lang_code in os.listdir(os.path.join(dirname, 'locale')):
 
-    dirname = os.path.join(os.path.dirname(__file__), 'teresa')
-    for lang_code in os.listdir(os.path.join(dirname, 'locale')):
+    locale_files.append(
+        ('share/locale/'+lang_code+'/LC_MESSAGES', [dirname + '/locale/'+lang_code+'/LC_MESSAGES/teresa.mo'])
+    )
 
-        locale_files.append(
-            ('share/locale/'+lang_code+'/LC_MESSAGES', [dirname + '/locale/'+lang_code+'/LC_MESSAGES/teresa.mo'])
-        )
 
-    return locale_files
-
-DATA_FILES = get_local_data_files()
+DATA_FILES = locale_files
 
 
 setup(name=NAME,
@@ -68,7 +65,7 @@ setup(name=NAME,
       classifiers=CLASSIFIERS,
       packages=find_packages(),
       message_extractors={
-          'ipodshuffle/tools': [
+          'teresa/': [
               ('**.py', 'python', None),
           ]
       },

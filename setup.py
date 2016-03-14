@@ -4,6 +4,7 @@ import os
 from babel.messages.frontend import compile_catalog, extract_messages, init_catalog, update_catalog
 
 from distutils.command.build import build as _build
+from distutils.command.build_py import build_py as _build_py
 
 import ipodshuffle.version
 
@@ -35,6 +36,10 @@ CLASSIFIERS = [
 
 class Build(_build):
     sub_commands = [('compile_catalog', None)] + _build.sub_commands
+
+
+class BuildPy(_build_py):
+    sub_commands = [('compile_catalog', None)] + _build_py.sub_commands
 
 
 def get_local_data_files():
@@ -84,7 +89,8 @@ setup(name=NAME,
           'init_catalog': init_catalog,
           'update_catalog': update_catalog,
 
-          'build': Build
+          'build': Build,
+          'build_py': BuildPy,
       },
       data_files=DATA_FILES
       )

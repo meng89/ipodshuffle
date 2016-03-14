@@ -1,6 +1,6 @@
-.. _Modules:
+.. _modules:
 
-Modules
+modules
 #######
 
 .. toctree::

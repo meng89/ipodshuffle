@@ -11,10 +11,9 @@ ipodshuffle & teresa Documentation
 What is ipodshuffle?
 ********************
 
-ipodshuffle is a Python Project to manage iPod Shuffle.
+ipodshuffle is a Python Project for iPod Shuffle.
 
-You can use :ref:`modules<Modules>` to write your tools.
-
+You can use :ref:`modules<modules>` to write your own tools:
 
 .. toctree::
     :maxdepth: 2
@@ -22,8 +21,8 @@ You can use :ref:`modules<Modules>` to write your tools.
     modules/index
 
 
-Or use existing command-line :ref:`teresa<teresa>` to sync audio files.
 
+Or use existing command-line tool :ref:`teresa<teresa>` to manage your player:
 
 .. toctree::
     :maxdepth: 2

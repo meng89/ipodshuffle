@@ -37,8 +37,19 @@ class Build(_build):
     sub_commands = [('compile_catalog', None)] + _build.sub_commands
 
 
-def get_data_files():
-    pass
+def get_local_data_files():
+    locale_files = []
+
+    dirname = os.path.join(os.path.dirname(__file__), 'teresa')
+    for lang_code in os.listdir(os.path.join(dirname, 'locale')):
+
+        locale_files.append(
+            ('share/locale/'+lang_code+'/LC_MESSAGES', [dirname + '/locale/'+lang_code+'/LC_MESSAGES/teresa.mo'])
+        )
+
+    return locale_files
+
+DATA_FILES = get_local_data_files()
 
 
 setup(name=NAME,
@@ -75,10 +86,5 @@ setup(name=NAME,
 
           'build': Build
       },
-      data_files=[
-          ('share/locale/zh_CN/LC_MESSAGES', [
-                  'teresa/locale/zh_CN/LC_MESSAGES/teresa.mo',
-                  ]
-           )
-      ]
+      data_files=DATA_FILES
       )

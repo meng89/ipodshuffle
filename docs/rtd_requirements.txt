@@ -1,2 +1,6 @@
-ipodshuffle
+langid>=1.1.5
+mutagen>=1.27
+Babel
 sphinxcontrib-programoutput>=0.8
+
+ipodshuffle

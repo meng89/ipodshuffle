@@ -1,5 +1,6 @@
 from setuptools import setup, find_packages
 import os
+import Babel
 
 import ipodshuffle.version
 
@@ -44,11 +45,18 @@ setup(name=NAME,
       },
       install_requires=[
           'langid>=1.1.5',
-          'mutagen>=1.27'
+          'mutagen>=1.27',
+          'Babel'
       ],
       entry_points={
           'console_scripts': [
               'teresa=ipodshuffle.tools.teresa:main',
           ],
       },
+      cmdclass={
+        'compile_catalog': babel.compile_catalog,
+        'extract_messages': babel.extract_messages,
+        'init_catalog': babel.init_catalog,
+        'update_catalog': babel.update_catalog,
+      }
       )

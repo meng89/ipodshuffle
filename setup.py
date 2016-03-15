@@ -52,6 +52,9 @@ for lang_code in os.listdir(os.path.join(dirname, 'locale')):
 
 
 DATA_FILES = locale_files
+print()
+print(DATA_FILES)
+print()
 
 
 setup(name=NAME,
@@ -89,5 +92,6 @@ setup(name=NAME,
           'build': Build,
           'build_py': BuildPy,
       },
+      include_package_data=True,
       data_files=DATA_FILES
       )

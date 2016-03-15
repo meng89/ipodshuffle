@@ -1,0 +1,4 @@
+/usr/lib64/python3.4/site-packages/ipodshuffle-0.3.15-py3.4.egg
+/usr/bin/teresa
+/usr/bin/pybabel
+/usr/bin/langid

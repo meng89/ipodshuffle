@@ -3,8 +3,7 @@ import os
 
 from babel.messages.frontend import compile_catalog, extract_messages, init_catalog, update_catalog
 
-from distutils.command.build import build as _build
-from distutils.command.build_py import build_py as _build_py
+from distutils.command.build import build
 
 import ipodshuffle.version
 
@@ -34,27 +33,24 @@ CLASSIFIERS = [
 ]
 
 
-class Build(_build):
-    sub_commands = [('compile_catalog', None)] + _build.sub_commands
+class Build(build):
+
+    sub_commands = [('compile_catalog', None)] + build.sub_commands
 
 
-class BuildPy(_build_py):
-    sub_commands = [('compile_catalog', None)] + _build_py.sub_commands
+def get_mo_data_files():
+    locale_files = []
 
+    dirname = os.path.join(os.path.dirname(__file__), 'teresa')
+    for lang_code in os.listdir(os.path.join(dirname, 'locale')):
 
-locale_files = []
-dirname = os.path.join(os.path.dirname(__file__), 'teresa')
-for lang_code in os.listdir(os.path.join(dirname, 'locale')):
+        locale_files.append(
+            ('share/locale/'+lang_code+'/LC_MESSAGES', [dirname + '/locale/'+lang_code+'/LC_MESSAGES/teresa.mo'])
+        )
 
-    locale_files.append(
-        ('share/locale/'+lang_code+'/LC_MESSAGES', [dirname + '/locale/'+lang_code+'/LC_MESSAGES/teresa.mo'])
-    )
+    return locale_files
 
-
-DATA_FILES = locale_files
-print()
-print(DATA_FILES)
-print()
+DATA_FILES = get_mo_data_files()
 
 
 setup(name=NAME,
@@ -90,8 +86,9 @@ setup(name=NAME,
           'update_catalog': update_catalog,
 
           'build': Build,
-          'build_py': BuildPy,
       },
       include_package_data=True,
-      data_files=DATA_FILES
+      data_files=DATA_FILES,
       )
+
+print(3)

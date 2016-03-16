@@ -1,6 +1,5 @@
 from setuptools import setup, find_packages
-
-import ipodshuffle.version
+from distutils.util import convert_path
 
 import os
 
@@ -8,9 +7,15 @@ from babel.messages.frontend import compile_catalog, extract_messages, init_cata
 
 from distutils.command.build import build
 
-VERSION = ipodshuffle.version.__version__
 
 NAME = "ipodshuffle"
+
+
+main_ns = {}
+ver_path = convert_path('{}/version.py'.format(NAME))
+with open(ver_path) as ver_file:
+    exec(ver_file.read(), main_ns)
+
 
 DESCRIPTION = 'modules and tools for iPod shuffle 4th generation'
 
@@ -51,7 +56,7 @@ def get_mo_data_files():
 DATA_FILES = get_mo_data_files()
 
 setup(name=NAME,
-      version=VERSION,
+      version=main_ns['__version__'],
       description=DESCRIPTION,
       long_description=LONG_DESCRIPTION,
       author='Chen Meng',
@@ -91,5 +96,3 @@ setup(name=NAME,
       include_package_data=True,
       data_files=DATA_FILES,
       )
-
-print(3)

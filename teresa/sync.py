@@ -341,7 +341,7 @@ def register(parser):
 
                                     _('Source path folder structure see: {}')
                                     .format('http://ipodshuffle.readthedocs.org/' +
-                                            'en/latest/teresa/sync.html#source-path-folder-structure'),
+                                            'en/latest/teresa/index.html#source-path-folder-structure'),
                                     add_help=False
                                     )
 

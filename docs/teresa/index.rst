@@ -51,7 +51,7 @@ voicerss
 source path folder structure
 ----------------------------
 
-    all folders and audio files can be symbolic(soft) links.
+    All folders and audio files can be symbolic(soft) links.
 
     "source" is just a example, you can use another name whatever you want.
     In source folder,

@@ -1,18 +1,16 @@
 from setuptools import setup, find_packages
+
+import ipodshuffle.version
+
 import os
 
 from babel.messages.frontend import compile_catalog, extract_messages, init_catalog, update_catalog
 
 from distutils.command.build import build
 
-import ipodshuffle.version
-
-
-__version__ = ipodshuffle.version.__version__
+VERSION = ipodshuffle.version.__version__
 
 NAME = "ipodshuffle"
-
-VERSION = __version__
 
 DESCRIPTION = 'modules and tools for iPod shuffle 4th generation'
 
@@ -52,7 +50,6 @@ def get_mo_data_files():
 
 DATA_FILES = get_mo_data_files()
 
-
 setup(name=NAME,
       version=VERSION,
       description=DESCRIPTION,
@@ -71,6 +68,10 @@ setup(name=NAME,
       install_requires=[
           'langid>=1.1.5',
           'mutagen>=1.27',
+      ],
+
+      setup_requires=[
+          'mutagen>=1.27'
           'Babel'
       ],
       entry_points={

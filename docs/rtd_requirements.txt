@@ -1,5 +1,5 @@
 sphinxcontrib-programoutput>=0.8
 mutagen
 
---extra-index-url https://testpypi.python.org/pypi
+#--extra-index-url https://testpypi.python.org/pypi
 ipodshuffle==0.3.19

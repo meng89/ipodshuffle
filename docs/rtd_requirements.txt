@@ -1,2 +1,4 @@
 sphinxcontrib-programoutput>=0.8
-ipodshuffle
+
+--extra-index-url https://testpypi.python.org/pypi
+ipodshuffle=0.3.18b1

@@ -1,5 +1,7 @@
+langid>=1.1.5
+mutagen>=1.27
+
 sphinxcontrib-programoutput>=0.8
-mutagen
 
 #--extra-index-url https://testpypi.python.org/pypi
 ipodshuffle==0.3.19

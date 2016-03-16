@@ -1,33 +1,45 @@
 ipodshuffle
 ===========
 
-ipodshuffle is a Python Project to manage iPod Shuffle 4th generation.
+ipodshuffle is a Python Project for iPod Shuffle 4th generation.
 
-It contain a few modules to handle "iTunesSD"
+It contain a few modules to handle "iTunesSD".
 
-And a cli tool "teresa" for sync audio files,
-with TTS engine "voicerss", it can speak lot of languages naturally, include English, Chinese, Japanese and Korean.
+And a cli tool "teresa" for sync audio files.
 
-Dependencies:
-=============
+With TTS engine "voicerss", it can speak lot of languages naturally, include English, Chinese, Japanese and Korean.
 
-Python 3
+Easy to use
+-----------
 
-`mutagen <https://bitbucket.org/lazka/mutagen>`_ >= 1.27
+::
+    teresa set -b ipod_test -v true
+    teresa sync -b ipod_test -s ipod_src -l zh-cn,ja-jp,en-gb -e voicerss -k d279f919f7384d3bafa5c6caad0eae56
 
-`langid <https://github.com/saffsd/langid.py>`_
-
-svox (if you use this tts engine)
+`ipod_src structure <http://ipodshuffle.readthedocs.org/en/latest/teresa/index.html#source-path-folder-structure>`_
 
 Installation
 ============
 
+Dependencies
+------------
+
+Python 3
+
+`mutagen <https://bitbucket.org/lazka/mutagen>`_
+
+`langid <https://github.com/saffsd/langid.py>`_
+
+`Babel <http://babel.pocoo.org/>`_
+
+svox
+
 Gentoo/Linux
 ------------
 
-app-accessibility/svox in Overlay "ikelos"
+app-accessibility/svox in overlay 'ikelos'
 
-dev-python/ipodshuffle in Overlay "observer"
+dev-python/ipodshuffle in overlay 'observer'
 
 PyPi
 ----
@@ -35,13 +47,13 @@ PyPi
 
     pip3 install ipodshuffle
 
-If you want ot use svox TTS engine, install svox package on your Linux System
+install svox yourself if you want to use svox tts engine
 
-Usage & Modules API
-===================
 
-see http://ipodshuffle.readthedocs.org/ 
+Read the docs
+=============
 
+http://ipodshuffle.readthedocs.org/
 
 note
 ====

@@ -11,10 +11,11 @@ With TTS engine "voicerss", it can speak lot of languages naturally, include Eng
 
 Easy to use
 -----------
-
 ::
+
     teresa set -b ipod_test -v true
     teresa sync -b ipod_test -s ipod_src -l zh-cn,ja-jp,en-gb -e voicerss -k d279f919f7384d3bafa5c6caad0eae56
+
 
 `ipod_src structure <http://ipodshuffle.readthedocs.org/en/latest/teresa/index.html#source-path-folder-structure>`_
 

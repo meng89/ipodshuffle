@@ -33,7 +33,7 @@ Python 3
 
 `Babel <http://babel.pocoo.org/>`_
 
-svox
+svox (only if you want to use this TTS engline)
 
 Gentoo/Linux
 ------------
@@ -48,15 +48,13 @@ PyPi
 
     pip3 install ipodshuffle
 
-install svox yourself if you want to use svox tts engine
-
 
 Read the docs
 =============
 
 http://ipodshuffle.readthedocs.org/
 
-note
+Note
 ====
 
 This program not compatible with iTunes.

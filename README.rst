@@ -43,6 +43,7 @@ PyPi
 Easy to use
 ===========
 ::
+
     # enable "voiceover" first
     teresa set -b ipod_test -v true
 

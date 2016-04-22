@@ -61,11 +61,11 @@ def id3_title_artist(path):
 def title_artist_or_filename(path):
 
     title, artist = id3_title_artist(path)
-    title.strip()
-    artist.strip()
+
+    artist = artist.strip() if artist else ''
 
     if title:
-        text = title
+        text = title.strip()
         if artist:
             if text[-1] in ('?', ',', '.'):
                 pass

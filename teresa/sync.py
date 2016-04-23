@@ -148,6 +148,25 @@ def filter_unsupported_files(files):
 #     return pl_titles_and_files
 
 
+def get_normals2(dire):
+
+    all_files = []
+
+    sub_files = []
+
+    pl_title_files = []
+
+    for path in sorted(os.listdir(dire)):
+        if os.path.isfile(path):
+            sub_files.append(path)
+        elif os.path.isdir(path):
+            _all_files, _pl_title_files = get_normals2(path)
+
+    return all_files, pl_title_files
+
+
+
+
 def get_normals(dire):
 
     titles_and_files = []
@@ -156,8 +175,8 @@ def get_normals(dire):
 
         legal_files = filter_unsupported_files(get_all_files(one_dire))
         if legal_files:
-            pl_title = os.path.split(one_dire)[1]
-            titles_and_files.append((pl_title, sorted(legal_files)))
+
+            titles_and_files.append((os.path.split(one_dire)[1], sorted(legal_files)))
 
     return titles_and_files
 

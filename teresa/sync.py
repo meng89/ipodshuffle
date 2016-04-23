@@ -82,15 +82,28 @@ def title_artist_or_filename(path):
 ###########################################################################
 
 
-def get_all_dires(dire):
+# def get_all_dires(dire):
+#     dirs = []
+#     # os.path.walk(src, visit, dir_files_list)
+#     for top, sub_dirs, names in os.walk(dire, followlinks=True):
+#         dirs.append(top)
+#     return dirs
+
+
+def get_all_sub_dires(dire):
     dirs = []
-    # os.path.walk(src, visit, dir_files_list)
     for top, sub_dirs, names in os.walk(dire, followlinks=True):
         dirs.append(top)
-    return dirs
+    return dirs[1:]
 
 
 get_all_files = ipodshuffle.utils.get_all_files
+
+
+def get_files(dire):
+    files = []
+    for one in os.listdir(dire):
+        files.append(os.path.join(dire, one))
 
 
 def get_sub_files_dires(dire):
@@ -107,31 +120,46 @@ def get_sub_files_dires(dire):
     return files, dires
 
 
-def get_legal_files(files):
-    legal_files = []
-    for file in files:
-        if get_audio_type(file):
-            legal_files.append(file)
-        else:
-            print('Ignore not legal file: ', file)
+def filter_unsupported_files(files):
+    # legal_files = []
+    # for file in files:
+    #   if get_audio_type(file):
+    #       legal_files.append(file)
+    #   else:
+    #       print('Ignore not legal file: ', file)
+    # return legal_files
 
-    return legal_files
+    return filter(lambda file: get_audio_type(file), files)
+
 
 ###############################################################################
 
 
-def get_master_normals(dire):
-    titles_files = []
+# def get_master_normals(dire):
+#     pl_titles_and_files = []
+#
+#     for one_dire in get_all_dires(dire):
+#
+#         legal_files = filter_unsupported_files(get_all_files(one_dire))
+#         if legal_files:
+#             pl_title = os.path.split(one_dire)[1]
+#             pl_titles_and_files.append((pl_title, sorted(legal_files)))
+#
+#     return pl_titles_and_files
 
-    dires = get_all_dires(dire)
 
-    for _dire in dires:
-        legal_files = get_legal_files(get_all_files(_dire))
+def get_normals(dire):
+
+    titles_and_files = []
+
+    for one_dire in get_all_sub_dires(dire):
+
+        legal_files = filter_unsupported_files(get_all_files(one_dire))
         if legal_files:
-            title = os.path.split(_dire)[1]
-            titles_files.append((title, sorted(legal_files)))
+            pl_title = os.path.split(one_dire)[1]
+            titles_and_files.append((pl_title, sorted(legal_files)))
 
-    return titles_files
+    return titles_and_files
 
 
 def get_podcasts(dire):
@@ -140,7 +168,7 @@ def get_podcasts(dire):
     dires = get_sub_files_dires(dire)[1]
 
     for _dire in dires:
-        legal_files = get_legal_files(get_sub_files_dires(_dire)[0])
+        legal_files = filter_unsupported_files(get_sub_files_dires(_dire)[0])
         if legal_files:
             title = os.path.split(_dire)[1]
             titles_files.append((title, legal_files))
@@ -153,12 +181,12 @@ def get_audiobooks(dire):
     files, dires = get_sub_files_dires(dire)
 
     # Do single file audiobooks
-    for file in get_legal_files(files):
+    for file in filter_unsupported_files(files):
         title = filename(file)
         titles_files.append((title, (file,)))
 
     for _dire in dires:
-        legal_files = get_legal_files(get_sub_files_dires(_dire)[0])
+        legal_files = filter_unsupported_files(get_sub_files_dires(_dire)[0])
         if legal_files:
             title = os.path.split(_dire)[1]
             titles_files.append((title, legal_files))
@@ -248,7 +276,7 @@ def sync(args):
     local_filelog = LocalFileLog(os.path.join(CACHE_DIR, 'local_file_log.json'))
 
     dire_and_funs = (
-        (src + '/' + 'music', get_master_normals),
+        (src + '/' + 'music', get_normals),
         (src + '/' + 'podcasts', get_podcasts),
         (src + '/' + 'audiobooks', get_audiobooks),
     )
@@ -262,13 +290,13 @@ def sync(args):
             z.append(a)
         return z
 
-    master_and_normals, podcasts, audiobooks = x(dire_and_funs)
+    normals, podcasts, audiobooks = x(dire_and_funs)
 
     master = []
-    normals = []
-    if master_and_normals:
-        master = master_and_normals[0]
-        normals = master_and_normals[1:]
+    master.extend(filter_unsupported_files(get_all_files(src + '/' + 'music', )))
+
+    for normal in normals:
+        master.extend(normal[1])
 
     def set_voice(obj, text, lang):
         try:
@@ -311,7 +339,7 @@ def sync(args):
             add_files_to_playlist(pl, files, text_fun)
 
     master_pl = ipod.playlists.append_one(pl_type=MASTER)
-    add_files_to_playlist(master_pl, master[1], title_artist_or_filename)
+    add_files_to_playlist(master_pl, master, title_artist_or_filename)
 
     add_playlists(normals, NORMAL, title_artist_or_filename)
     add_playlists(podcasts, PODCAST, title_artist_or_filename)

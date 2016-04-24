@@ -55,6 +55,9 @@ def get_mo_data_files():
 
 DATA_FILES = get_mo_data_files()
 
+with open('requirements.txt') as f:
+    required = f.read().splitlines()
+
 setup(name=NAME,
       version=main_ns['__version__'],
       description=DESCRIPTION,
@@ -70,15 +73,10 @@ setup(name=NAME,
               ('**.py', 'python', None),
           ]
       },
-      install_requires=[
-          'langid>=1.1.5',
-          'mutagen>=1.27',
-      ],
+      install_requires=required,
 
-      setup_requires=[
-          'mutagen>=1.27'
-          'Babel'
-      ],
+      setup_requires=required,
+
       entry_points={
           'console_scripts': [
               'teresa=teresa.__main__:main',

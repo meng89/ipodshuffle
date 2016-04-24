@@ -22,6 +22,9 @@ from .tts.error import GetVoiceDataError
 
 from .fix_zh import fix_zh
 
+import logging
+log = logging.getLogger('sync')
+
 
 CACHE_DIR = os.path.join(os.path.expanduser('~'), '.cache/teresa')
 os.makedirs(CACHE_DIR, exist_ok=True)
@@ -61,11 +64,11 @@ def id3_title_artist(path):
 def title_artist_or_filename(path):
 
     title, artist = id3_title_artist(path)
-    title.strip()
-    artist.strip()
+
+    artist = artist.strip() if artist else ''
 
     if title:
-        text = title
+        text = title.strip()
         if artist:
             if text[-1] in ('?', ',', '.'):
                 pass
@@ -82,15 +85,34 @@ def title_artist_or_filename(path):
 ###########################################################################
 
 
-def get_all_dires(dire):
+def get_all_sub_dires(dire):
     dirs = []
-    # os.path.walk(src, visit, dir_files_list)
     for top, sub_dirs, names in os.walk(dire, followlinks=True):
         dirs.append(top)
-    return dirs
+    return dirs[1:]
 
 
 get_all_files = ipodshuffle.utils.get_all_files
+
+
+def get_files(dire):
+    files = []
+    for one in os.listdir(dire):
+        full_path = os.path.join(dire, one)
+        if os.path.isfile(full_path):
+            files.append(full_path)
+
+    return files
+
+
+def get_dires(dire):
+    dires = []
+    for one in os.listdir(dire):
+        full_path = os.path.join(dire, one)
+        if os.path.isdir(full_path):
+            dires.append(full_path)
+
+    return dires
 
 
 def get_sub_files_dires(dire):
@@ -107,31 +129,46 @@ def get_sub_files_dires(dire):
     return files, dires
 
 
-def get_legal_files(files):
-    legal_files = []
-    for file in files:
-        if get_audio_type(file):
-            legal_files.append(file)
-        else:
-            print('Ignore not legal file: ', file)
+def filter_unsupported_files(files):
+    return [one for one in filter(lambda file: get_audio_type(file), files)]
 
-    return legal_files
 
 ###############################################################################
 
 
-def get_master_normals(dire):
-    titles_files = []
+def get_normals2(dire):
+    audio = filter_unsupported_files(sorted(get_files(dire)))
 
-    dires = get_all_dires(dire)
+    all_audio = []
 
-    for _dire in dires:
-        legal_files = get_legal_files(get_all_files(_dire))
+    pl_title_files = []
+
+    for one in sorted(get_dires(dire)):
+        _all_audio, _pl_title_files = get_normals2(one)
+
+        if _all_audio:
+
+            pl_title_files = [(os.path.split(one)[1], _all_audio)]
+
+            all_audio += _all_audio
+
+        pl_title_files += _pl_title_files
+
+    return audio + all_audio, pl_title_files
+
+
+def get_normals(dire):
+
+    titles_and_files = []
+
+    for one_dire in get_all_sub_dires(dire):
+
+        legal_files = filter_unsupported_files(get_all_files(one_dire))
         if legal_files:
-            title = os.path.split(_dire)[1]
-            titles_files.append((title, sorted(legal_files)))
 
-    return titles_files
+            titles_and_files.append((os.path.split(one_dire)[1], sorted(legal_files)))
+
+    return titles_and_files
 
 
 def get_podcasts(dire):
@@ -140,7 +177,7 @@ def get_podcasts(dire):
     dires = get_sub_files_dires(dire)[1]
 
     for _dire in dires:
-        legal_files = get_legal_files(get_sub_files_dires(_dire)[0])
+        legal_files = filter_unsupported_files(get_sub_files_dires(_dire)[0])
         if legal_files:
             title = os.path.split(_dire)[1]
             titles_files.append((title, legal_files))
@@ -153,12 +190,12 @@ def get_audiobooks(dire):
     files, dires = get_sub_files_dires(dire)
 
     # Do single file audiobooks
-    for file in get_legal_files(files):
-        title = filename(file)
-        titles_files.append((title, (file,)))
+    for audio in filter_unsupported_files(files):
+        title = filename(audio)
+        titles_files.append((title, (audio,)))
 
     for _dire in dires:
-        legal_files = get_legal_files(get_sub_files_dires(_dire)[0])
+        legal_files = filter_unsupported_files(get_sub_files_dires(_dire)[0])
         if legal_files:
             title = os.path.split(_dire)[1]
             titles_files.append((title, legal_files))
@@ -198,14 +235,15 @@ def voice_things(local_voicedb, args):
 
     def local_voice_path(text, lang):
         tts_lang = lang
-        print(repr(lang), repr(text))
+
+        log('try local voice: {}, {}'.format(repr(lang), repr(text)))
+
         voice_path = local_voicedb.get_path(text, tts_lang)
         if not voice_path and callable(tts_func):  # The voice not in local
-            print('   not in local. ', end='')
-
-            print('try TTS engine {} ... '.format(args.engine), end='', flush=True)
+            log('not in local.', )
+            log('try TTS engine {} ... '.format(args.engine))
             voice_data = tts_func(text, tts_lang)
-            print('done!')
+            log('done!')
 
             tmp_file = tempfile.NamedTemporaryFile(delete=False)
             tmp_file_name = tmp_file.name
@@ -247,34 +285,11 @@ def sync(args):
 
     local_filelog = LocalFileLog(os.path.join(CACHE_DIR, 'local_file_log.json'))
 
-    dire_and_funs = (
-        (src + '/' + 'music', get_master_normals),
-        (src + '/' + 'podcasts', get_podcasts),
-        (src + '/' + 'audiobooks', get_audiobooks),
-    )
-
-    def x(y):
-        z = []
-        for dire, _fun in y:
-            a = []
-            if os.path.exists(dire) and os.path.isdir(dire):
-                a = _fun(dire)
-            z.append(a)
-        return z
-
-    master_and_normals, podcasts, audiobooks = x(dire_and_funs)
-
-    master = []
-    normals = []
-    if master_and_normals:
-        master = master_and_normals[0]
-        normals = master_and_normals[1:]
-
     def set_voice(obj, text, lang):
         try:
             obj.voice = text, lang
         except GetVoiceDataError as e:
-            print(e, ' ignored.')
+            log('{}, ignornd.'.format(e))
 
     def add_files_to_playlist(pl, files, get_track_voice_title=None):
         for file in files:
@@ -310,12 +325,32 @@ def sync(args):
 
             add_files_to_playlist(pl, files, text_fun)
 
-    master_pl = ipod.playlists.append_one(pl_type=MASTER)
-    add_files_to_playlist(master_pl, master[1], title_artist_or_filename)
+    def exists_and_isdir(path):
+        return True if os.path.exists(path) and os.path.isdir(path) else False
 
-    add_playlists(normals, NORMAL, title_artist_or_filename)
-    add_playlists(podcasts, PODCAST, title_artist_or_filename)
-    add_playlists(audiobooks, AUDIOBOOK, filename)
+    normal_dir = os.path.join(src, 'music')
+    podcasts_dir = os.path.join(src, 'podcasts')
+    audiobooks_dir = os.path.join(src, 'audiobooks')
+
+    if exists_and_isdir(normal_dir):
+        master_audio, normals = get_normals2(normal_dir)
+
+        if master_audio:
+            master_pl = ipod.playlists.append_one(pl_type=MASTER)
+            add_files_to_playlist(master_pl, master_audio, title_artist_or_filename)
+
+        if normals:
+            add_playlists(normals, NORMAL, title_artist_or_filename)
+
+    if exists_and_isdir(podcasts_dir):
+        podcasts = get_podcasts(podcasts_dir)
+        if podcasts:
+            add_playlists(podcasts, PODCAST, title_artist_or_filename)
+
+    if exists_and_isdir(audiobooks_dir):
+        audiobooks = get_audiobooks(audiobooks_dir)
+        if audiobooks:
+            add_playlists(audiobooks, AUDIOBOOK, filename)
 
     ipod.write_db()
 

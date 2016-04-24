@@ -23,7 +23,7 @@ class Shuffle:
                 self.__dict__['playlists'] = _Playlists(playlists_dics_and_indexes)
 
         else:
-            self.enable_voiceover = False
+            self.enable_voiceover = True
             self.max_volume = 0
 
             self.__dict__['tracks'] = _Tracks()

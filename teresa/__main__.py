@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 # encoding=utf-8
 
+import logging
 import argparse
 
 import ipodshuffle.version
@@ -10,6 +11,7 @@ from .utils import add_optional_group, add_args_help
 
 
 def main():
+    logging.basicConfig(level=logging.INFO)
 
     parser = argparse.ArgumentParser(
         formatter_class=argparse.RawTextHelpFormatter,

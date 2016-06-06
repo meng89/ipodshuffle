@@ -56,7 +56,7 @@ Easy to use
 Read the docs
 =============
 
-http://ipodshuffle.readthedocs.org/
+http://ipodshuffle.readthedocs.io/
 
 
 Note
